@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "./spthread.h"
 
@@ -15,7 +14,7 @@
 // definitions and  thread_local globals
 ///////////////////////////////////////////////////////////////////////////////
 
-// function potiner to a function
+// function pointer to a function
 // that takes a void* and returns a void*
 typedef void* (*pthread_fn)(void*);
 

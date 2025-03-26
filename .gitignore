@@ -1,0 +1,11 @@
+# Object files
+*.o
+
+# Executables
+bin/*
+
+# Log files
+log/*
+
+# Build directories
+build/ 

@@ -41,7 +41,7 @@ static void scheduler(void) {
       .sa_mask = suspend_set,
       .sa_flags = SA_RESTART,
   };
-  sigaction(SIGALRM, &act, NULL);
+  sigaction(SIGALRM, &act, NULL); 
 
   // make sure SIGALRM is unblocked
   sigset_t alarm_set;
@@ -66,7 +66,7 @@ static void scheduler(void) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// thread funcs stuff
+// thread funcs stuff 
 ///////////////////////////////////////////////////////////////////////////////
 static void* cat([[maybe_unused]] void* arg) {
   // arg is ignored, mark it that way so compiler stops complaining
