@@ -9,3 +9,5 @@ log/*
 
 # Build directories
 build/ 
+
+*.sh
