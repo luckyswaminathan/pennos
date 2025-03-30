@@ -9,6 +9,8 @@
 #define EMKFS_CALLOC_FAILED 9
 #define EMKFS_CLOSE_FAILED 10
 
+#include <stdint.h>
+
 /**
  * Create a new filesystem
  *

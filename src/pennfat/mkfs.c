@@ -1,6 +1,7 @@
-#include "bin/pennfat/mkfs.h"
+#include "src/pennfat/mkfs.h"
 
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -45,12 +46,12 @@ int mkfs(char* fs_name, uint8_t blocks_in_fat, uint8_t block_size_config) {
 	}
 
 	// Create a file with that size that represents ourfilesystem
-	int fs_fd = open(fs_name, O_CREAT | O_EXCL)
+	int fs_fd = open(fs_name, O_CREAT | O_EXCL | O_WRONLY);
 	if (fs_fd < 0) {
 		return EMKFS_OPEN_FAILED;	
 	}
 
-	uint8_t* empty_block = (uint8_t*) calloc(block_size);
+	uint8_t* empty_block = (uint8_t*) calloc(block_size, sizeof(uint8_t));
 	if (empty_block == NULL) {
 		return EMKFS_CALLOC_FAILED;
 	}
@@ -66,7 +67,7 @@ int mkfs(char* fs_name, uint8_t blocks_in_fat, uint8_t block_size_config) {
 	}
 
 	// Go back to the start and write the first FAT entrey
-	if (lseek(fs_fd, 0) < 0) {
+	if (lseek(fs_fd, 0, SEEK_SET) < 0) {
 		return EMKFS_LSEEK_FAILED;	
 	}
 	uint16_t zeroeth_fat_entry = (((uint16_t)blocks_in_fat) << 8) | block_size_config;

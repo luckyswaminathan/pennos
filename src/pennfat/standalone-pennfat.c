@@ -1,39 +1,42 @@
 #include "src/pennfat/mkfs.h"
 
-#include <readline/readline.h>
+#include <string.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <errno.h>
 
 
 char** whitespace_tokenize(char *string, size_t* n_tokens) {
-	size_t length = strlen(string);
+	size_t length = strlen(string) + 1; // +1 for the null terminator
 	char* copy_of_string = (char*) malloc(sizeof(char) * length);
-
 	if (copy_of_string == NULL) {
 		return NULL;
 	}
+	strcpy(copy_of_string, string);
 
 
-	size_t _n_tokens = 0;
-	char *tok;
-	char *rest = copy_of_string;
-	
 	// count number of tokens
-	while ((tok = strtok_r(rest, " \t\n\r", &rest))) {
+	size_t _n_tokens = 0;
+	char* tok = strtok(copy_of_string, " \t\n\r");
+	while (tok != NULL) {
 		_n_tokens += 1;
+		tok = strtok(NULL, " \t\n\r");
 	}
 	free(copy_of_string);
 
 	// allocate a char** to store tokens based on the original string
-	rest = string;
 	char** tokens = (char**) malloc(sizeof(char*) * _n_tokens);
 	if (tokens == NULL) {
 		return NULL;
 	}
 
-	for (size_t i = 0; (tok = strtok_r(rest, " \t\n\r", &rest)) && i < _n_tokens; i++) {
+	// actually tokenize the string
+	tok = strtok(string, " \t\n\r");
+	for (size_t i = 0; tok != NULL && i < _n_tokens; i++) {
 		tokens[i] = tok;
+		tok = strtok(NULL, " \t\n\r");
 	}
 
 	*n_tokens = _n_tokens;
@@ -44,7 +47,7 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 	char* endptr;
 
 	errno = 0; // reset errno
-	long int val = strtol(tokens[2], &endptr, 10);
+	long int val = strtol(string, &endptr, 10);
 	
 	*ok = true;
 	if (*endptr != '\0') {
@@ -67,17 +70,23 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 }
 
 int main(void) {
-	// redirect readline prompt to use stderr
-	rl_outstream = stderr;
 	while (true) {
-		char* line = readline("PENNFAT>");
-		if (line == NULL) {
-			if (errorno != 0) {
+		fprintf(stderr, "PENNFAT> ");
+		char* line = NULL;
+		size_t line_size;
+
+		errno = 0; // clear errno
+		ssize_t nread = getline(&line, &line_size, stdin);
+
+		if (nread == -1) {
+			if (errno != 0) {
 				perror("Failed to read line");
-				continue;
+				goto cleanup_line;
 			} else {
 				// EOF sent by user -- exit the shell
-				exit(EXIT_SUCCESS)
+				// Note an EOF sent anywhere is treated as a signal to kill the shell (even if there is a full command before the EOF is sent
+				fprintf(stderr, "\n");
+				exit(EXIT_SUCCESS);
 			}
 		}
 
@@ -88,7 +97,7 @@ int main(void) {
 			goto cleanup_line;
 		}
 
-		if (n_tokens == ) {
+		if (n_tokens == 0) {
 			goto cleanup_tokens;
 		}
 
@@ -103,7 +112,7 @@ int main(void) {
 			uint8_t blocks_in_fat;
 			{
 				bool ok;
-				long int long_blocks_in_fat = safe_strtol(tokens[2], "mkfs BLOCKS_IN_FAT arg", &ok);
+				long long_blocks_in_fat = safe_strtol(tokens[2], "mkfs BLOCKS_IN_FAT arg", &ok);
 				if (!ok) {
 					goto cleanup_tokens;
 				}
@@ -125,16 +134,20 @@ int main(void) {
 					fprintf(stderr, "mkfs BLOCK_SIZE_CONFIG arg: must be between 0 and 4 inclusive\n");
 					goto cleanup_tokens;
 				}
-				blocks_in_fat = (uint8_t) long_blocks_in_fat;
+				block_size_config = (uint8_t) long_block_size_config;
 			}
 
 
 			int mkfs_err = mkfs(fs_name, blocks_in_fat, block_size_config);
 			if (mkfs_err != 0) {
 				// TODO: add error prints here
+				fprintf(stderr, "Failed to mkfs with error code %d\n", mkfs_err);
 				goto cleanup_tokens;
 			}
 
+		} else {
+			fprintf(stderr, "Unrecognized command\n");
+			goto cleanup_tokens;
 		}
 		
 
