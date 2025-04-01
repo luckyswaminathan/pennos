@@ -103,6 +103,7 @@ void make_process_ready(pcb_t* pcb) {
     LOG_INFO("Making process %d ready", pcb->pid);
 
     pcb->state = PROCESS_READY;
+    pcb->prev = NULL;  // Clear old prev pointer
     pcb->next = scheduler.ready_head;
     if (scheduler.ready_head) {
         scheduler.ready_head->prev = pcb;
@@ -131,11 +132,13 @@ static void schedule_next_process(void) {
     if (scheduler.current) {
         // Save current process state
         pcb_t* old = scheduler.current;
+        // Only suspend if it's still running
         if (old->state == PROCESS_RUNNING) {
+            LOG_DEBUG("Moving current process %d back to ready queue", old->pid);
             old->state = PROCESS_READY;
             make_process_ready(old);
+            spthread_suspend(old->thread);
         }
-        spthread_suspend(old->thread);
     }
 
     // Get next process from ready queue
