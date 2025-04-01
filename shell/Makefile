@@ -50,7 +50,7 @@ YOUR_HEADERS = $(filter-out parser.h, $(HEADERS))
 all: $(PROG) tidy-check
 
 $(PROG) : $(OBJS) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) ../src/scheduler.o ../src/spthread.o
+	$(CC) $(CFLAGS) -o $@ $(OBJS) ../src/scheduler.o ../src/spthread.o ../src/logger.o
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<

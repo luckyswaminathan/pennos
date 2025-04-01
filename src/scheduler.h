@@ -33,6 +33,7 @@ typedef struct process_control_block {
     // Thread info
     spthread_t thread;
     process_state state;
+    bool non_preemptible;  // If true, this process won't be preempted
 
     // Scheduling info
     int priority;

@@ -18,6 +18,7 @@ jid_t job_id = 0;
 // Shell main loop function that will run in a thread
 static void* shell_loop(void* arg) {
     while (true) {
+        printf("Shell loop\n");
 
         display_prompt();  // Only display prompt once at the start of the loop
         
@@ -96,6 +97,12 @@ static void* shell_loop(void* arg) {
     return NULL;
 }
 
+// Thread function to run the scheduler
+void* scheduler_thread_fn(void* arg) {
+    run_scheduler();
+    return NULL;
+}
+
 int main(int argc, char **argv) {
     // First ignore signals
     ignore_signals();
@@ -111,6 +118,13 @@ int main(int argc, char **argv) {
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
 
+    // Create scheduler thread
+    spthread_t scheduler_thread;
+    if (spthread_create(&scheduler_thread, NULL, scheduler_thread_fn, NULL) != 0) {
+        perror("Failed to create scheduler thread");
+        exit(1);
+    }
+
     // Create shell thread
     spthread_t shell_thread;
     if (spthread_create(&shell_thread, NULL, shell_loop, NULL) != 0) {
@@ -120,10 +134,14 @@ int main(int argc, char **argv) {
 
     // Create shell PCB and make it ready
     pcb_t* shell_pcb = create_process(shell_thread, 0, false);
+    shell_pcb->non_preemptible = true;  // Don't preempt the shell
     make_process_ready(shell_pcb);
+    
+    // Start the shell thread
+    spthread_continue(shell_thread);
 
-    // Start the scheduler - this will run forever
-    run_scheduler();
+    // Wait for shell thread to finish
+    spthread_join(shell_thread, NULL);
 
-    return EXIT_SUCCESS;  // Never reached
+    return EXIT_SUCCESS;
 }

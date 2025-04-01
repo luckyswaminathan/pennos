@@ -132,12 +132,15 @@ static void schedule_next_process(void) {
     if (scheduler.current) {
         // Save current process state
         pcb_t* old = scheduler.current;
-        // Only suspend if it's still running
-        if (old->state == PROCESS_RUNNING) {
+        // Only suspend if it's still running and not non-preemptible
+        if (old->state == PROCESS_RUNNING && !old->non_preemptible) {
             LOG_DEBUG("Moving current process %d back to ready queue", old->pid);
             old->state = PROCESS_READY;
             make_process_ready(old);
             spthread_suspend(old->thread);
+        } else if (old->non_preemptible) {
+            LOG_DEBUG("Not preempting non-preemptible process %d", old->pid);
+            return;
         }
     }
 
