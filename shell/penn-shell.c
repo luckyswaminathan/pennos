@@ -11,30 +11,26 @@
 #include "./signals.h"
 #include "../src/scheduler.h"
 
-// TODO: encapsulate in jobs.h
 jid_t job_id = 0;
 
 
-// Shell main loop function that will run in a thread
 static void* shell_loop(void* arg) {
     while (true) {
         printf("Shell loop\n");
 
-        display_prompt();  // Only display prompt once at the start of the loop
-        
-        // Poll for background job completions
+        display_prompt();  
+
         while (true) {
             pid_t dead_pid = waitpid(-1, NULL, WNOHANG | WUNTRACED);
             if (dead_pid == -1 && errno != ECHILD) {
                 perror("Failed to wait for background jobs");
                 exit(EXIT_FAILURE);
             }
-            // no more jobs to reap or no children at all!
+
             if (dead_pid == 0 || (dead_pid == -1 && errno == ECHILD)) {
                 break;
             }
 
-            // dequeue job
             remove_job_by_pid(dead_pid);
         }
      
@@ -42,11 +38,11 @@ static void* shell_loop(void* arg) {
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-        if (ret == -1) {  // EOF
+        if (ret == -1) {  
             exit(0);
-        } else if (ret == -2) {  // Error
+        } else if (ret == -2) {  
             if (errno == EINTR) {
-                // Signal interrupted the read, try again
+    
                 continue;
             }
             perror("Error reading command");
