@@ -9,26 +9,16 @@
 #include "./jobs.h"
 #include "./exiting_alloc.h"
 #include "./signals.h"
+#include "../src/scheduler.h"
 
 // TODO: encapsulate in jobs.h
 jid_t job_id = 0;
 
 
-int main(int argc, char **argv)
-{
-    // First ignore signals
-    ignore_signals();
-    
-    // Initialize shell's process group
-    init_shell_pgid();
-    
-    // Finally set up the job control handlers
-    setup_job_control_handlers();
+// Shell main loop function that will run in a thread
+static void* shell_loop(void* arg) {
+    while (true) {
 
-    printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
-
-    while (true)
-    {
         display_prompt();  // Only display prompt once at the start of the loop
         
         // Poll for background job completions
@@ -103,5 +93,37 @@ int main(int argc, char **argv)
             // Don't display prompt here - it will be displayed at the start of the next loop
         }
     }
-    return EXIT_SUCCESS;
+    return NULL;
+}
+
+int main(int argc, char **argv) {
+    // First ignore signals
+    ignore_signals();
+    
+    // Initialize shell's process group
+    init_shell_pgid();
+
+    // Initialize scheduler
+    init_scheduler();
+    
+    // Finally set up the job control handlers
+    setup_job_control_handlers();
+
+    printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
+
+    // Create shell thread
+    spthread_t shell_thread;
+    if (spthread_create(&shell_thread, NULL, shell_loop, NULL) != 0) {
+        perror("Failed to create shell thread");
+        exit(1);
+    }
+
+    // Create shell PCB and make it ready
+    pcb_t* shell_pcb = create_process(shell_thread, 0, false);
+    make_process_ready(shell_pcb);
+
+    // Start the scheduler - this will run forever
+    run_scheduler();
+
+    return EXIT_SUCCESS;  // Never reached
 }

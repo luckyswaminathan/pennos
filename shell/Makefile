@@ -28,7 +28,7 @@ CC = clang-15
 #
 # NOTE aadalal: added -Wno-gnu-statement-expression to support macro based generic containers
 # (like linked_list.h, vector.h) that use statement expressions.
-CFLAGS += -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -Wno-language-extension-token -I. -I.. --std=gnu2x
+CFLAGS += -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -Wno-language-extension-token -I. -I.. -I../src --std=gnu2x
 CXXFLAGS += -g3 -gdwarf-4 -Wall -Werror -Wpedantic -I. -I.. --std=gnu++2b
 
 SRCS = $(wildcard *.c)
@@ -50,7 +50,7 @@ YOUR_HEADERS = $(filter-out parser.h, $(HEADERS))
 all: $(PROG) tidy-check
 
 $(PROG) : $(OBJS) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) ../src/scheduler.o ../src/spthread.o
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<

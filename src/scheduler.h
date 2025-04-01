@@ -23,58 +23,57 @@ typedef enum {
 // --- Process Control Block ---
 // Must have 'prev' and 'next' pointers for linked_list.h
 typedef struct process_control_block {
-    // --- Linked List pointers (MUST be named prev/next) ---
+    // Process identification
+    pid_t pid;              // Process ID
+    pid_t ppid;             // Parent process ID
+    int job_id;             // Job ID for shell
+    pid_t pgid;             // Process group ID
+    bool is_leader;         // Process group leader flag
+
+    // Thread info
+    spthread_t thread;
+    process_state state;
+
+    // Scheduling info
+    int priority;
+    unsigned long start_time;
+    unsigned long cpu_time;
+
+    // Signal handling
+    sigset_t pending_signals;
+
+    // Shell/Job control
+    char* command;          // Command string
+    bool is_background;     // Background process?
+    int exit_status;        // Exit status when terminated
+
+    // Linked list pointers (for ready/blocked queues)
     struct process_control_block* prev;
     struct process_control_block* next;
 
-    // --- Process Info ---
-    spthread_t thread;       // The underlying spthread
-    pid_t pid;              // Process ID (you'll need to assign these)
-    pid_t ppid;             // Parent Process ID
-    pid_t pgid;             // Process Group ID
-    process_state state;    // Current state
-    int priority;           // Priority (for future use)
-
-    // Add other fields from your comments as needed later
+    // Children list (siblings share same parent)
+    struct process_control_block* first_child;    // First child process
+    struct process_control_block* next_sibling;   // Next sibling in children list
 } pcb_t;
 
-// --- Queue Type based on linked_list.h ---
-// Defines a struct { pcb_t *head; pcb_t *tail; destroy_fn ele_dtor; }
-typedef linked_list(pcb_t) queue_t;
+// Scheduler state management
+typedef struct scheduler_state {
+    // Ready and blocked queues
+    pcb_t* ready_head;
+    pcb_t* blocked_head;
+    pcb_t* current;        // Currently running process
 
-// --- Process Tree (Placeholder) ---
-typedef struct process_tree {
-    pcb_t* root;           // Root process
+    // Process tracking
+    pcb_t* all_processes;  // List of all processes for cleanup
     size_t process_count;
-    // Define tree structure later if needed
-} process_tree_t;
 
-// --- Scheduler State ---
-typedef struct {
-    process_tree_t* process_tree; // Optional process tree
-    pcb_t* running;              // Currently running process PCB
-    queue_t ready_queue;         // Queue of ready processes (using linked_list)
-    queue_t blocked_queue;       // Queue of blocked processes (using linked_list)
-    // Add volatile sig_atomic_t preempt_flag; if needed for signal handler
-} scheduler_t;
+    // Job control
+    pcb_t* fg_process;     // Current foreground process
+} scheduler_state_t;
 
-// --- Function Prototypes ---
+void init_scheduler(void);
+void run_scheduler(void); 
+pcb_t* create_process(spthread_t thread, pid_t ppid, bool is_background);
+void make_process_ready(pcb_t* pcb);
 
-// Initialization
-void init_scheduler(scheduler_t* scheduler);
-void start_scheduling_timer(void); // Sets up SIGALRM timer
-
-// Core scheduling logic (called internally)
-void schedule(void); // Decides and dispatches the next process
-
-// Process management API (called by threads or setup code)
-void scheduler_add_process(pcb_t* pcb); // Add a new process
-void scheduler_exit(void);             // Current process exits
-void scheduler_yield(void);            // Current process yields CPU
-void scheduler_block(void);            // Current process blocks
-void scheduler_unblock(pcb_t* pcb);    // Unblock a specific process
-
-// Main loop to run the scheduler (if needed, maybe integrated elsewhere)
-void run_scheduler_loop(void);
-
-#endif // SCHEDULER_H
+#endif
