@@ -57,6 +57,12 @@ typedef struct process_control_block {
     struct process_control_block* next_sibling;   // Next sibling in children list
 } pcb_t;
 
+// Priority levels
+#define PRIORITY_HIGH 0    
+#define PRIORITY_MEDIUM 1 
+#define PRIORITY_LOW 2
+#define NUM_PRIORITIES 3
+
 // Scheduler state management
 typedef struct scheduler_state {
     // Ready and blocked queues
@@ -70,6 +76,10 @@ typedef struct scheduler_state {
 
     // Job control
     pcb_t* fg_process;     // Current foreground process
+
+    // Priority scheduling
+    unsigned long quantum_count;           // Total quanta elapsed
+    unsigned long priority_quanta[NUM_PRIORITIES];  // Quanta used by each priority level
 } scheduler_state_t;
 
 void init_scheduler(void);

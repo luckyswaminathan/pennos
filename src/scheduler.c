@@ -23,7 +23,7 @@ void alarm_handler(int signum) {
 void run_scheduler(void) {
     LOG_INFO("Starting scheduler...");
     struct itimerval it;
-    it.it_interval = (struct timeval){.tv_usec = TIME_SLICE_USEC};
+    it.it_interval = (struct timeval){.tv_sec = 0, .tv_usec = TIME_SLICE_USEC};
     it.it_value = it.it_interval;
     setitimer(ITIMER_REAL, &it, NULL);
     
@@ -50,6 +50,12 @@ void init_scheduler(void) {
     scheduler.all_processes = NULL;
     scheduler.process_count = 0;
     scheduler.fg_process = NULL;
+
+    // Initialize priority scheduling counters
+    scheduler.quantum_count = 0;
+    for (int i = 0; i < NUM_PRIORITIES; i++) {
+        scheduler.priority_quanta[i] = 0;
+    }
 
     // Set up timer for preemption
     struct sigaction sa = {
@@ -84,6 +90,9 @@ pcb_t* create_process(spthread_t thread, pid_t ppid, bool is_background) {
     pcb->thread = thread;
     pcb->state = PROCESS_READY;
     pcb->is_background = is_background;
+
+    // Set initial priority - shell gets high priority
+    pcb->priority = (pcb->pid == 0) ? PRIORITY_HIGH : PRIORITY_MEDIUM;
     
     // Initialize list pointers
     pcb->prev = pcb->next = NULL;
@@ -129,7 +138,17 @@ static void schedule_next_process(void) {
     LOG_DEBUG("Scheduling next process");
     LOG_DEBUG("Current process: %s", scheduler.current ? "yes" : "no");
     LOG_DEBUG("Ready queue head: %s", scheduler.ready_head ? "yes" : "no");
+
+    // Update quantum counts if we have a running process
     if (scheduler.current) {
+        scheduler.quantum_count++;
+        scheduler.priority_quanta[scheduler.current->priority]++;
+        LOG_DEBUG("Quantum counts - Total: %lu, High: %lu, Med: %lu, Low: %lu",
+                 scheduler.quantum_count,
+                 scheduler.priority_quanta[PRIORITY_HIGH],
+                 scheduler.priority_quanta[PRIORITY_MEDIUM],
+                 scheduler.priority_quanta[PRIORITY_LOW]);
+
         // Save current process state
         pcb_t* old = scheduler.current;
         // Only suspend if it's still running and not non-preemptible
@@ -144,21 +163,64 @@ static void schedule_next_process(void) {
         }
     }
 
-    // Get next process from ready queue
-    pcb_t* next = scheduler.ready_head;
-    if (next) {
-        // Remove from ready queue
-        scheduler.ready_head = next->next;
-        if (scheduler.ready_head) {
-            scheduler.ready_head->prev = NULL;
+    // Calculate priority ratios if we have enough quanta
+    int target_priority = -1;
+    if (scheduler.quantum_count > 0) {
+        float high_ratio = scheduler.priority_quanta[PRIORITY_HIGH] / (float)scheduler.quantum_count;
+        float med_ratio = scheduler.priority_quanta[PRIORITY_MEDIUM] / (float)scheduler.quantum_count;
+        float low_ratio = scheduler.priority_quanta[PRIORITY_LOW] / (float)scheduler.quantum_count;
+
+        LOG_DEBUG("Priority ratios - High: %.2f, Med: %.2f, Low: %.2f",
+                 high_ratio, med_ratio, low_ratio);
+
+        // Determine which priority level should run next based on target ratios
+        if (high_ratio < 0.6) {
+            target_priority = PRIORITY_HIGH;
+        } else if (med_ratio < 0.2) {
+            target_priority = PRIORITY_MEDIUM;
+        } else if (low_ratio < 0.2) {
+            target_priority = PRIORITY_LOW;
         }
-        next->next = next->prev = NULL;
+    }
+
+    // Find next process to run
+    pcb_t* next = scheduler.ready_head;
+    pcb_t* best = NULL;
+
+    // First try to find a process of the target priority
+    if (target_priority != -1) {
+        while (next) {
+            if (next->priority == target_priority) {
+                best = next;
+                break;
+            }
+            next = next->next;
+        }
+    }
+
+    // If no process of target priority found, take first ready process
+    if (!best && scheduler.ready_head) {
+        best = scheduler.ready_head;
+    }
+
+    // Switch to the chosen process
+    if (best) {
+        // Remove from ready queue
+        if (best->prev) {
+            best->prev->next = best->next;
+        } else {
+            scheduler.ready_head = best->next;
+        }
+        if (best->next) {
+            best->next->prev = best->prev;
+        }
+        best->next = best->prev = NULL;
 
         // Make it running
-        next->state = PROCESS_RUNNING;
-        scheduler.current = next;
-        LOG_INFO("Switching to process %d", next->pid);
-        spthread_continue(next->thread);
+        best->state = PROCESS_RUNNING;
+        scheduler.current = best;
+        LOG_INFO("Switching to process %d (priority %d)", best->pid, best->priority);
+        spthread_continue(best->thread);
     } else {
         scheduler.current = NULL;
     }

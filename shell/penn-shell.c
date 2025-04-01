@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <unistd.h> 
 #include "./parser.h"
+#include "../src/logger.h"
 #include "./command_execution.h"
 #include "./shell_porcelain.h"
 #include "./Job.h"
@@ -16,7 +17,7 @@ jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
     while (true) {
-        printf("Shell loop\n");
+        LOG_INFO("Shell loop entered");
 
         display_prompt();  
 
@@ -82,6 +83,7 @@ static void* shell_loop(void* arg) {
             handle_jobs();
 
             execute_job(job_ptr); 
+            LOG_INFO("execute_job returned");
             // Only destroy the job if it wasn't stopped
             if (job_ptr->status != J_STOPPED) {
                 remove_foreground_job(job_ptr);
@@ -106,7 +108,8 @@ int main(int argc, char **argv) {
     // Initialize shell's process group
     init_shell_pgid();
 
-    // Initialize scheduler
+    // Initialize logger and scheduler
+    init_logger("../src/scheduler.log");
     init_scheduler();
     
     // Finally set up the job control handlers
@@ -133,7 +136,10 @@ int main(int argc, char **argv) {
     shell_pcb->non_preemptible = true;  // Don't preempt the shell
     make_process_ready(shell_pcb);
     
-    // Start the shell thread
+    // Start the scheduler thread first
+    spthread_continue(scheduler_thread);
+    
+    // Then start the shell thread
     spthread_continue(shell_thread);
 
     // Wait for shell thread to finish
