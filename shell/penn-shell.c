@@ -131,19 +131,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // Create shell PCB and make it ready
-    pcb_t* shell_pcb = create_process(shell_thread, 0, false);
-    shell_pcb->non_preemptible = true;  // Don't preempt the shell
-    make_process_ready(shell_pcb);
-    
-    // Start the scheduler thread first
-    spthread_continue(scheduler_thread);
-    
-    // Then start the shell thread
-    spthread_continue(shell_thread);
-
-    // Wait for shell thread to finish
-    spthread_join(shell_thread, NULL);
 
     return EXIT_SUCCESS;
 }
