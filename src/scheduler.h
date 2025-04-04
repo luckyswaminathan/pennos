@@ -20,23 +20,33 @@ typedef enum {
     PROCESS_TERMINATED 
 } process_state;
 
+typedef enum {
+    PRIORITY_HIGH,
+    PRIORITY_MEDIUM,
+    PRIORITY_LOW
+} priority_t;
+
+// Forward declaration
+typedef struct process_control_block pcb_t;
+
 // --- Process Control Block ---
 // Must have 'prev' and 'next' pointers for linked_list.h
-typedef struct process_control_block {
+struct process_control_block {
     pid_t pid;        
     pid_t ppid;        
-    linked_list(pcb_t) children;     
     pid_t pgid;          
     bool is_leader; 
     int fd0;
     int fd1;
     process_state state;        
+    priority_t priority;   
 
     spthread_t thread;
     struct process_control_block* prev;
     struct process_control_block* next;
-
-} pcb_t;
+    linked_list(pcb_t) children;
+    char** argv;
+};
 
 typedef struct scheduler {
     linked_list(pcb_t) processes;
@@ -46,7 +56,10 @@ typedef struct scheduler {
     linked_list(pcb_t) blocked_processes;
     linked_list(pcb_t) terminated_processes;
     int process_count;
+    pcb_t* init;
 } scheduler_t;
 
+void init_scheduler();
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
 
 #endif

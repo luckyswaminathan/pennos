@@ -1,10 +1,10 @@
 CC = clang
 CFLAGS = -g3 -pthread -Wall -Werror -Wno-gnu -O0 --std=gnu2x
-CPPFLAGS = -I.
+CPPFLAGS = -I. -I../shell
 
 # Source files
-SRCS = scheduler.c spthread.c logger.c
-HDRS = scheduler.h spthread.h logger.h
+SRCS = scheduler.c spthread.c logger.c ../shell/exiting_alloc.c
+HDRS = scheduler.h spthread.h logger.h ../shell/exiting_alloc.h
 MAIN = sched-test.c
 OBJS = $(SRCS:.c=.o)
 
