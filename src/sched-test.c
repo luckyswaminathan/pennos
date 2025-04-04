@@ -5,11 +5,12 @@
 #include "scheduler.h"
 #include "spthread.h"
 #include "logger.h"
+#include "sys.h"
 
 void* child_func(void* arg) {
     LOG_INFO("Child process started");
     sleep(10); // Simulate some work
-    
+
     LOG_INFO("Child process finished");
     return NULL;
 }

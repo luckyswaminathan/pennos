@@ -54,13 +54,16 @@ typedef struct scheduler {
     linked_list(pcb_t) priority_low;
     linked_list(pcb_t) blocked_processes;
     linked_list(pcb_t) terminated_processes;
+    linked_list(pcb_t) stopped_processes;
     int process_count;
     pcb_t* init;
+    pcb_t* curr;
 } scheduler_t;
 
+extern scheduler_t* scheduler_state;
+
 void init_scheduler();
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
-pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang);
-int s_kill(pid_t pid);
+void run_scheduler();
+void handle_next_process();
 
 #endif

@@ -5,9 +5,13 @@
 #include "../shell/exiting_alloc.h"
 #include "../lib/linked_list.h"
 #include "spthread.h"
+#include <sys/time.h>
+#include "kernel.h"
 
 
 scheduler_t* scheduler_state = NULL;
+static const int centisecond = 10000;
+static int quantum = 0;
 
 static void alarm_handler(int signum) {}
 
@@ -41,6 +45,10 @@ void init_scheduler() {
     scheduler_state->terminated_processes.tail = NULL;
     scheduler_state->terminated_processes.ele_dtor = NULL;
 
+    scheduler_state->stopped_processes.head = NULL;
+    scheduler_state->stopped_processes.tail = NULL;
+    scheduler_state->stopped_processes.ele_dtor = NULL;
+    
     pcb_t* init = exiting_malloc(sizeof(pcb_t));
     init->ppid = 0;
     init->pid = scheduler_state->process_count++;
@@ -53,6 +61,8 @@ void init_scheduler() {
     spthread_t* thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
     init->thread = *thread;
     spthread_create(thread, NULL, NULL, NULL);
+
+    scheduler_state->curr = init;
     
     scheduler_state->init = init;
 
@@ -83,104 +93,29 @@ void init_scheduler() {
 
 
 void run_scheduler() {
+    sigset_t mask;
+    sigfillset(&mask);
+    sigdelset(&mask, SIGALRM);
+    
     while (1) {
-        schedule_next_process();
+        sigsuspend(&mask); 
+        handle_next_process();
     }
 }
 
-void schedule_next_process() {
+void handle_next_process() {
+    int current = quantum % 18;
+    if (current < 9) {
 
+    } else if (current < 15) {
+
+    } else {
+        
+    }
+    quantum++;
+
+
+    
     
 }
 
-pcb_t* k_proc_create(pcb_t *parent) {
-    pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
-
-    proc->ppid = parent->pid;
-    proc->pid = scheduler_state->process_count++;
-    LOG_INFO("Spawning process %d", proc->pid);
-    proc->priority = PRIORITY_MEDIUM;
-    proc->state = PROCESS_READY;
-    proc->children.head = NULL;
-    proc->children.tail = NULL;
-    proc->children.ele_dtor = NULL;
-    linked_list_push_tail(&scheduler_state->processes, proc);
-    linked_list_push_tail(&scheduler_state->priority_medium, proc);
-    return proc;
-}
-
-void k_proc_cleanup(pcb_t *proc) {
-    linked_list_remove(&scheduler_state->processes, proc);
-    linked_list_remove(&scheduler_state->priority_medium, proc);
-    free(proc);
-}
-
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
-    pcb_t* proc = k_proc_create(scheduler_state->init);
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
-    proc->argv = argv;
-    spthread_create(&proc->thread, NULL, func, NULL);
-    return proc->pid;
-}
-
-pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
-    pcb_t* proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        if (proc->pid == pid) {
-            LOG_INFO("Waiting for process %d", proc->pid);
-            
-            if (proc->state == PROCESS_TERMINATED) {
-                k_proc_cleanup(proc);
-                return pid;
-            }
-            if (nohang) {
-                return -1;
-            } else {
-                spthread_join(proc->thread, (void**)wstatus);
-                k_proc_cleanup(proc);
-                return pid;
-            }
-        }
-        proc = proc->next;
-    }
-    return -1;
-}
-
-int s_kill(pid_t pid) {
-    pcb_t* proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        if (proc->pid == pid) {
-            LOG_INFO("Killing process %d", proc->pid);
-            proc->state = PROCESS_TERMINATED;
-            return 0;
-        }
-        proc = proc->next;
-    }
-    return -1;
-}
-
-int s_nice(pid_t pid, int priority) {
-    pcb_t* proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        if (proc->pid == pid) {
-            LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
-            if (proc->priority != priority) {
-                linked_list_remove(&scheduler_state->priority_medium, proc);
-                if (priority == PRIORITY_HIGH) {
-                    linked_list_push_tail(&scheduler_state->priority_high, proc);
-                } else if (priority == PRIORITY_MEDIUM) {
-                    linked_list_push_tail(&scheduler_state->priority_medium, proc);
-                } else if (priority == PRIORITY_LOW) {
-                    linked_list_push_tail(&scheduler_state->priority_low, proc);
-                }
-            }
-            proc->priority = priority;
-            
-            return 0;
-        }
-        proc = proc->next;
-    }
-    return -1;
-}
-    
