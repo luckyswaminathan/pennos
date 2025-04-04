@@ -9,6 +9,8 @@
 
 scheduler_t* scheduler_state = NULL;
 
+static void alarm_handler(int signum) {}
+
 void init_scheduler() {
     scheduler_state = (scheduler_t*) exiting_malloc(sizeof(scheduler_t));
     init_logger("scheduler.log");
@@ -53,6 +55,42 @@ void init_scheduler() {
     spthread_create(thread, NULL, NULL, NULL);
     
     scheduler_state->init = init;
+
+
+    sigset_t suspend_set;
+    sigfillset(&suspend_set);
+    sigdelset(&suspend_set, SIGALRM);
+
+    struct sigaction act = (struct sigaction){
+        .sa_handler = alarm_handler,
+        .sa_mask = suspend_set,
+        .sa_flags = SA_RESTART,
+    };
+    sigaction(SIGALRM, &act, NULL);
+    sigset_t alarm_set;
+    sigemptyset(&alarm_set);
+    sigaddset(&alarm_set, SIGALRM);
+    pthread_sigmask(SIG_UNBLOCK, &alarm_set, NULL);
+
+    struct itimerval it;
+    it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
+    it.it_value = it.it_interval; 
+    setitimer(ITIMER_REAL, &it, NULL);
+    run_scheduler();
+
+}
+
+
+
+void run_scheduler() {
+    while (1) {
+        schedule_next_process();
+    }
+}
+
+void schedule_next_process() {
+
+    
 }
 
 pcb_t* k_proc_create(pcb_t *parent) {
