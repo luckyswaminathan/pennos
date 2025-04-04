@@ -54,6 +54,7 @@ void init_scheduler() {
     
     scheduler_state->init = init;
 }
+
 pcb_t* k_proc_create(pcb_t *parent) {
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
 
@@ -61,6 +62,7 @@ pcb_t* k_proc_create(pcb_t *parent) {
     proc->pid = scheduler_state->process_count++;
     LOG_INFO("Spawning process %d", proc->pid);
     proc->priority = PRIORITY_MEDIUM;
+    proc->state = PROCESS_READY;
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
@@ -88,6 +90,8 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
         if (proc->pid == pid) {
+            LOG_INFO("Waiting for process %d", proc->pid);
+            
             if (proc->state == PROCESS_TERMINATED) {
                 k_proc_cleanup(proc);
                 return pid;
@@ -104,3 +108,18 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     }
     return -1;
 }
+
+int s_kill(pid_t pid) {
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        if (proc->pid == pid) {
+            LOG_INFO("Killing process %d", proc->pid);
+            proc->state = PROCESS_TERMINATED;
+            return 0;
+        }
+        proc = proc->next;
+    }
+    return -1;
+}
+
+

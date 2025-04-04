@@ -12,8 +12,7 @@
 
 #include "./spthread.h" 
 
-typedef enum {
-    PROCESS_NEW,     
+typedef enum {   
     PROCESS_READY,
     PROCESS_RUNNING, 
     PROCESS_BLOCKED, 
@@ -62,6 +61,6 @@ typedef struct scheduler {
 void init_scheduler();
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang);
-
+int s_kill(pid_t pid);
 
 #endif
