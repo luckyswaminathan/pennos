@@ -23,38 +23,31 @@ typedef enum {
 // --- Process Control Block ---
 // Must have 'prev' and 'next' pointers for linked_list.h
 typedef struct process_control_block {
-    // Process identification
-    pid_t pid;              // Process ID
-    pid_t ppid;             // Parent process ID
-    int job_id;             // Job ID for shell
-    pid_t pgid;             // Process group ID
-    bool is_leader;         // Process group leader flag
+    pid_t pid;        
+    pid_t ppid;        
+    int job_id;         
+    pid_t pgid;          
+    bool is_leader;        
 
-    // Thread info
     spthread_t thread;
     process_state state;
-    bool non_preemptible;  // If true, this process won't be preempted
+    bool non_preemptible; 
 
-    // Scheduling info
     int priority;
     unsigned long start_time;
     unsigned long cpu_time;
 
-    // Signal handling
     sigset_t pending_signals;
 
-    // Shell/Job control
-    char* command;          // Command string
-    bool is_background;     // Background process?
-    int exit_status;        // Exit status when terminated
+    char* command;  
+    bool is_background;     
+    int exit_status;      
 
-    // Linked list pointers (for ready/blocked queues)
     struct process_control_block* prev;
     struct process_control_block* next;
 
-    // Children list (siblings share same parent)
-    struct process_control_block* first_child;    // First child process
-    struct process_control_block* next_sibling;   // Next sibling in children list
+    struct process_control_block* first_child;
+    struct process_control_block* next_sibling;
 } pcb_t;
 
 // Priority levels
@@ -82,9 +75,15 @@ typedef struct scheduler_state {
     unsigned long priority_quanta[NUM_PRIORITIES];  // Quanta used by each priority level
 } scheduler_state_t;
 
-void init_scheduler(void);
-void run_scheduler(void); 
-pcb_t* create_process(spthread_t thread, pid_t ppid, bool is_background);
-void make_process_ready(pcb_t* pcb);
 
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
+// pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang);
+// int s_kill(pid_t pid, int signal);
+// void s_exit(void);
+
+// int s_nice(pid_t pid, int priority);
+// void s_sleep(unsigned int ticks);
+// pcb_t* k_proc_create(pcb_t *parent);
+// void k_proc_cleanup(pcb_t *proc);
 #endif
+
