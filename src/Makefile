@@ -3,8 +3,8 @@ CFLAGS = -g3 -pthread -Wall -Werror -Wno-gnu -O0 --std=gnu2x
 CPPFLAGS = -I. -I../shell
 
 # Source files
-SRCS = scheduler.c spthread.c logger.c ../shell/exiting_alloc.c
-HDRS = scheduler.h spthread.h logger.h ../shell/exiting_alloc.h
+SRCS = scheduler.c spthread.c logger.c ../shell/exiting_alloc.c kernel.c sys.c
+HDRS = scheduler.h spthread.h logger.h ../shell/exiting_alloc.h kernel.h ../lib/linked_list.h sys.h
 MAIN = sched-test.c
 OBJS = $(SRCS:.c=.o)
 
