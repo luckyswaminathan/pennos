@@ -21,11 +21,13 @@ int main() {
     LOG_INFO("Starting scheduler test...");
     
     init_scheduler();
+    LOG_INFO("Scheduler initialized");
     
     // Spawn child process
     pid_t child_pid = s_spawn(child_func, NULL, -1, -1);
     LOG_INFO("Spawned child process with pid %d", child_pid);
-    
+    pcb_t* child = linked_list_pop_head(&scheduler_state->priority_medium);
+    LOG_INFO("Child process %d started", child->pid);
     // Wait for child to finish
     int status;
     pid_t waited_pid = s_waitpid(child_pid, &status, false);

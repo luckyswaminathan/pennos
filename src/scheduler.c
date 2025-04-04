@@ -12,11 +12,13 @@
 scheduler_t* scheduler_state = NULL;
 static const int centisecond = 10000;
 static int quantum = 0;
+static sigset_t suspend_set;
 
 static void alarm_handler(int signum) {}
 
 void init_scheduler() {
     scheduler_state = (scheduler_t*) exiting_malloc(sizeof(scheduler_t));
+    
     init_logger("scheduler.log");
     scheduler_state->process_count = 0;
     
@@ -45,9 +47,9 @@ void init_scheduler() {
     scheduler_state->terminated_processes.tail = NULL;
     scheduler_state->terminated_processes.ele_dtor = NULL;
 
-    scheduler_state->stopped_processes.head = NULL;
-    scheduler_state->stopped_processes.tail = NULL;
-    scheduler_state->stopped_processes.ele_dtor = NULL;
+    scheduler_state->sleeping_processes.head = NULL;
+    scheduler_state->sleeping_processes.tail = NULL;
+    scheduler_state->sleeping_processes.ele_dtor = NULL;
     
     pcb_t* init = exiting_malloc(sizeof(pcb_t));
     init->ppid = 0;
@@ -56,18 +58,25 @@ void init_scheduler() {
     init->fd0 = -1;
     init->fd1 = -1;
     init->is_leader = true;
+    init->sleep_time = 0;
     init->priority = PRIORITY_MEDIUM;
     init->state = PROCESS_RUNNING;
-    spthread_t* thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
-    init->thread = *thread;
-    spthread_create(thread, NULL, NULL, NULL);
-
-    scheduler_state->curr = init;
+    init->prev = NULL;
+    init->next = NULL;
     
+    // Initialize thread first, then assign it
+    spthread_t* thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
+    if (spthread_create(thread, NULL, NULL, NULL) != 0) {
+        LOG_ERROR("Failed to create init thread");
+        exit(1);
+    }
+    init->thread = *thread;
+    
+    // Add init process to the medium priority queue
+    linked_list_push_tail(&scheduler_state->priority_medium, init);
+    
+    scheduler_state->curr = init;
     scheduler_state->init = init;
-
-
-    sigset_t suspend_set;
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 
@@ -86,10 +95,22 @@ void init_scheduler() {
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval; 
     setitimer(ITIMER_REAL, &it, NULL);
-    run_scheduler();
+    // run_scheduler();
 
 }
 
+void decrease_sleep() {
+    pcb_t* proc = scheduler_state->sleeping_processes.head;
+    while (proc != NULL) {
+        proc->sleep_time -= centisecond;
+        if (proc->sleep_time <= 0) {
+            proc->state = PROCESS_READY;
+            linked_list_remove(&scheduler_state->sleeping_processes, proc);
+            linked_list_push_tail(&scheduler_state->processes, proc);
+        }
+        proc = proc->next;
+    }
+}
 
 
 void run_scheduler() {
@@ -99,23 +120,61 @@ void run_scheduler() {
     
     while (1) {
         sigsuspend(&mask); 
-        handle_next_process();
+        run_next_process();
+        decrease_sleep();
+        
     }
 }
 
-void handle_next_process() {
+void run_next_process() {
     int current = quantum % 18;
+    // Try high priority first if in high priority time slot
     if (current < 9) {
-
-    } else if (current < 15) {
-
-    } else {
-        
+        if (scheduler_state->priority_high.head != NULL) {
+            scheduler_state->curr = scheduler_state->priority_high.head;
+            spthread_continue(scheduler_state->priority_high.head->thread);
+            sigsuspend(&suspend_set);
+            spthread_suspend(scheduler_state->priority_high.head->thread);
+            pcb_t* proc = linked_list_pop_head(&scheduler_state->priority_high);
+            linked_list_push_tail(&scheduler_state->priority_high, proc);
+            quantum++;
+            return;
+        }
+    }
+    if (current < 15 || (current < 9 && scheduler_state->priority_high.head == NULL)) {
+        if (scheduler_state->priority_medium.head != NULL) {
+            scheduler_state->curr = scheduler_state->priority_medium.head;
+            spthread_continue(scheduler_state->priority_medium.head->thread);
+            sigsuspend(&suspend_set);
+            spthread_suspend(scheduler_state->priority_medium.head->thread);
+            pcb_t* proc = linked_list_pop_head(&scheduler_state->priority_medium);
+            linked_list_push_tail(&scheduler_state->priority_medium, proc);
+            quantum++;
+            return;
+        }
+    }
+    if (current >= 15 || 
+        ((current < 15 && scheduler_state->priority_medium.head == NULL) && 
+         (current < 9 && scheduler_state->priority_high.head == NULL))) {
+        if (scheduler_state->priority_low.head != NULL) {
+            scheduler_state->curr = scheduler_state->priority_low.head;
+            spthread_continue(scheduler_state->priority_low.head->thread);
+            sigsuspend(&suspend_set);
+            spthread_suspend(scheduler_state->priority_low.head->thread);
+            pcb_t* proc = linked_list_pop_head(&scheduler_state->priority_low);
+            linked_list_push_tail(&scheduler_state->priority_low, proc);
+            quantum++;
+            return;
+        }
+        if (scheduler_state->priority_high.head != NULL) {
+            scheduler_state->curr = scheduler_state->priority_high.head;
+            spthread_continue(scheduler_state->priority_high.head->thread);
+            sigsuspend(&suspend_set);
+            spthread_suspend(scheduler_state->priority_high.head->thread);
+            pcb_t* proc = linked_list_pop_head(&scheduler_state->priority_high);
+            linked_list_push_tail(&scheduler_state->priority_high, proc);
+        }
     }
     quantum++;
-
-
-    
-    
 }
 
