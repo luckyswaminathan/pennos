@@ -1,21 +1,66 @@
+#ifndef SCHEDULER_H
+#define SCHEDULER_H
 
+#include <signal.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/time.h>
+#include <sys/types.h> // For pid_t
 
-/* process control block design
-So I need to create a process control block for each process.
-Registers - type register_t
-Program counter - type uintptr_t
-Program status - type uintptr_t
-Stack pointer - type uintptr_t
-Process state - type enum process_state
-Priority - type int
-Scheduling parameters - type struct sched_param
-Process ID - type pid_t
-Parent process - type pid_t
-Process group - type pid_t
-Signals - type sigset_t
-Time when process started - type time_t
-CPU time used - type struct timeval
-Children’s CPU time - type struct timeval
-Time of next alarm - type struct timeval
+#include "../lib/linked_list.h" 
 
-*/
+#include "./spthread.h" 
+
+typedef enum {   
+    PROCESS_READY,
+    PROCESS_RUNNING, 
+    PROCESS_BLOCKED, 
+    PROCESS_TERMINATED 
+} process_state;
+
+typedef enum {
+    PRIORITY_HIGH,
+    PRIORITY_MEDIUM,
+    PRIORITY_LOW
+} priority_t;
+
+// Forward declaration
+typedef struct process_control_block pcb_t;
+
+// --- Process Control Block ---
+// Must have 'prev' and 'next' pointers for linked_list.h
+struct process_control_block {
+    pid_t pid;        
+    pid_t ppid;        
+    pid_t pgid;          
+    bool is_leader; 
+    int fd0;
+    int fd1;
+    process_state state;        
+    priority_t priority;   
+
+    spthread_t thread;
+    struct process_control_block* prev;
+    struct process_control_block* next;
+    linked_list(pcb_t) children;
+    char** argv;
+};
+
+typedef struct scheduler {
+    linked_list(pcb_t) processes;
+    linked_list(pcb_t) priority_high;
+    linked_list(pcb_t) priority_medium;
+    linked_list(pcb_t) priority_low;
+    linked_list(pcb_t) blocked_processes;
+    linked_list(pcb_t) terminated_processes;
+    int process_count;
+    pcb_t* init;
+} scheduler_t;
+
+void init_scheduler();
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
+pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang);
+int s_kill(pid_t pid);
+
+#endif

@@ -1,0 +1,4 @@
+[2025-04-04 14:51:11] [INFO] Starting scheduler test...
+[2025-04-04 14:51:11] [INFO] Spawning process 1
+[2025-04-04 14:51:11] [INFO] Spawned child process with pid 1
+[2025-04-04 14:51:11] [INFO] Waiting for process 1
