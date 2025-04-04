@@ -7,11 +7,11 @@
 #include "spthread.h"
 
 
-
 scheduler_t* scheduler_state = NULL;
 
 void init_scheduler() {
     scheduler_state = (scheduler_t*) exiting_malloc(sizeof(scheduler_t));
+    init_logger("scheduler.log");
     scheduler_state->process_count = 0;
     
     // Initialize all linked lists
@@ -59,6 +59,7 @@ pcb_t* k_proc_create(pcb_t *parent) {
 
     proc->ppid = parent->pid;
     proc->pid = scheduler_state->process_count++;
+    LOG_INFO("Spawning process %d", proc->pid);
     proc->priority = PRIORITY_MEDIUM;
     proc->children.head = NULL;
     proc->children.tail = NULL;
@@ -81,4 +82,25 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
     proc->argv = argv;
     spthread_create(&proc->thread, NULL, func, NULL);
     return proc->pid;
+}
+
+pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        if (proc->pid == pid) {
+            if (proc->state == PROCESS_TERMINATED) {
+                k_proc_cleanup(proc);
+                return pid;
+            }
+            if (nohang) {
+                return -1;
+            } else {
+                spthread_join(proc->thread, (void**)wstatus);
+                k_proc_cleanup(proc);
+                return pid;
+            }
+        }
+        proc = proc->next;
+    }
+    return -1;
 }

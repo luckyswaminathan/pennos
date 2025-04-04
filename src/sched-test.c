@@ -12,6 +12,7 @@ int main() {
     LOG_INFO("Starting scheduler test...");
     
     init_scheduler();
+    s_spawn(NULL, NULL, -1, -1);
     
     return 0;
 }
