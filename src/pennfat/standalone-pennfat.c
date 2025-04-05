@@ -1,4 +1,5 @@
 #include "src/pennfat/mkfs.h"
+#include "src/pennfat/fat.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -70,6 +71,9 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 }
 
 int main(void) {
+	fat16_fs fs;
+	bool mounted = false;
+
 	while (true) {
 		fprintf(stderr, "PENNFAT> ");
 		char* line = NULL;
@@ -86,6 +90,7 @@ int main(void) {
 				// EOF sent by user -- exit the shell
 				// Note an EOF sent anywhere is treated as a signal to kill the shell (even if there is a full command before the EOF is sent
 				fprintf(stderr, "\n");
+				// NOTE: we can exit safely here because fat16_fs and the mmap in it etc will be cleaned up on exit!
 				exit(EXIT_SUCCESS);
 			}
 		}
@@ -128,6 +133,7 @@ int main(void) {
 				bool ok;
 				long int long_block_size_config = safe_strtol(tokens[3], "mkfs BLOCK_SIZE_CONFIG arg", &ok);
 				if (!ok) {
+					// safe_strol already handles the arg
 					goto cleanup_tokens;
 				}
 				if (long_block_size_config < 0 || long_block_size_config > 4) {
@@ -144,6 +150,34 @@ int main(void) {
 				fprintf(stderr, "Failed to mkfs with error code %d\n", mkfs_err);
 				goto cleanup_tokens;
 			}
+		} else if (strcmp(tokens[0], "mount") == 0) {
+			if (n_tokens != 2) {
+				fprintf(stderr, "mount got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
+
+			int mount_err = mount(tokens[1], &fs);
+			if (mount_err != 0) {
+				fprintf(stderr, "Failed to mount with error code %d\n", mount_err);
+				goto cleanup_tokens;
+			}
+			mounted = true;
+		} else if (strcmp(tokens[0], "unmount") == 0) {
+			if (n_tokens != 1) {
+				fprintf(stderr, "unmount got wrong number of arguments (expected no arguments)\n");
+				goto cleanup_tokens;
+			}
+			if (!mounted) {
+				fprintf(stderr, "unmount: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+
+			int unmount_err = unmount(&fs);
+			if (unmount_err != 0) {
+				fprintf(stderr, "Failed to unmount with error code %d\n", unmount_err);
+				goto cleanup_tokens;
+			}
+			mounted = false;
 
 		} else {
 			fprintf(stderr, "Unrecognized command\n");

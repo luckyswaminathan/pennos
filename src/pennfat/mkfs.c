@@ -1,25 +1,11 @@
 #include "src/pennfat/mkfs.h"
+#include "src/pennfat/fat_utils.h"
 
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-/**
- * Maps 0,1,2,3,4 to 256,512,1024,2048,4096 bytes
- *
- * 0 return indicates an error
- */
-uint16_t block_size_of_config(uint8_t block_size_config) {
-	switch (block_size_config) {
-		case 0: return 256;
-		case 1: return 512;
-		case 2: return 1024;
-		case 3: return 2048;
-		case 4: return 4096;
-		default: return 0;
-	}
-}
 
 int mkfs(char* fs_name, uint8_t blocks_in_fat, uint8_t block_size_config) {
 	// the size of the filesystem is equal to the size of the fat plus the size of the data region
@@ -66,7 +52,7 @@ int mkfs(char* fs_name, uint8_t blocks_in_fat, uint8_t block_size_config) {
 		}
 	}
 
-	// Go back to the start and write the first FAT entrey
+	// Go back to the start and write the first FAT entry
 	if (lseek(fs_fd, 0, SEEK_SET) < 0) {
 		return EMKFS_LSEEK_FAILED;	
 	}
