@@ -1,0 +1,14 @@
+# Object files
+*.o
+
+# Executables
+bin/*
+
+# Log files
+log/*
+src/scheduler.log
+
+# Build directories
+build/ 
+
+*.sh

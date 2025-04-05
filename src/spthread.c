@@ -75,6 +75,9 @@ typedef struct spthread_meta_st {
 #define SPTHREAD_RUNNING_STATE 0
 #define SPTHREAD_SUSPENDED_STATE 1
 #define SPTHREAD_TERMINATED_STATE 2
+#define P_WIFEXITED(status) ((status) & 0xFF)
+#define P_WIFSIGNALED(status) (((status) & 0x7F) != 0)
+#define P_WIFSTOPPED(status) (((status) & 0xFF) == 0x7F)
 
 // Defined integer values
 // that are sent with SIGPTHD
