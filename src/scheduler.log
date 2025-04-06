@@ -1,55 +1,19 @@
-[2025-04-06 01:54:15] [INFO] Starting scheduler test...
-[2025-04-06 01:54:15] [INFO] Scheduler initialized
-[2025-04-06 01:54:15] [INFO] Spawning process 1
-[2025-04-06 01:54:15] [INFO] Spawned child process with pid 1
-[2025-04-06 01:54:15] [INFO] === Current Queue State ===
-[2025-04-06 01:54:15] [INFO] High Priority Queue:
-[2025-04-06 01:54:15] [INFO] Medium Priority Queue:
-[2025-04-06 01:54:15] [INFO]   PID 1 (State: 0)
-[2025-04-06 01:54:15] [INFO] Low Priority Queue:
-[2025-04-06 01:54:15] [INFO] Sleeping Queue:
-[2025-04-06 01:54:15] [INFO] Terminated Queue:
-[2025-04-06 01:54:15] [INFO] ========================
-[2025-04-06 01:54:15] [INFO] Quantum 0
-[2025-04-06 01:54:15] [INFO] No init process, running next process
-[2025-04-06 01:54:15] [INFO] Running medium priority process
-[2025-04-06 01:54:15] [INFO] Child process started
-[2025-04-06 01:54:16] [INFO] Process 1 finished
-[2025-04-06 01:54:16] [INFO] === Current Queue State ===
-[2025-04-06 01:54:16] [INFO] High Priority Queue:
-[2025-04-06 01:54:16] [INFO] Medium Priority Queue:
-[2025-04-06 01:54:16] [INFO]   PID 0 (State: 1)
-[2025-04-06 01:54:16] [INFO] Low Priority Queue:
-[2025-04-06 01:54:16] [INFO] Sleeping Queue:
-[2025-04-06 01:54:16] [INFO] Terminated Queue:
-[2025-04-06 01:54:16] [INFO]   PID 1
-[2025-04-06 01:54:16] [INFO] ========================
-[2025-04-06 01:54:16] [INFO] Quantum 1
-[2025-04-06 01:54:16] [INFO] No init process, running next process
-[2025-04-06 01:54:16] [INFO] Running medium priority process
-[2025-04-06 01:54:54] [INFO] Starting scheduler test...
-[2025-04-06 01:54:54] [INFO] Scheduler initialized
-[2025-04-06 01:54:54] [INFO] Spawning process 1
-[2025-04-06 01:54:54] [INFO] Spawned child process with pid 1
-[2025-04-06 01:54:54] [INFO] === Current Queue State ===
-[2025-04-06 01:54:54] [INFO] High Priority Queue:
-[2025-04-06 01:54:54] [INFO] Medium Priority Queue:
-[2025-04-06 01:54:54] [INFO]   PID 1 (State: 0)
-[2025-04-06 01:54:54] [INFO] Low Priority Queue:
-[2025-04-06 01:54:54] [INFO] Sleeping Queue:
-[2025-04-06 01:54:54] [INFO] Terminated Queue:
-[2025-04-06 01:54:54] [INFO] ========================
-[2025-04-06 01:54:54] [INFO] Quantum 0
-[2025-04-06 01:54:54] [INFO] No init process, running next process
-[2025-04-06 01:54:54] [INFO] Running medium priority process
-[2025-04-06 01:54:54] [INFO] Child process started
-[2025-04-06 01:54:54] [INFO] Process 1 finished
-[2025-04-06 01:54:54] [INFO] === Current Queue State ===
-[2025-04-06 01:54:54] [INFO] High Priority Queue:
-[2025-04-06 01:54:54] [INFO] Medium Priority Queue:
-[2025-04-06 01:54:54] [INFO] Low Priority Queue:
-[2025-04-06 01:54:54] [INFO] Sleeping Queue:
-[2025-04-06 01:54:54] [INFO] Terminated Queue:
-[2025-04-06 01:54:54] [INFO]   PID 1
-[2025-04-06 01:54:54] [INFO] ========================
-[2025-04-06 01:54:54] [INFO] Quantum 1
+[2025-04-06 12:24:21] [INFO] Starting scheduler test...
+[2025-04-06 12:24:21] [INFO] Scheduler initialized
+[2025-04-06 12:24:21] [INFO] Spawning process 1
+[2025-04-06 12:24:21] [INFO] Spawned child process with pid 1
+[2025-04-06 12:24:21] [INFO] === Current Queue State ===
+[2025-04-06 12:24:21] [INFO] High Priority Queue:
+[2025-04-06 12:24:21] [INFO] Medium Priority Queue:
+[2025-04-06 12:24:21] [INFO]   PID 1 (State: 0)
+[2025-04-06 12:24:21] [INFO] Low Priority Queue:
+[2025-04-06 12:24:21] [INFO] Sleeping Queue:
+[2025-04-06 12:24:21] [INFO] Terminated Queue:
+[2025-04-06 12:24:21] [INFO] ========================
+[2025-04-06 12:24:21] [INFO] Quantum 0
+[2025-04-06 12:24:21] [INFO] No init process, running next process
+[2025-04-06 12:24:21] [INFO] Running medium priority process
+[2025-04-06 12:24:21] [INFO] Child process started
+[2025-04-06 12:24:21] [INFO] Process 1 finished
+[2025-04-06 12:24:21] [INFO] No more runnable processes, scheduler exiting
+[2025-04-06 12:24:21] [INFO] All processes finished

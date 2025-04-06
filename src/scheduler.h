@@ -40,6 +40,7 @@ struct process_control_block {
     process_state state;        
     priority_t priority;   
     double sleep_time;
+    int quantum_count;  // Track how many quantums this process has run
 
     spthread_t* thread;
     struct process_control_block* prev;

@@ -19,6 +19,7 @@ static void alarm_handler(int signum) {}
 // Init thread main function - continuously reaps zombie children
 static void* init_thread_func(void* arg) {
     while (1) {
+        LOG_INFO("Init thread running");
         if (scheduler_state->terminated_processes.head != NULL) {
             pcb_t* terminated = linked_list_pop_head(&scheduler_state->terminated_processes);
             LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
@@ -168,10 +169,6 @@ static void log_queue_state() {
 
 // Check if there are any runnable processes
 static bool has_runnable_processes() {
-    // Always consider init process as runnable
-    if (scheduler_state->init != NULL) {
-        return true;
-    }
     return scheduler_state->priority_high.head != NULL ||
            scheduler_state->priority_medium.head != NULL ||
            scheduler_state->priority_low.head != NULL ||
@@ -193,6 +190,21 @@ void run_scheduler() {
     LOG_INFO("No more runnable processes, scheduler exiting");
 }
 
+void block_process(pcb_t* proc) {
+
+    if (proc->priority == PRIORITY_HIGH) {
+        linked_list_remove(&scheduler_state->priority_high, proc);
+    } else if (proc->priority == PRIORITY_MEDIUM) {
+        linked_list_remove(&scheduler_state->priority_medium, proc);
+    } else {
+        linked_list_remove(&scheduler_state->priority_low, proc);
+    }
+    
+    proc->state = PROCESS_BLOCKED;
+    linked_list_push_tail(&scheduler_state->blocked_processes, proc);
+    LOG_INFO("Process %d blocked after %d quantums", proc->pid, proc->quantum_count);
+}
+
 void add_process_to_queue(pcb_t* proc) {
     if (proc->priority == PRIORITY_HIGH) {
         linked_list_push_tail(&scheduler_state->priority_high, proc);
@@ -206,11 +218,10 @@ void add_process_to_queue(pcb_t* proc) {
 void run_next_process() {
     int current = quantum % 18;
     LOG_INFO("Quantum %d", quantum);
+
     
     // Always run init process if it exists and there are no other processes
-    if (scheduler_state->priority_high.head == NULL &&
-        scheduler_state->priority_medium.head == NULL &&
-        scheduler_state->priority_low.head == NULL) {
+    if (!has_runnable_processes()) {
         if (scheduler_state->init != NULL) {
             scheduler_state->curr = scheduler_state->init;
             spthread_continue(*scheduler_state->init->thread);
@@ -219,6 +230,8 @@ void run_next_process() {
             quantum++;
             return;
         }
+        quantum++;
+        return;
     }
     LOG_INFO("No init process, running next process");
     // Try high priority first if in high priority time slot
@@ -251,10 +264,7 @@ void run_next_process() {
             proc->state = PROCESS_TERMINATED;
             linked_list_push_tail(&scheduler_state->terminated_processes, proc);
             quantum++;
-            if (!has_runnable_processes()) {
-                LOG_INFO("No more runnable processes, scheduler exiting");
-                return;
-            }
+
             return;
         }
     }
