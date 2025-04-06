@@ -13,7 +13,11 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
     proc->fd0 = fd0;
     proc->fd1 = fd1;
     proc->argv = argv;
-    spthread_create(&proc->thread, NULL, func, NULL);
+    proc->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
+    if (spthread_create(proc->thread, NULL, func, argv) != 0) {
+        LOG_ERROR("Failed to create thread for process %d", proc->pid);
+        return -1;
+    }
     return proc->pid;
 }
 
@@ -30,11 +34,13 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
             if (nohang) {
                 return -1;
             } else {
-                spthread_join(proc->thread, (void**)wstatus);
+                spthread_join(*proc->thread, (void**)wstatus);
                 k_proc_cleanup(proc);
                 return pid;
             }
+
         }
+        LOG_INFO("Process %d is not the one we're waiting for", proc->pid);
         proc = proc->next;
     }
     return -1;
