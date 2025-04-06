@@ -56,11 +56,14 @@ int mkfs(char* fs_name, uint8_t blocks_in_fat, uint8_t block_size_config) {
 	if (lseek(fs_fd, 0, SEEK_SET) < 0) {
 		return EMKFS_LSEEK_FAILED;	
 	}
-	uint16_t zeroeth_fat_entry = (((uint16_t)blocks_in_fat) << 8) | block_size_config;
-	ssize_t written_bytes = write(fs_fd, &zeroeth_fat_entry, 2);
+
+	uint16_t entries[2];
+	entries[0] = (((uint16_t)blocks_in_fat) << 8) | block_size_config;
+	entries[1] = 0xFFFF; // TODO: replace 0xFFFF magic number
+	ssize_t written_bytes = write(fs_fd, entries, 2*sizeof(uint16_t));
 	if (written_bytes < 0) {
 		return EMKFS_WRITE_FAILED;
-	} else if (written_bytes < 2) {
+	} else if (written_bytes < 2*sizeof(uint16_t)) {
 		return EMKFS_WRITE_LESS;
 	}
 

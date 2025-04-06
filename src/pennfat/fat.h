@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <time.h>
 
 #define EMOUNT_BAD_FAT_FIRST_ENTRY 1
 #define EMOUNT_OPEN_FAILED 5
@@ -10,12 +11,31 @@
 
 #define EUNMOUNT_MUNMAP_FAILED 1
 
+#define EF_OPEN_ 1
+
+#define F_WRITE 0
+#define F_READ 1
+#define F_APPEND 2
+
 typedef struct fat16_fs_st {
+    char* fs_name;   // the filesystem name. Must be the file in the underlying fs
     uint16_t* fat;
     size_t fat_size; // the total sizei of the fat
     uint16_t block_size;
     uint16_t blocks_in_fat; 
 } fat16_fs;
+
+// TODO: should this be public
+typedef struct directory_entry_st {
+    char name[32];       // 32 bytes
+    uint32_t size;       // 4
+    uint16_t firstBlock; // 2
+    uint8_t type;        // 1
+    uint8_t perm;        // 1
+    time_t mtime;        // 8
+    char padding[16];    // 16
+} directory_entry; // 64 bytes in total!
+_Static_assert(sizeof(directory_entry) == 64, "directory_entry must be 64 byes");
 
 /**
  * Mount the pennfat (fat16) filesystem from the file named fs_name into
@@ -34,3 +54,8 @@ int mount(char *fs_name, fat16_fs* ptr_to_fs);
  * defined in this header).
  */
 int unmount(fat16_fs* ptr_to_fs);
+
+/**
+ * TODO
+ */
+int f_open(fat16_fs* ptr_to_fs, const char* fname, int mode);
