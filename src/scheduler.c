@@ -232,7 +232,7 @@ void add_process_to_queue(pcb_t* proc) {
 
 void run_next_process() {
     int current = quantum % 18;
-    LOG_INFO("Quantum %d", quantum);
+    LOG_INFO("CURRENT: %d", current);
 
     // Try high priority first if in high priority time slot
     if (current < 9) {
@@ -246,13 +246,12 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             if (ret != 0 && proc->pid != 0) {
                 linked_list_remove(&scheduler_state->priority_high, proc);
-                linked_list_remove(&scheduler_state->processes, proc);
                 // Reset prev/next pointers before adding to terminated queue
                 proc->prev = NULL;
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
@@ -260,7 +259,7 @@ void run_next_process() {
             // After suspending, move to back of queue
             linked_list_remove(&scheduler_state->priority_high, proc);
             linked_list_push_tail(&scheduler_state->priority_high, proc);
-            current++;
+            quantum++;
             return;
         }
     }
@@ -280,7 +279,7 @@ void run_next_process() {
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
@@ -288,8 +287,7 @@ void run_next_process() {
             // After suspending, move to back of queue
             linked_list_remove(&scheduler_state->priority_medium, proc);
             linked_list_push_tail(&scheduler_state->priority_medium, proc);
-            current++;
-
+            quantum++;
             return;
         }
     }
@@ -310,23 +308,24 @@ void run_next_process() {
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
             // Move to back of queue for next round if suspended
             linked_list_remove(&scheduler_state->priority_low, proc);
             linked_list_push_tail(&scheduler_state->priority_low, proc);
-            current++;
+            quantum++;
             return;
         }
         // Check if we have any runnable processes left
         if (!has_runnable_processes()) {
             LOG_INFO("No more runnable processes, scheduler exiting");
+            quantum++;
             return;
         }
     }
-    current++;
+    quantum++;
 }
 
 void log_all_processes() {

@@ -67,15 +67,31 @@ int s_nice(pid_t pid, int priority) {
             LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
             if (proc->priority != priority) {
                 if (priority == PRIORITY_HIGH) {
+                    if (proc->priority == PRIORITY_MEDIUM) {
+                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                    } else if (proc->priority == PRIORITY_LOW) {
+                        linked_list_remove(&scheduler_state->priority_low, proc);
+                    }
+                    proc->priority = priority;
                     linked_list_push_tail(&scheduler_state->priority_high, proc);
                 } else if (priority == PRIORITY_MEDIUM) {
+                    if (proc->priority == PRIORITY_HIGH) {
+                        linked_list_remove(&scheduler_state->priority_high, proc);
+                    } else if (proc->priority == PRIORITY_LOW) {
+                        linked_list_remove(&scheduler_state->priority_low, proc);
+                    }
+                    proc->priority = priority;
                     linked_list_push_tail(&scheduler_state->priority_medium, proc);
                 } else if (priority == PRIORITY_LOW) {
+                    if (proc->priority == PRIORITY_HIGH) {
+                        linked_list_remove(&scheduler_state->priority_high, proc);
+                    } else if (proc->priority == PRIORITY_MEDIUM) {
+                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                    }
+                    proc->priority = priority;
                     linked_list_push_tail(&scheduler_state->priority_low, proc);
                 }
             }
-            proc->priority = priority;
-            
             return 0;
         }
         proc = proc->next;
