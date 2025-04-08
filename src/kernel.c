@@ -25,6 +25,6 @@ pcb_t* k_proc_create(pcb_t *parent) {
 
 void k_proc_cleanup(pcb_t *proc) {
     linked_list_remove(&scheduler_state->processes, proc);
-    linked_list_remove(&scheduler_state->priority_medium, proc);
+    LOG_INFO("freeing proc");
     free(proc);
 }
