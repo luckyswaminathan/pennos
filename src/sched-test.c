@@ -11,7 +11,7 @@ void* child_func(void* arg) {
     LOG_INFO("Child process started");
     
     // Run forever, incrementing a counter
-    for (int i = 0;; i++) {
+    for (int i = 0; i < 2; i++) {
         LOG_INFO("Child process iteration %d", i);
         usleep(1000000); // Sleep for 1 second between iterations
     }
@@ -24,7 +24,7 @@ void* child_func2(void* arg) {
     LOG_INFO("****Child process 2 started");
     
     // Run forever, incrementing a counter
-    for (int i = 0;; i++) {
+    for (int i = 0;i<3; i++) {
         LOG_INFO("*****Child process iteration %d", i);
         usleep(1000000); // Sleep for 1 second between iterations
     }

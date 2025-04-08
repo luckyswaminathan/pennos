@@ -18,13 +18,10 @@ static void alarm_handler(int signum) {}
 
 // Init thread main function - continuously reaps zombie children
 static void* init_thread_func(void* arg) {
-    while (1) {
-        LOG_INFO("Init thread running");
-        if (scheduler_state->terminated_processes.head != NULL) {
-            pcb_t* terminated = linked_list_pop_head(&scheduler_state->terminated_processes);
-            LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
-            free(terminated);
-        }
+    while (scheduler_state->terminated_processes.head != NULL) {
+        pcb_t* terminated = linked_list_pop_head(&scheduler_state->terminated_processes);
+        LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
+        k_proc_cleanup(terminated);
     }
     return NULL;
 }
@@ -88,6 +85,7 @@ void init_scheduler() {
 
     scheduler_state->curr = init;
     scheduler_state->init = init; 
+    linked_list_push_tail(&scheduler_state->priority_medium, init);
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 
@@ -219,21 +217,6 @@ void run_next_process() {
     int current = quantum % 18;
     LOG_INFO("Quantum %d", quantum);
 
-    
-    // Always run init process if it exists and there are no other processes
-    if (!has_runnable_processes()) {
-        if (scheduler_state->init != NULL) {
-            scheduler_state->curr = scheduler_state->init;
-            spthread_continue(*scheduler_state->init->thread);
-            sigsuspend(&suspend_set);
-            spthread_suspend(*scheduler_state->init->thread);
-            current++;
-            return;
-        }
-        current++;
-        return;
-    }
-    LOG_INFO("No init process, running next process");
     // Try high priority first if in high priority time slot
     if (current < 9) {
         if (scheduler_state->priority_high.head != NULL) {
@@ -243,7 +226,14 @@ void run_next_process() {
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
-            spthread_suspend(*proc->thread);
+            int ret = spthread_suspend(*proc->thread);
+            if (ret != 0 && proc->pid != 0) {
+                linked_list_remove(&scheduler_state->priority_high, proc);
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+                LOG_INFO("Process %d terminated", proc->pid);
+                current++;
+                return;
+            }
             
             // Move to back of queue for next round if suspended
             // After suspending, move to back of queue
@@ -261,7 +251,14 @@ void run_next_process() {
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
-            spthread_suspend(*proc->thread);
+            int ret = spthread_suspend(*proc->thread);
+            if (ret != 0 && proc->pid != 0) {
+                linked_list_remove(&scheduler_state->priority_medium, proc);
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+                LOG_INFO("Process %d terminated", proc->pid);
+                current++;
+                return;
+            }
             
             // Move to back of queue for next round if suspended
             // After suspending, move to back of queue
@@ -281,7 +278,14 @@ void run_next_process() {
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
-            spthread_suspend(*proc->thread);
+            int ret = spthread_suspend(*proc->thread);
+            if (ret != 0 && proc->pid != 0) {
+                linked_list_remove(&scheduler_state->priority_low, proc);
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+                LOG_INFO("Process %d terminated", proc->pid);
+                current++;
+                return;
+            }
             
             // Move to back of queue for next round if suspended
             // After suspending, move to back of queue
