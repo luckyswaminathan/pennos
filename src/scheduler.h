@@ -40,7 +40,6 @@ struct process_control_block {
     process_state state;        
     priority_t priority;   
     double sleep_time;
-    int quantum_count;  // Track how many quantums this process has run
 
     spthread_t* thread;
     struct process_control_block* prev;
@@ -66,6 +65,7 @@ extern scheduler_t* scheduler_state;
 
 void init_scheduler();
 void run_scheduler();
+void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 
 // Handle orphaned processes by transferring them to init
 void handle_orphaned_processes(pcb_t* terminated_process);

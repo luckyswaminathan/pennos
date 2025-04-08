@@ -46,6 +46,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     return -1;
 }
 
+
 int s_kill(pid_t pid) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
@@ -65,7 +66,6 @@ int s_nice(pid_t pid, int priority) {
         if (proc->pid == pid) {
             LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
             if (proc->priority != priority) {
-                linked_list_remove(&scheduler_state->priority_medium, proc);
                 if (priority == PRIORITY_HIGH) {
                     linked_list_push_tail(&scheduler_state->priority_high, proc);
                 } else if (priority == PRIORITY_MEDIUM) {
@@ -82,4 +82,17 @@ int s_nice(pid_t pid, int priority) {
     }
     return -1;
 }
+    
+// void s_exit(void) {
+//     if (scheduler_state->curr != NULL) {
+//         terminate_process(scheduler_state->curr);
+//     }
+//     run_scheduler();
+// } 
+
+
+// void s_sleep(unsigned int ticks) {
+//     put_process_to_sleep(scheduler_state->curr, ticks);
+//     run_scheduler();
+// }
     

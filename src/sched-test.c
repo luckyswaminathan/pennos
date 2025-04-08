@@ -9,9 +9,27 @@
 
 void* child_func(void* arg) {
     LOG_INFO("Child process started");
-    sleep(10); // Simulate some work
+    
+    // Run forever, incrementing a counter
+    for (int i = 0;; i++) {
+        LOG_INFO("Child process iteration %d", i);
+        usleep(1000000); // Sleep for 1 second between iterations
+    }
 
     LOG_INFO("Child process finished");
+    return NULL;
+}
+
+void* child_func2(void* arg) {
+    LOG_INFO("****Child process 2 started");
+    
+    // Run forever, incrementing a counter
+    for (int i = 0;; i++) {
+        LOG_INFO("*****Child process iteration %d", i);
+        usleep(1000000); // Sleep for 1 second between iterations
+    }
+
+    LOG_INFO("Child process 2 finished");
     return NULL;
 }
 
@@ -25,7 +43,9 @@ int main() {
     
     // Spawn child process
     pid_t child_pid = s_spawn(child_func, NULL, -1, -1);
+    pid_t child_pid2 = s_spawn(child_func2, NULL, -1, -1);
     LOG_INFO("Spawned child process with pid %d", child_pid);
+    LOG_INFO("Spawned child process with pid %d", child_pid2);
     log_all_processes();
     // Start the scheduler - this will run until all processes finish
     run_scheduler();

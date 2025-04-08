@@ -1,19 +1,1325 @@
-[2025-04-06 12:24:21] [INFO] Starting scheduler test...
-[2025-04-06 12:24:21] [INFO] Scheduler initialized
-[2025-04-06 12:24:21] [INFO] Spawning process 1
-[2025-04-06 12:24:21] [INFO] Spawned child process with pid 1
-[2025-04-06 12:24:21] [INFO] === Current Queue State ===
-[2025-04-06 12:24:21] [INFO] High Priority Queue:
-[2025-04-06 12:24:21] [INFO] Medium Priority Queue:
-[2025-04-06 12:24:21] [INFO]   PID 1 (State: 0)
-[2025-04-06 12:24:21] [INFO] Low Priority Queue:
-[2025-04-06 12:24:21] [INFO] Sleeping Queue:
-[2025-04-06 12:24:21] [INFO] Terminated Queue:
-[2025-04-06 12:24:21] [INFO] ========================
-[2025-04-06 12:24:21] [INFO] Quantum 0
-[2025-04-06 12:24:21] [INFO] No init process, running next process
-[2025-04-06 12:24:21] [INFO] Running medium priority process
-[2025-04-06 12:24:21] [INFO] Child process started
-[2025-04-06 12:24:21] [INFO] Process 1 finished
-[2025-04-06 12:24:21] [INFO] No more runnable processes, scheduler exiting
-[2025-04-06 12:24:21] [INFO] All processes finished
+[2025-04-07 19:59:29] [INFO] Starting scheduler test...
+[2025-04-07 19:59:29] [INFO] Scheduler initialized
+[2025-04-07 19:59:29] [INFO] Spawning process 1
+[2025-04-07 19:59:29] [INFO] Spawning process 2
+[2025-04-07 19:59:29] [INFO] Spawned child process with pid 1
+[2025-04-07 19:59:29] [INFO] Spawned child process with pid 2
+[2025-04-07 19:59:29] [INFO] === Current Queue State ===
+[2025-04-07 19:59:29] [INFO] High Priority Queue:
+[2025-04-07 19:59:29] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:29] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:29] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:29] [INFO] Low Priority Queue:
+[2025-04-07 19:59:29] [INFO] Sleeping Queue:
+[2025-04-07 19:59:29] [INFO] Terminated Queue:
+[2025-04-07 19:59:29] [INFO] ========================
+[2025-04-07 19:59:30] [INFO] Quantum 0
+[2025-04-07 19:59:30] [INFO] No init process, running next process
+[2025-04-07 19:59:30] [INFO] Running medium priority process
+[2025-04-07 19:59:30] [INFO] Child process started
+[2025-04-07 19:59:30] [INFO] Child process iteration 0
+[2025-04-07 19:59:30] [INFO] === Current Queue State ===
+[2025-04-07 19:59:30] [INFO] High Priority Queue:
+[2025-04-07 19:59:30] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:30] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:30] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:30] [INFO] Low Priority Queue:
+[2025-04-07 19:59:30] [INFO] Sleeping Queue:
+[2025-04-07 19:59:30] [INFO] Terminated Queue:
+[2025-04-07 19:59:30] [INFO] ========================
+[2025-04-07 19:59:30] [INFO] Quantum 0
+[2025-04-07 19:59:30] [INFO] No init process, running next process
+[2025-04-07 19:59:30] [INFO] Running medium priority process
+[2025-04-07 19:59:30] [INFO] ****Child process 2 started
+[2025-04-07 19:59:30] [INFO] *****Child process iteration 0
+[2025-04-07 19:59:30] [INFO] === Current Queue State ===
+[2025-04-07 19:59:30] [INFO] High Priority Queue:
+[2025-04-07 19:59:30] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:30] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:30] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:30] [INFO] Low Priority Queue:
+[2025-04-07 19:59:30] [INFO] Sleeping Queue:
+[2025-04-07 19:59:30] [INFO] Terminated Queue:
+[2025-04-07 19:59:30] [INFO] ========================
+[2025-04-07 19:59:30] [INFO] Quantum 0
+[2025-04-07 19:59:30] [INFO] No init process, running next process
+[2025-04-07 19:59:30] [INFO] Running medium priority process
+[2025-04-07 19:59:30] [INFO] Child process iteration 1
+[2025-04-07 19:59:30] [INFO] === Current Queue State ===
+[2025-04-07 19:59:30] [INFO] High Priority Queue:
+[2025-04-07 19:59:30] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:30] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:30] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:30] [INFO] Low Priority Queue:
+[2025-04-07 19:59:30] [INFO] Sleeping Queue:
+[2025-04-07 19:59:30] [INFO] Terminated Queue:
+[2025-04-07 19:59:30] [INFO] ========================
+[2025-04-07 19:59:30] [INFO] Quantum 0
+[2025-04-07 19:59:30] [INFO] No init process, running next process
+[2025-04-07 19:59:30] [INFO] Running medium priority process
+[2025-04-07 19:59:30] [INFO] *****Child process iteration 1
+[2025-04-07 19:59:30] [INFO] === Current Queue State ===
+[2025-04-07 19:59:30] [INFO] High Priority Queue:
+[2025-04-07 19:59:30] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:30] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:30] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:30] [INFO] Low Priority Queue:
+[2025-04-07 19:59:30] [INFO] Sleeping Queue:
+[2025-04-07 19:59:30] [INFO] Terminated Queue:
+[2025-04-07 19:59:30] [INFO] ========================
+[2025-04-07 19:59:30] [INFO] Quantum 0
+[2025-04-07 19:59:30] [INFO] No init process, running next process
+[2025-04-07 19:59:30] [INFO] Running medium priority process
+[2025-04-07 19:59:30] [INFO] Child process iteration 2
+[2025-04-07 19:59:30] [INFO] === Current Queue State ===
+[2025-04-07 19:59:30] [INFO] High Priority Queue:
+[2025-04-07 19:59:30] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:30] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:30] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:30] [INFO] Low Priority Queue:
+[2025-04-07 19:59:30] [INFO] Sleeping Queue:
+[2025-04-07 19:59:30] [INFO] Terminated Queue:
+[2025-04-07 19:59:30] [INFO] ========================
+[2025-04-07 19:59:31] [INFO] Quantum 0
+[2025-04-07 19:59:31] [INFO] No init process, running next process
+[2025-04-07 19:59:31] [INFO] Running medium priority process
+[2025-04-07 19:59:31] [INFO] *****Child process iteration 2
+[2025-04-07 19:59:31] [INFO] === Current Queue State ===
+[2025-04-07 19:59:31] [INFO] High Priority Queue:
+[2025-04-07 19:59:31] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:31] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:31] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:31] [INFO] Low Priority Queue:
+[2025-04-07 19:59:31] [INFO] Sleeping Queue:
+[2025-04-07 19:59:31] [INFO] Terminated Queue:
+[2025-04-07 19:59:31] [INFO] ========================
+[2025-04-07 19:59:31] [INFO] Quantum 0
+[2025-04-07 19:59:31] [INFO] No init process, running next process
+[2025-04-07 19:59:31] [INFO] Running medium priority process
+[2025-04-07 19:59:31] [INFO] Child process iteration 3
+[2025-04-07 19:59:31] [INFO] === Current Queue State ===
+[2025-04-07 19:59:31] [INFO] High Priority Queue:
+[2025-04-07 19:59:31] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:31] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:31] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:31] [INFO] Low Priority Queue:
+[2025-04-07 19:59:31] [INFO] Sleeping Queue:
+[2025-04-07 19:59:31] [INFO] Terminated Queue:
+[2025-04-07 19:59:31] [INFO] ========================
+[2025-04-07 19:59:31] [INFO] Quantum 0
+[2025-04-07 19:59:31] [INFO] No init process, running next process
+[2025-04-07 19:59:31] [INFO] Running medium priority process
+[2025-04-07 19:59:31] [INFO] *****Child process iteration 3
+[2025-04-07 19:59:31] [INFO] === Current Queue State ===
+[2025-04-07 19:59:31] [INFO] High Priority Queue:
+[2025-04-07 19:59:31] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:31] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:31] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:31] [INFO] Low Priority Queue:
+[2025-04-07 19:59:31] [INFO] Sleeping Queue:
+[2025-04-07 19:59:31] [INFO] Terminated Queue:
+[2025-04-07 19:59:31] [INFO] ========================
+[2025-04-07 19:59:31] [INFO] Quantum 0
+[2025-04-07 19:59:31] [INFO] No init process, running next process
+[2025-04-07 19:59:31] [INFO] Running medium priority process
+[2025-04-07 19:59:31] [INFO] Child process iteration 4
+[2025-04-07 19:59:31] [INFO] === Current Queue State ===
+[2025-04-07 19:59:31] [INFO] High Priority Queue:
+[2025-04-07 19:59:31] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:31] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:31] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:31] [INFO] Low Priority Queue:
+[2025-04-07 19:59:31] [INFO] Sleeping Queue:
+[2025-04-07 19:59:31] [INFO] Terminated Queue:
+[2025-04-07 19:59:31] [INFO] ========================
+[2025-04-07 19:59:31] [INFO] Quantum 0
+[2025-04-07 19:59:31] [INFO] No init process, running next process
+[2025-04-07 19:59:31] [INFO] Running medium priority process
+[2025-04-07 19:59:31] [INFO] *****Child process iteration 4
+[2025-04-07 19:59:31] [INFO] === Current Queue State ===
+[2025-04-07 19:59:31] [INFO] High Priority Queue:
+[2025-04-07 19:59:31] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:31] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:31] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:31] [INFO] Low Priority Queue:
+[2025-04-07 19:59:31] [INFO] Sleeping Queue:
+[2025-04-07 19:59:31] [INFO] Terminated Queue:
+[2025-04-07 19:59:31] [INFO] ========================
+[2025-04-07 19:59:32] [INFO] Quantum 0
+[2025-04-07 19:59:32] [INFO] No init process, running next process
+[2025-04-07 19:59:32] [INFO] Running medium priority process
+[2025-04-07 19:59:32] [INFO] Child process iteration 5
+[2025-04-07 19:59:32] [INFO] === Current Queue State ===
+[2025-04-07 19:59:32] [INFO] High Priority Queue:
+[2025-04-07 19:59:32] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:32] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:32] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:32] [INFO] Low Priority Queue:
+[2025-04-07 19:59:32] [INFO] Sleeping Queue:
+[2025-04-07 19:59:32] [INFO] Terminated Queue:
+[2025-04-07 19:59:32] [INFO] ========================
+[2025-04-07 19:59:32] [INFO] Quantum 0
+[2025-04-07 19:59:32] [INFO] No init process, running next process
+[2025-04-07 19:59:32] [INFO] Running medium priority process
+[2025-04-07 19:59:32] [INFO] *****Child process iteration 5
+[2025-04-07 19:59:32] [INFO] === Current Queue State ===
+[2025-04-07 19:59:32] [INFO] High Priority Queue:
+[2025-04-07 19:59:32] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:32] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:32] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:32] [INFO] Low Priority Queue:
+[2025-04-07 19:59:32] [INFO] Sleeping Queue:
+[2025-04-07 19:59:32] [INFO] Terminated Queue:
+[2025-04-07 19:59:32] [INFO] ========================
+[2025-04-07 19:59:32] [INFO] Quantum 0
+[2025-04-07 19:59:32] [INFO] No init process, running next process
+[2025-04-07 19:59:32] [INFO] Running medium priority process
+[2025-04-07 19:59:32] [INFO] Child process iteration 6
+[2025-04-07 19:59:32] [INFO] === Current Queue State ===
+[2025-04-07 19:59:32] [INFO] High Priority Queue:
+[2025-04-07 19:59:32] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:32] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:32] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:32] [INFO] Low Priority Queue:
+[2025-04-07 19:59:32] [INFO] Sleeping Queue:
+[2025-04-07 19:59:32] [INFO] Terminated Queue:
+[2025-04-07 19:59:32] [INFO] ========================
+[2025-04-07 19:59:32] [INFO] Quantum 0
+[2025-04-07 19:59:32] [INFO] No init process, running next process
+[2025-04-07 19:59:32] [INFO] Running medium priority process
+[2025-04-07 19:59:32] [INFO] *****Child process iteration 6
+[2025-04-07 19:59:32] [INFO] === Current Queue State ===
+[2025-04-07 19:59:32] [INFO] High Priority Queue:
+[2025-04-07 19:59:32] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:32] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:32] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:32] [INFO] Low Priority Queue:
+[2025-04-07 19:59:32] [INFO] Sleeping Queue:
+[2025-04-07 19:59:32] [INFO] Terminated Queue:
+[2025-04-07 19:59:32] [INFO] ========================
+[2025-04-07 19:59:32] [INFO] Quantum 0
+[2025-04-07 19:59:32] [INFO] No init process, running next process
+[2025-04-07 19:59:32] [INFO] Running medium priority process
+[2025-04-07 19:59:32] [INFO] Child process iteration 7
+[2025-04-07 19:59:32] [INFO] === Current Queue State ===
+[2025-04-07 19:59:32] [INFO] High Priority Queue:
+[2025-04-07 19:59:32] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:32] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:32] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:32] [INFO] Low Priority Queue:
+[2025-04-07 19:59:32] [INFO] Sleeping Queue:
+[2025-04-07 19:59:32] [INFO] Terminated Queue:
+[2025-04-07 19:59:32] [INFO] ========================
+[2025-04-07 19:59:33] [INFO] Quantum 0
+[2025-04-07 19:59:33] [INFO] No init process, running next process
+[2025-04-07 19:59:33] [INFO] Running medium priority process
+[2025-04-07 19:59:33] [INFO] *****Child process iteration 7
+[2025-04-07 19:59:33] [INFO] === Current Queue State ===
+[2025-04-07 19:59:33] [INFO] High Priority Queue:
+[2025-04-07 19:59:33] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:33] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:33] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:33] [INFO] Low Priority Queue:
+[2025-04-07 19:59:33] [INFO] Sleeping Queue:
+[2025-04-07 19:59:33] [INFO] Terminated Queue:
+[2025-04-07 19:59:33] [INFO] ========================
+[2025-04-07 19:59:33] [INFO] Quantum 0
+[2025-04-07 19:59:33] [INFO] No init process, running next process
+[2025-04-07 19:59:33] [INFO] Running medium priority process
+[2025-04-07 19:59:33] [INFO] Child process iteration 8
+[2025-04-07 19:59:33] [INFO] === Current Queue State ===
+[2025-04-07 19:59:33] [INFO] High Priority Queue:
+[2025-04-07 19:59:33] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:33] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:33] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:33] [INFO] Low Priority Queue:
+[2025-04-07 19:59:33] [INFO] Sleeping Queue:
+[2025-04-07 19:59:33] [INFO] Terminated Queue:
+[2025-04-07 19:59:33] [INFO] ========================
+[2025-04-07 19:59:33] [INFO] Quantum 0
+[2025-04-07 19:59:33] [INFO] No init process, running next process
+[2025-04-07 19:59:33] [INFO] Running medium priority process
+[2025-04-07 19:59:33] [INFO] *****Child process iteration 8
+[2025-04-07 19:59:33] [INFO] === Current Queue State ===
+[2025-04-07 19:59:33] [INFO] High Priority Queue:
+[2025-04-07 19:59:33] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:33] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:33] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:33] [INFO] Low Priority Queue:
+[2025-04-07 19:59:33] [INFO] Sleeping Queue:
+[2025-04-07 19:59:33] [INFO] Terminated Queue:
+[2025-04-07 19:59:33] [INFO] ========================
+[2025-04-07 19:59:33] [INFO] Quantum 0
+[2025-04-07 19:59:33] [INFO] No init process, running next process
+[2025-04-07 19:59:33] [INFO] Running medium priority process
+[2025-04-07 19:59:33] [INFO] Child process iteration 9
+[2025-04-07 19:59:33] [INFO] === Current Queue State ===
+[2025-04-07 19:59:33] [INFO] High Priority Queue:
+[2025-04-07 19:59:33] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:33] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:33] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:33] [INFO] Low Priority Queue:
+[2025-04-07 19:59:33] [INFO] Sleeping Queue:
+[2025-04-07 19:59:33] [INFO] Terminated Queue:
+[2025-04-07 19:59:33] [INFO] ========================
+[2025-04-07 19:59:33] [INFO] Quantum 0
+[2025-04-07 19:59:33] [INFO] No init process, running next process
+[2025-04-07 19:59:33] [INFO] Running medium priority process
+[2025-04-07 19:59:33] [INFO] *****Child process iteration 9
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:34] [INFO] Quantum 0
+[2025-04-07 19:59:34] [INFO] No init process, running next process
+[2025-04-07 19:59:34] [INFO] Running medium priority process
+[2025-04-07 19:59:34] [INFO] Child process iteration 10
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:34] [INFO] Quantum 0
+[2025-04-07 19:59:34] [INFO] No init process, running next process
+[2025-04-07 19:59:34] [INFO] Running medium priority process
+[2025-04-07 19:59:34] [INFO] *****Child process iteration 10
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:34] [INFO] Quantum 0
+[2025-04-07 19:59:34] [INFO] No init process, running next process
+[2025-04-07 19:59:34] [INFO] Running medium priority process
+[2025-04-07 19:59:34] [INFO] Child process iteration 11
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:34] [INFO] Quantum 0
+[2025-04-07 19:59:34] [INFO] No init process, running next process
+[2025-04-07 19:59:34] [INFO] Running medium priority process
+[2025-04-07 19:59:34] [INFO] *****Child process iteration 11
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:34] [INFO] Quantum 0
+[2025-04-07 19:59:34] [INFO] No init process, running next process
+[2025-04-07 19:59:34] [INFO] Running medium priority process
+[2025-04-07 19:59:34] [INFO] Child process iteration 12
+[2025-04-07 19:59:34] [INFO] === Current Queue State ===
+[2025-04-07 19:59:34] [INFO] High Priority Queue:
+[2025-04-07 19:59:34] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:34] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:34] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:34] [INFO] Low Priority Queue:
+[2025-04-07 19:59:34] [INFO] Sleeping Queue:
+[2025-04-07 19:59:34] [INFO] Terminated Queue:
+[2025-04-07 19:59:34] [INFO] ========================
+[2025-04-07 19:59:35] [INFO] Quantum 0
+[2025-04-07 19:59:35] [INFO] No init process, running next process
+[2025-04-07 19:59:35] [INFO] Running medium priority process
+[2025-04-07 19:59:35] [INFO] *****Child process iteration 12
+[2025-04-07 19:59:35] [INFO] === Current Queue State ===
+[2025-04-07 19:59:35] [INFO] High Priority Queue:
+[2025-04-07 19:59:35] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:35] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:35] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:35] [INFO] Low Priority Queue:
+[2025-04-07 19:59:35] [INFO] Sleeping Queue:
+[2025-04-07 19:59:35] [INFO] Terminated Queue:
+[2025-04-07 19:59:35] [INFO] ========================
+[2025-04-07 19:59:35] [INFO] Quantum 0
+[2025-04-07 19:59:35] [INFO] No init process, running next process
+[2025-04-07 19:59:35] [INFO] Running medium priority process
+[2025-04-07 19:59:35] [INFO] Child process iteration 13
+[2025-04-07 19:59:35] [INFO] === Current Queue State ===
+[2025-04-07 19:59:35] [INFO] High Priority Queue:
+[2025-04-07 19:59:35] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:35] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:35] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:35] [INFO] Low Priority Queue:
+[2025-04-07 19:59:35] [INFO] Sleeping Queue:
+[2025-04-07 19:59:35] [INFO] Terminated Queue:
+[2025-04-07 19:59:35] [INFO] ========================
+[2025-04-07 19:59:35] [INFO] Quantum 0
+[2025-04-07 19:59:35] [INFO] No init process, running next process
+[2025-04-07 19:59:35] [INFO] Running medium priority process
+[2025-04-07 19:59:35] [INFO] *****Child process iteration 13
+[2025-04-07 19:59:35] [INFO] === Current Queue State ===
+[2025-04-07 19:59:35] [INFO] High Priority Queue:
+[2025-04-07 19:59:35] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:35] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:35] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:35] [INFO] Low Priority Queue:
+[2025-04-07 19:59:35] [INFO] Sleeping Queue:
+[2025-04-07 19:59:35] [INFO] Terminated Queue:
+[2025-04-07 19:59:35] [INFO] ========================
+[2025-04-07 19:59:35] [INFO] Quantum 0
+[2025-04-07 19:59:35] [INFO] No init process, running next process
+[2025-04-07 19:59:35] [INFO] Running medium priority process
+[2025-04-07 19:59:35] [INFO] Child process iteration 14
+[2025-04-07 19:59:35] [INFO] === Current Queue State ===
+[2025-04-07 19:59:35] [INFO] High Priority Queue:
+[2025-04-07 19:59:35] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:35] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:35] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:35] [INFO] Low Priority Queue:
+[2025-04-07 19:59:35] [INFO] Sleeping Queue:
+[2025-04-07 19:59:35] [INFO] Terminated Queue:
+[2025-04-07 19:59:35] [INFO] ========================
+[2025-04-07 19:59:35] [INFO] Quantum 0
+[2025-04-07 19:59:35] [INFO] No init process, running next process
+[2025-04-07 19:59:35] [INFO] Running medium priority process
+[2025-04-07 19:59:35] [INFO] *****Child process iteration 14
+[2025-04-07 19:59:35] [INFO] === Current Queue State ===
+[2025-04-07 19:59:35] [INFO] High Priority Queue:
+[2025-04-07 19:59:35] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:35] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:35] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:35] [INFO] Low Priority Queue:
+[2025-04-07 19:59:35] [INFO] Sleeping Queue:
+[2025-04-07 19:59:35] [INFO] Terminated Queue:
+[2025-04-07 19:59:35] [INFO] ========================
+[2025-04-07 19:59:36] [INFO] Quantum 0
+[2025-04-07 19:59:36] [INFO] No init process, running next process
+[2025-04-07 19:59:36] [INFO] Running medium priority process
+[2025-04-07 19:59:36] [INFO] Child process iteration 15
+[2025-04-07 19:59:36] [INFO] === Current Queue State ===
+[2025-04-07 19:59:36] [INFO] High Priority Queue:
+[2025-04-07 19:59:36] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:36] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:36] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:36] [INFO] Low Priority Queue:
+[2025-04-07 19:59:36] [INFO] Sleeping Queue:
+[2025-04-07 19:59:36] [INFO] Terminated Queue:
+[2025-04-07 19:59:36] [INFO] ========================
+[2025-04-07 19:59:36] [INFO] Quantum 0
+[2025-04-07 19:59:36] [INFO] No init process, running next process
+[2025-04-07 19:59:36] [INFO] Running medium priority process
+[2025-04-07 19:59:36] [INFO] *****Child process iteration 15
+[2025-04-07 19:59:36] [INFO] === Current Queue State ===
+[2025-04-07 19:59:36] [INFO] High Priority Queue:
+[2025-04-07 19:59:36] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:36] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:36] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:36] [INFO] Low Priority Queue:
+[2025-04-07 19:59:36] [INFO] Sleeping Queue:
+[2025-04-07 19:59:36] [INFO] Terminated Queue:
+[2025-04-07 19:59:36] [INFO] ========================
+[2025-04-07 19:59:36] [INFO] Quantum 0
+[2025-04-07 19:59:36] [INFO] No init process, running next process
+[2025-04-07 19:59:36] [INFO] Running medium priority process
+[2025-04-07 19:59:36] [INFO] Child process iteration 16
+[2025-04-07 19:59:36] [INFO] === Current Queue State ===
+[2025-04-07 19:59:36] [INFO] High Priority Queue:
+[2025-04-07 19:59:36] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:36] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:36] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:36] [INFO] Low Priority Queue:
+[2025-04-07 19:59:36] [INFO] Sleeping Queue:
+[2025-04-07 19:59:36] [INFO] Terminated Queue:
+[2025-04-07 19:59:36] [INFO] ========================
+[2025-04-07 19:59:36] [INFO] Quantum 0
+[2025-04-07 19:59:36] [INFO] No init process, running next process
+[2025-04-07 19:59:36] [INFO] Running medium priority process
+[2025-04-07 19:59:36] [INFO] *****Child process iteration 16
+[2025-04-07 19:59:36] [INFO] === Current Queue State ===
+[2025-04-07 19:59:36] [INFO] High Priority Queue:
+[2025-04-07 19:59:36] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:36] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:36] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:36] [INFO] Low Priority Queue:
+[2025-04-07 19:59:36] [INFO] Sleeping Queue:
+[2025-04-07 19:59:36] [INFO] Terminated Queue:
+[2025-04-07 19:59:36] [INFO] ========================
+[2025-04-07 19:59:36] [INFO] Quantum 0
+[2025-04-07 19:59:36] [INFO] No init process, running next process
+[2025-04-07 19:59:36] [INFO] Running medium priority process
+[2025-04-07 19:59:36] [INFO] Child process iteration 17
+[2025-04-07 19:59:36] [INFO] === Current Queue State ===
+[2025-04-07 19:59:36] [INFO] High Priority Queue:
+[2025-04-07 19:59:36] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:36] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:36] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:36] [INFO] Low Priority Queue:
+[2025-04-07 19:59:36] [INFO] Sleeping Queue:
+[2025-04-07 19:59:36] [INFO] Terminated Queue:
+[2025-04-07 19:59:36] [INFO] ========================
+[2025-04-07 19:59:37] [INFO] Quantum 0
+[2025-04-07 19:59:37] [INFO] No init process, running next process
+[2025-04-07 19:59:37] [INFO] Running medium priority process
+[2025-04-07 19:59:37] [INFO] *****Child process iteration 17
+[2025-04-07 19:59:37] [INFO] === Current Queue State ===
+[2025-04-07 19:59:37] [INFO] High Priority Queue:
+[2025-04-07 19:59:37] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:37] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:37] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:37] [INFO] Low Priority Queue:
+[2025-04-07 19:59:37] [INFO] Sleeping Queue:
+[2025-04-07 19:59:37] [INFO] Terminated Queue:
+[2025-04-07 19:59:37] [INFO] ========================
+[2025-04-07 19:59:37] [INFO] Quantum 0
+[2025-04-07 19:59:37] [INFO] No init process, running next process
+[2025-04-07 19:59:37] [INFO] Running medium priority process
+[2025-04-07 19:59:37] [INFO] Child process iteration 18
+[2025-04-07 19:59:37] [INFO] === Current Queue State ===
+[2025-04-07 19:59:37] [INFO] High Priority Queue:
+[2025-04-07 19:59:37] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:37] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:37] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:37] [INFO] Low Priority Queue:
+[2025-04-07 19:59:37] [INFO] Sleeping Queue:
+[2025-04-07 19:59:37] [INFO] Terminated Queue:
+[2025-04-07 19:59:37] [INFO] ========================
+[2025-04-07 19:59:37] [INFO] Quantum 0
+[2025-04-07 19:59:37] [INFO] No init process, running next process
+[2025-04-07 19:59:37] [INFO] Running medium priority process
+[2025-04-07 19:59:37] [INFO] *****Child process iteration 18
+[2025-04-07 19:59:37] [INFO] === Current Queue State ===
+[2025-04-07 19:59:37] [INFO] High Priority Queue:
+[2025-04-07 19:59:37] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:37] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:37] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:37] [INFO] Low Priority Queue:
+[2025-04-07 19:59:37] [INFO] Sleeping Queue:
+[2025-04-07 19:59:37] [INFO] Terminated Queue:
+[2025-04-07 19:59:37] [INFO] ========================
+[2025-04-07 19:59:37] [INFO] Quantum 0
+[2025-04-07 19:59:37] [INFO] No init process, running next process
+[2025-04-07 19:59:37] [INFO] Running medium priority process
+[2025-04-07 19:59:37] [INFO] Child process iteration 19
+[2025-04-07 19:59:37] [INFO] === Current Queue State ===
+[2025-04-07 19:59:37] [INFO] High Priority Queue:
+[2025-04-07 19:59:37] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:37] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:37] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:37] [INFO] Low Priority Queue:
+[2025-04-07 19:59:37] [INFO] Sleeping Queue:
+[2025-04-07 19:59:37] [INFO] Terminated Queue:
+[2025-04-07 19:59:37] [INFO] ========================
+[2025-04-07 19:59:37] [INFO] Quantum 0
+[2025-04-07 19:59:37] [INFO] No init process, running next process
+[2025-04-07 19:59:37] [INFO] Running medium priority process
+[2025-04-07 19:59:37] [INFO] *****Child process iteration 19
+[2025-04-07 19:59:37] [INFO] === Current Queue State ===
+[2025-04-07 19:59:37] [INFO] High Priority Queue:
+[2025-04-07 19:59:37] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:37] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:37] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:37] [INFO] Low Priority Queue:
+[2025-04-07 19:59:37] [INFO] Sleeping Queue:
+[2025-04-07 19:59:37] [INFO] Terminated Queue:
+[2025-04-07 19:59:37] [INFO] ========================
+[2025-04-07 19:59:38] [INFO] Quantum 0
+[2025-04-07 19:59:38] [INFO] No init process, running next process
+[2025-04-07 19:59:38] [INFO] Running medium priority process
+[2025-04-07 19:59:38] [INFO] Child process iteration 20
+[2025-04-07 19:59:38] [INFO] === Current Queue State ===
+[2025-04-07 19:59:38] [INFO] High Priority Queue:
+[2025-04-07 19:59:38] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:38] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:38] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:38] [INFO] Low Priority Queue:
+[2025-04-07 19:59:38] [INFO] Sleeping Queue:
+[2025-04-07 19:59:38] [INFO] Terminated Queue:
+[2025-04-07 19:59:38] [INFO] ========================
+[2025-04-07 19:59:38] [INFO] Quantum 0
+[2025-04-07 19:59:38] [INFO] No init process, running next process
+[2025-04-07 19:59:38] [INFO] Running medium priority process
+[2025-04-07 19:59:38] [INFO] *****Child process iteration 20
+[2025-04-07 19:59:38] [INFO] === Current Queue State ===
+[2025-04-07 19:59:38] [INFO] High Priority Queue:
+[2025-04-07 19:59:38] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:38] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:38] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:38] [INFO] Low Priority Queue:
+[2025-04-07 19:59:38] [INFO] Sleeping Queue:
+[2025-04-07 19:59:38] [INFO] Terminated Queue:
+[2025-04-07 19:59:38] [INFO] ========================
+[2025-04-07 19:59:38] [INFO] Quantum 0
+[2025-04-07 19:59:38] [INFO] No init process, running next process
+[2025-04-07 19:59:38] [INFO] Running medium priority process
+[2025-04-07 19:59:38] [INFO] Child process iteration 21
+[2025-04-07 19:59:38] [INFO] === Current Queue State ===
+[2025-04-07 19:59:38] [INFO] High Priority Queue:
+[2025-04-07 19:59:38] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:38] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:38] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:38] [INFO] Low Priority Queue:
+[2025-04-07 19:59:38] [INFO] Sleeping Queue:
+[2025-04-07 19:59:38] [INFO] Terminated Queue:
+[2025-04-07 19:59:38] [INFO] ========================
+[2025-04-07 19:59:38] [INFO] Quantum 0
+[2025-04-07 19:59:38] [INFO] No init process, running next process
+[2025-04-07 19:59:38] [INFO] Running medium priority process
+[2025-04-07 19:59:38] [INFO] *****Child process iteration 21
+[2025-04-07 19:59:38] [INFO] === Current Queue State ===
+[2025-04-07 19:59:38] [INFO] High Priority Queue:
+[2025-04-07 19:59:38] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:38] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:38] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:38] [INFO] Low Priority Queue:
+[2025-04-07 19:59:38] [INFO] Sleeping Queue:
+[2025-04-07 19:59:38] [INFO] Terminated Queue:
+[2025-04-07 19:59:38] [INFO] ========================
+[2025-04-07 19:59:38] [INFO] Quantum 0
+[2025-04-07 19:59:38] [INFO] No init process, running next process
+[2025-04-07 19:59:38] [INFO] Running medium priority process
+[2025-04-07 19:59:38] [INFO] Child process iteration 22
+[2025-04-07 19:59:38] [INFO] === Current Queue State ===
+[2025-04-07 19:59:38] [INFO] High Priority Queue:
+[2025-04-07 19:59:38] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:38] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:38] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:38] [INFO] Low Priority Queue:
+[2025-04-07 19:59:38] [INFO] Sleeping Queue:
+[2025-04-07 19:59:38] [INFO] Terminated Queue:
+[2025-04-07 19:59:38] [INFO] ========================
+[2025-04-07 19:59:39] [INFO] Quantum 0
+[2025-04-07 19:59:39] [INFO] No init process, running next process
+[2025-04-07 19:59:39] [INFO] Running medium priority process
+[2025-04-07 19:59:39] [INFO] *****Child process iteration 22
+[2025-04-07 19:59:39] [INFO] === Current Queue State ===
+[2025-04-07 19:59:39] [INFO] High Priority Queue:
+[2025-04-07 19:59:39] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:39] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:39] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:39] [INFO] Low Priority Queue:
+[2025-04-07 19:59:39] [INFO] Sleeping Queue:
+[2025-04-07 19:59:39] [INFO] Terminated Queue:
+[2025-04-07 19:59:39] [INFO] ========================
+[2025-04-07 19:59:39] [INFO] Quantum 0
+[2025-04-07 19:59:39] [INFO] No init process, running next process
+[2025-04-07 19:59:39] [INFO] Running medium priority process
+[2025-04-07 19:59:39] [INFO] Child process iteration 23
+[2025-04-07 19:59:39] [INFO] === Current Queue State ===
+[2025-04-07 19:59:39] [INFO] High Priority Queue:
+[2025-04-07 19:59:39] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:39] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:39] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:39] [INFO] Low Priority Queue:
+[2025-04-07 19:59:39] [INFO] Sleeping Queue:
+[2025-04-07 19:59:39] [INFO] Terminated Queue:
+[2025-04-07 19:59:39] [INFO] ========================
+[2025-04-07 19:59:39] [INFO] Quantum 0
+[2025-04-07 19:59:39] [INFO] No init process, running next process
+[2025-04-07 19:59:39] [INFO] Running medium priority process
+[2025-04-07 19:59:39] [INFO] *****Child process iteration 23
+[2025-04-07 19:59:39] [INFO] === Current Queue State ===
+[2025-04-07 19:59:39] [INFO] High Priority Queue:
+[2025-04-07 19:59:39] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:39] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:39] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:39] [INFO] Low Priority Queue:
+[2025-04-07 19:59:39] [INFO] Sleeping Queue:
+[2025-04-07 19:59:39] [INFO] Terminated Queue:
+[2025-04-07 19:59:39] [INFO] ========================
+[2025-04-07 19:59:39] [INFO] Quantum 0
+[2025-04-07 19:59:39] [INFO] No init process, running next process
+[2025-04-07 19:59:39] [INFO] Running medium priority process
+[2025-04-07 19:59:39] [INFO] Child process iteration 24
+[2025-04-07 19:59:39] [INFO] === Current Queue State ===
+[2025-04-07 19:59:39] [INFO] High Priority Queue:
+[2025-04-07 19:59:39] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:39] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:39] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:39] [INFO] Low Priority Queue:
+[2025-04-07 19:59:39] [INFO] Sleeping Queue:
+[2025-04-07 19:59:39] [INFO] Terminated Queue:
+[2025-04-07 19:59:39] [INFO] ========================
+[2025-04-07 19:59:40] [INFO] Quantum 0
+[2025-04-07 19:59:40] [INFO] No init process, running next process
+[2025-04-07 19:59:40] [INFO] Running medium priority process
+[2025-04-07 19:59:40] [INFO] *****Child process iteration 24
+[2025-04-07 19:59:40] [INFO] === Current Queue State ===
+[2025-04-07 19:59:40] [INFO] High Priority Queue:
+[2025-04-07 19:59:40] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:40] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:40] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:40] [INFO] Low Priority Queue:
+[2025-04-07 19:59:40] [INFO] Sleeping Queue:
+[2025-04-07 19:59:40] [INFO] Terminated Queue:
+[2025-04-07 19:59:40] [INFO] ========================
+[2025-04-07 19:59:40] [INFO] Quantum 0
+[2025-04-07 19:59:40] [INFO] No init process, running next process
+[2025-04-07 19:59:40] [INFO] Running medium priority process
+[2025-04-07 19:59:40] [INFO] Child process iteration 25
+[2025-04-07 19:59:40] [INFO] === Current Queue State ===
+[2025-04-07 19:59:40] [INFO] High Priority Queue:
+[2025-04-07 19:59:40] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:40] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:40] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:40] [INFO] Low Priority Queue:
+[2025-04-07 19:59:40] [INFO] Sleeping Queue:
+[2025-04-07 19:59:40] [INFO] Terminated Queue:
+[2025-04-07 19:59:40] [INFO] ========================
+[2025-04-07 19:59:40] [INFO] Quantum 0
+[2025-04-07 19:59:40] [INFO] No init process, running next process
+[2025-04-07 19:59:40] [INFO] Running medium priority process
+[2025-04-07 19:59:40] [INFO] *****Child process iteration 25
+[2025-04-07 19:59:40] [INFO] === Current Queue State ===
+[2025-04-07 19:59:40] [INFO] High Priority Queue:
+[2025-04-07 19:59:40] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:40] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:40] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:40] [INFO] Low Priority Queue:
+[2025-04-07 19:59:40] [INFO] Sleeping Queue:
+[2025-04-07 19:59:40] [INFO] Terminated Queue:
+[2025-04-07 19:59:40] [INFO] ========================
+[2025-04-07 19:59:40] [INFO] Quantum 0
+[2025-04-07 19:59:40] [INFO] No init process, running next process
+[2025-04-07 19:59:40] [INFO] Running medium priority process
+[2025-04-07 19:59:40] [INFO] Child process iteration 26
+[2025-04-07 19:59:40] [INFO] === Current Queue State ===
+[2025-04-07 19:59:40] [INFO] High Priority Queue:
+[2025-04-07 19:59:40] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:40] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:40] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:40] [INFO] Low Priority Queue:
+[2025-04-07 19:59:40] [INFO] Sleeping Queue:
+[2025-04-07 19:59:40] [INFO] Terminated Queue:
+[2025-04-07 19:59:40] [INFO] ========================
+[2025-04-07 19:59:40] [INFO] Quantum 0
+[2025-04-07 19:59:40] [INFO] No init process, running next process
+[2025-04-07 19:59:40] [INFO] Running medium priority process
+[2025-04-07 19:59:40] [INFO] *****Child process iteration 26
+[2025-04-07 19:59:40] [INFO] === Current Queue State ===
+[2025-04-07 19:59:40] [INFO] High Priority Queue:
+[2025-04-07 19:59:40] [INFO] Medium Priority Queue:
+[2025-04-07 19:59:40] [INFO]   PID 1 (State: 0)
+[2025-04-07 19:59:40] [INFO]   PID 2 (State: 0)
+[2025-04-07 19:59:40] [INFO] Low Priority Queue:
+[2025-04-07 19:59:40] [INFO] Sleeping Queue:
+[2025-04-07 19:59:40] [INFO] Terminated Queue:
+[2025-04-07 19:59:40] [INFO] ========================
+[2025-04-07 20:26:06] [INFO] Starting scheduler test...
+[2025-04-07 20:26:06] [INFO] Scheduler initialized
+[2025-04-07 20:26:06] [INFO] Spawning process 1
+[2025-04-07 20:26:06] [INFO] Spawning process 2
+[2025-04-07 20:26:06] [INFO] Spawned child process with pid 1
+[2025-04-07 20:26:06] [INFO] Spawned child process with pid 2
+[2025-04-07 20:26:06] [INFO] === Current Queue State ===
+[2025-04-07 20:26:06] [INFO] High Priority Queue:
+[2025-04-07 20:26:06] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:06] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:06] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:06] [INFO] Low Priority Queue:
+[2025-04-07 20:26:06] [INFO] Sleeping Queue:
+[2025-04-07 20:26:06] [INFO] Terminated Queue:
+[2025-04-07 20:26:06] [INFO] ========================
+[2025-04-07 20:26:07] [INFO] Quantum 0
+[2025-04-07 20:26:07] [INFO] No init process, running next process
+[2025-04-07 20:26:07] [INFO] Running medium priority process
+[2025-04-07 20:26:07] [INFO] Child process started
+[2025-04-07 20:26:07] [INFO] Child process iteration 0
+[2025-04-07 20:26:07] [INFO] === Current Queue State ===
+[2025-04-07 20:26:07] [INFO] High Priority Queue:
+[2025-04-07 20:26:07] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:07] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:07] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:07] [INFO] Low Priority Queue:
+[2025-04-07 20:26:07] [INFO] Sleeping Queue:
+[2025-04-07 20:26:07] [INFO] Terminated Queue:
+[2025-04-07 20:26:07] [INFO] ========================
+[2025-04-07 20:26:07] [INFO] Quantum 0
+[2025-04-07 20:26:07] [INFO] No init process, running next process
+[2025-04-07 20:26:07] [INFO] Running medium priority process
+[2025-04-07 20:26:07] [INFO] ****Child process 2 started
+[2025-04-07 20:26:07] [INFO] *****Child process iteration 0
+[2025-04-07 20:26:07] [INFO] === Current Queue State ===
+[2025-04-07 20:26:07] [INFO] High Priority Queue:
+[2025-04-07 20:26:07] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:07] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:07] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:07] [INFO] Low Priority Queue:
+[2025-04-07 20:26:07] [INFO] Sleeping Queue:
+[2025-04-07 20:26:07] [INFO] Terminated Queue:
+[2025-04-07 20:26:07] [INFO] ========================
+[2025-04-07 20:26:07] [INFO] Quantum 0
+[2025-04-07 20:26:07] [INFO] No init process, running next process
+[2025-04-07 20:26:07] [INFO] Running medium priority process
+[2025-04-07 20:26:07] [INFO] Child process iteration 1
+[2025-04-07 20:26:07] [INFO] === Current Queue State ===
+[2025-04-07 20:26:07] [INFO] High Priority Queue:
+[2025-04-07 20:26:07] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:07] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:07] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:07] [INFO] Low Priority Queue:
+[2025-04-07 20:26:07] [INFO] Sleeping Queue:
+[2025-04-07 20:26:07] [INFO] Terminated Queue:
+[2025-04-07 20:26:07] [INFO] ========================
+[2025-04-07 20:26:07] [INFO] Quantum 0
+[2025-04-07 20:26:07] [INFO] No init process, running next process
+[2025-04-07 20:26:07] [INFO] Running medium priority process
+[2025-04-07 20:26:07] [INFO] *****Child process iteration 1
+[2025-04-07 20:26:07] [INFO] === Current Queue State ===
+[2025-04-07 20:26:07] [INFO] High Priority Queue:
+[2025-04-07 20:26:07] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:07] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:07] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:07] [INFO] Low Priority Queue:
+[2025-04-07 20:26:07] [INFO] Sleeping Queue:
+[2025-04-07 20:26:07] [INFO] Terminated Queue:
+[2025-04-07 20:26:07] [INFO] ========================
+[2025-04-07 20:26:07] [INFO] Quantum 0
+[2025-04-07 20:26:07] [INFO] No init process, running next process
+[2025-04-07 20:26:07] [INFO] Running medium priority process
+[2025-04-07 20:26:07] [INFO] Child process iteration 2
+[2025-04-07 20:26:07] [INFO] === Current Queue State ===
+[2025-04-07 20:26:07] [INFO] High Priority Queue:
+[2025-04-07 20:26:07] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:07] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:07] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:07] [INFO] Low Priority Queue:
+[2025-04-07 20:26:07] [INFO] Sleeping Queue:
+[2025-04-07 20:26:07] [INFO] Terminated Queue:
+[2025-04-07 20:26:07] [INFO] ========================
+[2025-04-07 20:26:08] [INFO] Quantum 0
+[2025-04-07 20:26:08] [INFO] No init process, running next process
+[2025-04-07 20:26:08] [INFO] Running medium priority process
+[2025-04-07 20:26:08] [INFO] *****Child process iteration 2
+[2025-04-07 20:26:08] [INFO] === Current Queue State ===
+[2025-04-07 20:26:08] [INFO] High Priority Queue:
+[2025-04-07 20:26:08] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:08] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:08] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:08] [INFO] Low Priority Queue:
+[2025-04-07 20:26:08] [INFO] Sleeping Queue:
+[2025-04-07 20:26:08] [INFO] Terminated Queue:
+[2025-04-07 20:26:08] [INFO] ========================
+[2025-04-07 20:26:08] [INFO] Quantum 0
+[2025-04-07 20:26:08] [INFO] No init process, running next process
+[2025-04-07 20:26:08] [INFO] Running medium priority process
+[2025-04-07 20:26:08] [INFO] Child process iteration 3
+[2025-04-07 20:26:08] [INFO] === Current Queue State ===
+[2025-04-07 20:26:08] [INFO] High Priority Queue:
+[2025-04-07 20:26:08] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:08] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:08] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:08] [INFO] Low Priority Queue:
+[2025-04-07 20:26:08] [INFO] Sleeping Queue:
+[2025-04-07 20:26:08] [INFO] Terminated Queue:
+[2025-04-07 20:26:08] [INFO] ========================
+[2025-04-07 20:26:08] [INFO] Quantum 0
+[2025-04-07 20:26:08] [INFO] No init process, running next process
+[2025-04-07 20:26:08] [INFO] Running medium priority process
+[2025-04-07 20:26:08] [INFO] *****Child process iteration 3
+[2025-04-07 20:26:08] [INFO] === Current Queue State ===
+[2025-04-07 20:26:08] [INFO] High Priority Queue:
+[2025-04-07 20:26:08] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:08] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:08] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:08] [INFO] Low Priority Queue:
+[2025-04-07 20:26:08] [INFO] Sleeping Queue:
+[2025-04-07 20:26:08] [INFO] Terminated Queue:
+[2025-04-07 20:26:08] [INFO] ========================
+[2025-04-07 20:26:08] [INFO] Quantum 0
+[2025-04-07 20:26:08] [INFO] No init process, running next process
+[2025-04-07 20:26:08] [INFO] Running medium priority process
+[2025-04-07 20:26:08] [INFO] Child process iteration 4
+[2025-04-07 20:26:08] [INFO] === Current Queue State ===
+[2025-04-07 20:26:08] [INFO] High Priority Queue:
+[2025-04-07 20:26:08] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:08] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:08] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:08] [INFO] Low Priority Queue:
+[2025-04-07 20:26:08] [INFO] Sleeping Queue:
+[2025-04-07 20:26:08] [INFO] Terminated Queue:
+[2025-04-07 20:26:08] [INFO] ========================
+[2025-04-07 20:26:08] [INFO] Quantum 0
+[2025-04-07 20:26:08] [INFO] No init process, running next process
+[2025-04-07 20:26:08] [INFO] Running medium priority process
+[2025-04-07 20:26:08] [INFO] *****Child process iteration 4
+[2025-04-07 20:26:08] [INFO] === Current Queue State ===
+[2025-04-07 20:26:08] [INFO] High Priority Queue:
+[2025-04-07 20:26:08] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:08] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:08] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:08] [INFO] Low Priority Queue:
+[2025-04-07 20:26:08] [INFO] Sleeping Queue:
+[2025-04-07 20:26:08] [INFO] Terminated Queue:
+[2025-04-07 20:26:08] [INFO] ========================
+[2025-04-07 20:26:09] [INFO] Quantum 0
+[2025-04-07 20:26:09] [INFO] No init process, running next process
+[2025-04-07 20:26:09] [INFO] Running medium priority process
+[2025-04-07 20:26:09] [INFO] Child process iteration 5
+[2025-04-07 20:26:09] [INFO] === Current Queue State ===
+[2025-04-07 20:26:09] [INFO] High Priority Queue:
+[2025-04-07 20:26:09] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:09] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:09] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:09] [INFO] Low Priority Queue:
+[2025-04-07 20:26:09] [INFO] Sleeping Queue:
+[2025-04-07 20:26:09] [INFO] Terminated Queue:
+[2025-04-07 20:26:09] [INFO] ========================
+[2025-04-07 20:26:09] [INFO] Quantum 0
+[2025-04-07 20:26:09] [INFO] No init process, running next process
+[2025-04-07 20:26:09] [INFO] Running medium priority process
+[2025-04-07 20:26:09] [INFO] *****Child process iteration 5
+[2025-04-07 20:26:09] [INFO] === Current Queue State ===
+[2025-04-07 20:26:09] [INFO] High Priority Queue:
+[2025-04-07 20:26:09] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:09] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:09] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:09] [INFO] Low Priority Queue:
+[2025-04-07 20:26:09] [INFO] Sleeping Queue:
+[2025-04-07 20:26:09] [INFO] Terminated Queue:
+[2025-04-07 20:26:09] [INFO] ========================
+[2025-04-07 20:26:09] [INFO] Quantum 0
+[2025-04-07 20:26:09] [INFO] No init process, running next process
+[2025-04-07 20:26:09] [INFO] Running medium priority process
+[2025-04-07 20:26:09] [INFO] Child process iteration 6
+[2025-04-07 20:26:09] [INFO] === Current Queue State ===
+[2025-04-07 20:26:09] [INFO] High Priority Queue:
+[2025-04-07 20:26:09] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:09] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:09] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:09] [INFO] Low Priority Queue:
+[2025-04-07 20:26:09] [INFO] Sleeping Queue:
+[2025-04-07 20:26:09] [INFO] Terminated Queue:
+[2025-04-07 20:26:09] [INFO] ========================
+[2025-04-07 20:26:09] [INFO] Quantum 0
+[2025-04-07 20:26:09] [INFO] No init process, running next process
+[2025-04-07 20:26:09] [INFO] Running medium priority process
+[2025-04-07 20:26:09] [INFO] *****Child process iteration 6
+[2025-04-07 20:26:09] [INFO] === Current Queue State ===
+[2025-04-07 20:26:09] [INFO] High Priority Queue:
+[2025-04-07 20:26:09] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:09] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:09] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:09] [INFO] Low Priority Queue:
+[2025-04-07 20:26:09] [INFO] Sleeping Queue:
+[2025-04-07 20:26:09] [INFO] Terminated Queue:
+[2025-04-07 20:26:09] [INFO] ========================
+[2025-04-07 20:26:09] [INFO] Quantum 0
+[2025-04-07 20:26:09] [INFO] No init process, running next process
+[2025-04-07 20:26:09] [INFO] Running medium priority process
+[2025-04-07 20:26:09] [INFO] Child process iteration 7
+[2025-04-07 20:26:09] [INFO] === Current Queue State ===
+[2025-04-07 20:26:09] [INFO] High Priority Queue:
+[2025-04-07 20:26:09] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:09] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:09] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:09] [INFO] Low Priority Queue:
+[2025-04-07 20:26:09] [INFO] Sleeping Queue:
+[2025-04-07 20:26:09] [INFO] Terminated Queue:
+[2025-04-07 20:26:09] [INFO] ========================
+[2025-04-07 20:26:10] [INFO] Quantum 0
+[2025-04-07 20:26:10] [INFO] No init process, running next process
+[2025-04-07 20:26:10] [INFO] Running medium priority process
+[2025-04-07 20:26:10] [INFO] *****Child process iteration 7
+[2025-04-07 20:26:10] [INFO] === Current Queue State ===
+[2025-04-07 20:26:10] [INFO] High Priority Queue:
+[2025-04-07 20:26:10] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:10] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:10] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:10] [INFO] Low Priority Queue:
+[2025-04-07 20:26:10] [INFO] Sleeping Queue:
+[2025-04-07 20:26:10] [INFO] Terminated Queue:
+[2025-04-07 20:26:10] [INFO] ========================
+[2025-04-07 20:26:10] [INFO] Quantum 0
+[2025-04-07 20:26:10] [INFO] No init process, running next process
+[2025-04-07 20:26:10] [INFO] Running medium priority process
+[2025-04-07 20:26:10] [INFO] Child process iteration 8
+[2025-04-07 20:26:10] [INFO] === Current Queue State ===
+[2025-04-07 20:26:10] [INFO] High Priority Queue:
+[2025-04-07 20:26:10] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:10] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:10] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:10] [INFO] Low Priority Queue:
+[2025-04-07 20:26:10] [INFO] Sleeping Queue:
+[2025-04-07 20:26:10] [INFO] Terminated Queue:
+[2025-04-07 20:26:10] [INFO] ========================
+[2025-04-07 20:26:10] [INFO] Quantum 0
+[2025-04-07 20:26:10] [INFO] No init process, running next process
+[2025-04-07 20:26:10] [INFO] Running medium priority process
+[2025-04-07 20:26:10] [INFO] *****Child process iteration 8
+[2025-04-07 20:26:10] [INFO] === Current Queue State ===
+[2025-04-07 20:26:10] [INFO] High Priority Queue:
+[2025-04-07 20:26:10] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:10] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:10] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:10] [INFO] Low Priority Queue:
+[2025-04-07 20:26:10] [INFO] Sleeping Queue:
+[2025-04-07 20:26:10] [INFO] Terminated Queue:
+[2025-04-07 20:26:10] [INFO] ========================
+[2025-04-07 20:26:10] [INFO] Quantum 0
+[2025-04-07 20:26:10] [INFO] No init process, running next process
+[2025-04-07 20:26:10] [INFO] Running medium priority process
+[2025-04-07 20:26:10] [INFO] Child process iteration 9
+[2025-04-07 20:26:10] [INFO] === Current Queue State ===
+[2025-04-07 20:26:10] [INFO] High Priority Queue:
+[2025-04-07 20:26:10] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:10] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:10] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:10] [INFO] Low Priority Queue:
+[2025-04-07 20:26:10] [INFO] Sleeping Queue:
+[2025-04-07 20:26:10] [INFO] Terminated Queue:
+[2025-04-07 20:26:10] [INFO] ========================
+[2025-04-07 20:26:10] [INFO] Quantum 0
+[2025-04-07 20:26:10] [INFO] No init process, running next process
+[2025-04-07 20:26:10] [INFO] Running medium priority process
+[2025-04-07 20:26:10] [INFO] *****Child process iteration 9
+[2025-04-07 20:26:10] [INFO] === Current Queue State ===
+[2025-04-07 20:26:10] [INFO] High Priority Queue:
+[2025-04-07 20:26:10] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:10] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:10] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:10] [INFO] Low Priority Queue:
+[2025-04-07 20:26:10] [INFO] Sleeping Queue:
+[2025-04-07 20:26:10] [INFO] Terminated Queue:
+[2025-04-07 20:26:10] [INFO] ========================
+[2025-04-07 20:26:11] [INFO] Quantum 0
+[2025-04-07 20:26:11] [INFO] No init process, running next process
+[2025-04-07 20:26:11] [INFO] Running medium priority process
+[2025-04-07 20:26:11] [INFO] Child process iteration 10
+[2025-04-07 20:26:11] [INFO] === Current Queue State ===
+[2025-04-07 20:26:11] [INFO] High Priority Queue:
+[2025-04-07 20:26:11] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:11] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:11] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:11] [INFO] Low Priority Queue:
+[2025-04-07 20:26:11] [INFO] Sleeping Queue:
+[2025-04-07 20:26:11] [INFO] Terminated Queue:
+[2025-04-07 20:26:11] [INFO] ========================
+[2025-04-07 20:26:11] [INFO] Quantum 0
+[2025-04-07 20:26:11] [INFO] No init process, running next process
+[2025-04-07 20:26:11] [INFO] Running medium priority process
+[2025-04-07 20:26:11] [INFO] *****Child process iteration 10
+[2025-04-07 20:26:11] [INFO] === Current Queue State ===
+[2025-04-07 20:26:11] [INFO] High Priority Queue:
+[2025-04-07 20:26:11] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:11] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:11] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:11] [INFO] Low Priority Queue:
+[2025-04-07 20:26:11] [INFO] Sleeping Queue:
+[2025-04-07 20:26:11] [INFO] Terminated Queue:
+[2025-04-07 20:26:11] [INFO] ========================
+[2025-04-07 20:26:11] [INFO] Quantum 0
+[2025-04-07 20:26:11] [INFO] No init process, running next process
+[2025-04-07 20:26:11] [INFO] Running medium priority process
+[2025-04-07 20:26:11] [INFO] Child process iteration 11
+[2025-04-07 20:26:11] [INFO] === Current Queue State ===
+[2025-04-07 20:26:11] [INFO] High Priority Queue:
+[2025-04-07 20:26:11] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:11] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:11] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:11] [INFO] Low Priority Queue:
+[2025-04-07 20:26:11] [INFO] Sleeping Queue:
+[2025-04-07 20:26:11] [INFO] Terminated Queue:
+[2025-04-07 20:26:11] [INFO] ========================
+[2025-04-07 20:26:11] [INFO] Quantum 0
+[2025-04-07 20:26:11] [INFO] No init process, running next process
+[2025-04-07 20:26:11] [INFO] Running medium priority process
+[2025-04-07 20:26:11] [INFO] *****Child process iteration 11
+[2025-04-07 20:26:11] [INFO] === Current Queue State ===
+[2025-04-07 20:26:11] [INFO] High Priority Queue:
+[2025-04-07 20:26:11] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:11] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:11] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:11] [INFO] Low Priority Queue:
+[2025-04-07 20:26:11] [INFO] Sleeping Queue:
+[2025-04-07 20:26:11] [INFO] Terminated Queue:
+[2025-04-07 20:26:11] [INFO] ========================
+[2025-04-07 20:26:11] [INFO] Quantum 0
+[2025-04-07 20:26:11] [INFO] No init process, running next process
+[2025-04-07 20:26:11] [INFO] Running medium priority process
+[2025-04-07 20:26:11] [INFO] Child process iteration 12
+[2025-04-07 20:26:11] [INFO] === Current Queue State ===
+[2025-04-07 20:26:11] [INFO] High Priority Queue:
+[2025-04-07 20:26:11] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:11] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:11] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:11] [INFO] Low Priority Queue:
+[2025-04-07 20:26:11] [INFO] Sleeping Queue:
+[2025-04-07 20:26:11] [INFO] Terminated Queue:
+[2025-04-07 20:26:11] [INFO] ========================
+[2025-04-07 20:26:12] [INFO] Quantum 0
+[2025-04-07 20:26:12] [INFO] No init process, running next process
+[2025-04-07 20:26:12] [INFO] Running medium priority process
+[2025-04-07 20:26:12] [INFO] *****Child process iteration 12
+[2025-04-07 20:26:12] [INFO] === Current Queue State ===
+[2025-04-07 20:26:12] [INFO] High Priority Queue:
+[2025-04-07 20:26:12] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:12] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:12] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:12] [INFO] Low Priority Queue:
+[2025-04-07 20:26:12] [INFO] Sleeping Queue:
+[2025-04-07 20:26:12] [INFO] Terminated Queue:
+[2025-04-07 20:26:12] [INFO] ========================
+[2025-04-07 20:26:12] [INFO] Quantum 0
+[2025-04-07 20:26:12] [INFO] No init process, running next process
+[2025-04-07 20:26:12] [INFO] Running medium priority process
+[2025-04-07 20:26:12] [INFO] Child process iteration 13
+[2025-04-07 20:26:12] [INFO] === Current Queue State ===
+[2025-04-07 20:26:12] [INFO] High Priority Queue:
+[2025-04-07 20:26:12] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:12] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:12] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:12] [INFO] Low Priority Queue:
+[2025-04-07 20:26:12] [INFO] Sleeping Queue:
+[2025-04-07 20:26:12] [INFO] Terminated Queue:
+[2025-04-07 20:26:12] [INFO] ========================
+[2025-04-07 20:26:12] [INFO] Quantum 0
+[2025-04-07 20:26:12] [INFO] No init process, running next process
+[2025-04-07 20:26:12] [INFO] Running medium priority process
+[2025-04-07 20:26:12] [INFO] *****Child process iteration 13
+[2025-04-07 20:26:12] [INFO] === Current Queue State ===
+[2025-04-07 20:26:12] [INFO] High Priority Queue:
+[2025-04-07 20:26:12] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:12] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:12] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:12] [INFO] Low Priority Queue:
+[2025-04-07 20:26:12] [INFO] Sleeping Queue:
+[2025-04-07 20:26:12] [INFO] Terminated Queue:
+[2025-04-07 20:26:12] [INFO] ========================
+[2025-04-07 20:26:12] [INFO] Quantum 0
+[2025-04-07 20:26:12] [INFO] No init process, running next process
+[2025-04-07 20:26:12] [INFO] Running medium priority process
+[2025-04-07 20:26:12] [INFO] Child process iteration 14
+[2025-04-07 20:26:12] [INFO] === Current Queue State ===
+[2025-04-07 20:26:12] [INFO] High Priority Queue:
+[2025-04-07 20:26:12] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:12] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:12] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:12] [INFO] Low Priority Queue:
+[2025-04-07 20:26:12] [INFO] Sleeping Queue:
+[2025-04-07 20:26:12] [INFO] Terminated Queue:
+[2025-04-07 20:26:12] [INFO] ========================
+[2025-04-07 20:26:12] [INFO] Quantum 0
+[2025-04-07 20:26:12] [INFO] No init process, running next process
+[2025-04-07 20:26:12] [INFO] Running medium priority process
+[2025-04-07 20:26:12] [INFO] *****Child process iteration 14
+[2025-04-07 20:26:12] [INFO] === Current Queue State ===
+[2025-04-07 20:26:12] [INFO] High Priority Queue:
+[2025-04-07 20:26:12] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:12] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:12] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:12] [INFO] Low Priority Queue:
+[2025-04-07 20:26:12] [INFO] Sleeping Queue:
+[2025-04-07 20:26:12] [INFO] Terminated Queue:
+[2025-04-07 20:26:12] [INFO] ========================
+[2025-04-07 20:26:13] [INFO] Quantum 0
+[2025-04-07 20:26:13] [INFO] No init process, running next process
+[2025-04-07 20:26:13] [INFO] Running medium priority process
+[2025-04-07 20:26:13] [INFO] Child process iteration 15
+[2025-04-07 20:26:13] [INFO] === Current Queue State ===
+[2025-04-07 20:26:13] [INFO] High Priority Queue:
+[2025-04-07 20:26:13] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:13] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:13] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:13] [INFO] Low Priority Queue:
+[2025-04-07 20:26:13] [INFO] Sleeping Queue:
+[2025-04-07 20:26:13] [INFO] Terminated Queue:
+[2025-04-07 20:26:13] [INFO] ========================
+[2025-04-07 20:26:13] [INFO] Quantum 0
+[2025-04-07 20:26:13] [INFO] No init process, running next process
+[2025-04-07 20:26:13] [INFO] Running medium priority process
+[2025-04-07 20:26:13] [INFO] *****Child process iteration 15
+[2025-04-07 20:26:13] [INFO] === Current Queue State ===
+[2025-04-07 20:26:13] [INFO] High Priority Queue:
+[2025-04-07 20:26:13] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:13] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:13] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:13] [INFO] Low Priority Queue:
+[2025-04-07 20:26:13] [INFO] Sleeping Queue:
+[2025-04-07 20:26:13] [INFO] Terminated Queue:
+[2025-04-07 20:26:13] [INFO] ========================
+[2025-04-07 20:26:13] [INFO] Quantum 0
+[2025-04-07 20:26:13] [INFO] No init process, running next process
+[2025-04-07 20:26:13] [INFO] Running medium priority process
+[2025-04-07 20:26:13] [INFO] Child process iteration 16
+[2025-04-07 20:26:13] [INFO] === Current Queue State ===
+[2025-04-07 20:26:13] [INFO] High Priority Queue:
+[2025-04-07 20:26:13] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:13] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:13] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:13] [INFO] Low Priority Queue:
+[2025-04-07 20:26:13] [INFO] Sleeping Queue:
+[2025-04-07 20:26:13] [INFO] Terminated Queue:
+[2025-04-07 20:26:13] [INFO] ========================
+[2025-04-07 20:26:13] [INFO] Quantum 0
+[2025-04-07 20:26:13] [INFO] No init process, running next process
+[2025-04-07 20:26:13] [INFO] Running medium priority process
+[2025-04-07 20:26:13] [INFO] *****Child process iteration 16
+[2025-04-07 20:26:13] [INFO] === Current Queue State ===
+[2025-04-07 20:26:13] [INFO] High Priority Queue:
+[2025-04-07 20:26:13] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:13] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:13] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:13] [INFO] Low Priority Queue:
+[2025-04-07 20:26:13] [INFO] Sleeping Queue:
+[2025-04-07 20:26:13] [INFO] Terminated Queue:
+[2025-04-07 20:26:13] [INFO] ========================
+[2025-04-07 20:26:13] [INFO] Quantum 0
+[2025-04-07 20:26:13] [INFO] No init process, running next process
+[2025-04-07 20:26:13] [INFO] Running medium priority process
+[2025-04-07 20:26:13] [INFO] Child process iteration 17
+[2025-04-07 20:26:13] [INFO] === Current Queue State ===
+[2025-04-07 20:26:13] [INFO] High Priority Queue:
+[2025-04-07 20:26:13] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:13] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:13] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:13] [INFO] Low Priority Queue:
+[2025-04-07 20:26:13] [INFO] Sleeping Queue:
+[2025-04-07 20:26:13] [INFO] Terminated Queue:
+[2025-04-07 20:26:13] [INFO] ========================
+[2025-04-07 20:26:14] [INFO] Quantum 0
+[2025-04-07 20:26:14] [INFO] No init process, running next process
+[2025-04-07 20:26:14] [INFO] Running medium priority process
+[2025-04-07 20:26:14] [INFO] *****Child process iteration 17
+[2025-04-07 20:26:14] [INFO] === Current Queue State ===
+[2025-04-07 20:26:14] [INFO] High Priority Queue:
+[2025-04-07 20:26:14] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:14] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:14] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:14] [INFO] Low Priority Queue:
+[2025-04-07 20:26:14] [INFO] Sleeping Queue:
+[2025-04-07 20:26:14] [INFO] Terminated Queue:
+[2025-04-07 20:26:14] [INFO] ========================
+[2025-04-07 20:26:14] [INFO] Quantum 0
+[2025-04-07 20:26:14] [INFO] No init process, running next process
+[2025-04-07 20:26:14] [INFO] Running medium priority process
+[2025-04-07 20:26:14] [INFO] Child process iteration 18
+[2025-04-07 20:26:14] [INFO] === Current Queue State ===
+[2025-04-07 20:26:14] [INFO] High Priority Queue:
+[2025-04-07 20:26:14] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:14] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:14] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:14] [INFO] Low Priority Queue:
+[2025-04-07 20:26:14] [INFO] Sleeping Queue:
+[2025-04-07 20:26:14] [INFO] Terminated Queue:
+[2025-04-07 20:26:14] [INFO] ========================
+[2025-04-07 20:26:14] [INFO] Quantum 0
+[2025-04-07 20:26:14] [INFO] No init process, running next process
+[2025-04-07 20:26:14] [INFO] Running medium priority process
+[2025-04-07 20:26:14] [INFO] *****Child process iteration 18
+[2025-04-07 20:26:14] [INFO] === Current Queue State ===
+[2025-04-07 20:26:14] [INFO] High Priority Queue:
+[2025-04-07 20:26:14] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:14] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:14] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:14] [INFO] Low Priority Queue:
+[2025-04-07 20:26:14] [INFO] Sleeping Queue:
+[2025-04-07 20:26:14] [INFO] Terminated Queue:
+[2025-04-07 20:26:14] [INFO] ========================
+[2025-04-07 20:26:14] [INFO] Quantum 0
+[2025-04-07 20:26:14] [INFO] No init process, running next process
+[2025-04-07 20:26:14] [INFO] Running medium priority process
+[2025-04-07 20:26:14] [INFO] Child process iteration 19
+[2025-04-07 20:26:14] [INFO] === Current Queue State ===
+[2025-04-07 20:26:14] [INFO] High Priority Queue:
+[2025-04-07 20:26:14] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:14] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:14] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:14] [INFO] Low Priority Queue:
+[2025-04-07 20:26:14] [INFO] Sleeping Queue:
+[2025-04-07 20:26:14] [INFO] Terminated Queue:
+[2025-04-07 20:26:14] [INFO] ========================
+[2025-04-07 20:26:14] [INFO] Quantum 0
+[2025-04-07 20:26:14] [INFO] No init process, running next process
+[2025-04-07 20:26:14] [INFO] Running medium priority process
+[2025-04-07 20:26:14] [INFO] *****Child process iteration 19
+[2025-04-07 20:26:15] [INFO] === Current Queue State ===
+[2025-04-07 20:26:15] [INFO] High Priority Queue:
+[2025-04-07 20:26:15] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:15] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:15] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:15] [INFO] Low Priority Queue:
+[2025-04-07 20:26:15] [INFO] Sleeping Queue:
+[2025-04-07 20:26:15] [INFO] Terminated Queue:
+[2025-04-07 20:26:15] [INFO] ========================
+[2025-04-07 20:26:15] [INFO] Quantum 0
+[2025-04-07 20:26:15] [INFO] No init process, running next process
+[2025-04-07 20:26:15] [INFO] Running medium priority process
+[2025-04-07 20:26:15] [INFO] Child process iteration 20
+[2025-04-07 20:26:15] [INFO] === Current Queue State ===
+[2025-04-07 20:26:15] [INFO] High Priority Queue:
+[2025-04-07 20:26:15] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:15] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:15] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:15] [INFO] Low Priority Queue:
+[2025-04-07 20:26:15] [INFO] Sleeping Queue:
+[2025-04-07 20:26:15] [INFO] Terminated Queue:
+[2025-04-07 20:26:15] [INFO] ========================
+[2025-04-07 20:26:15] [INFO] Quantum 0
+[2025-04-07 20:26:15] [INFO] No init process, running next process
+[2025-04-07 20:26:15] [INFO] Running medium priority process
+[2025-04-07 20:26:15] [INFO] *****Child process iteration 20
+[2025-04-07 20:26:15] [INFO] === Current Queue State ===
+[2025-04-07 20:26:15] [INFO] High Priority Queue:
+[2025-04-07 20:26:15] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:15] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:15] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:15] [INFO] Low Priority Queue:
+[2025-04-07 20:26:15] [INFO] Sleeping Queue:
+[2025-04-07 20:26:15] [INFO] Terminated Queue:
+[2025-04-07 20:26:15] [INFO] ========================
+[2025-04-07 20:26:15] [INFO] Quantum 0
+[2025-04-07 20:26:15] [INFO] No init process, running next process
+[2025-04-07 20:26:15] [INFO] Running medium priority process
+[2025-04-07 20:26:15] [INFO] Child process iteration 21
+[2025-04-07 20:26:15] [INFO] === Current Queue State ===
+[2025-04-07 20:26:15] [INFO] High Priority Queue:
+[2025-04-07 20:26:15] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:15] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:15] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:15] [INFO] Low Priority Queue:
+[2025-04-07 20:26:15] [INFO] Sleeping Queue:
+[2025-04-07 20:26:15] [INFO] Terminated Queue:
+[2025-04-07 20:26:15] [INFO] ========================
+[2025-04-07 20:26:15] [INFO] Quantum 0
+[2025-04-07 20:26:15] [INFO] No init process, running next process
+[2025-04-07 20:26:15] [INFO] Running medium priority process
+[2025-04-07 20:26:15] [INFO] *****Child process iteration 21
+[2025-04-07 20:26:15] [INFO] === Current Queue State ===
+[2025-04-07 20:26:15] [INFO] High Priority Queue:
+[2025-04-07 20:26:15] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:15] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:15] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:15] [INFO] Low Priority Queue:
+[2025-04-07 20:26:15] [INFO] Sleeping Queue:
+[2025-04-07 20:26:15] [INFO] Terminated Queue:
+[2025-04-07 20:26:15] [INFO] ========================
+[2025-04-07 20:26:15] [INFO] Quantum 0
+[2025-04-07 20:26:15] [INFO] No init process, running next process
+[2025-04-07 20:26:15] [INFO] Running medium priority process
+[2025-04-07 20:26:15] [INFO] Child process iteration 22
+[2025-04-07 20:26:16] [INFO] === Current Queue State ===
+[2025-04-07 20:26:16] [INFO] High Priority Queue:
+[2025-04-07 20:26:16] [INFO] Medium Priority Queue:
+[2025-04-07 20:26:16] [INFO]   PID 2 (State: 0)
+[2025-04-07 20:26:16] [INFO]   PID 1 (State: 0)
+[2025-04-07 20:26:16] [INFO] Low Priority Queue:
+[2025-04-07 20:26:16] [INFO] Sleeping Queue:
+[2025-04-07 20:26:16] [INFO] Terminated Queue:
+[2025-04-07 20:26:16] [INFO] ========================
+[2025-04-07 20:26:16] [INFO] Quantum 0
+[2025-04-07 20:26:16] [INFO] No init process, running next process
+[2025-04-07 20:26:16] [INFO] Running medium priority process
+[2025-04-07 20:26:16] [INFO] *****Child process iteration 22

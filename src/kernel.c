@@ -15,7 +15,6 @@ pcb_t* k_proc_create(pcb_t *parent) {
     LOG_INFO("Spawning process %d", proc->pid);
     proc->priority = PRIORITY_MEDIUM;
     proc->state = PROCESS_READY;
-    proc->quantum_count = 0;
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
