@@ -18,12 +18,29 @@ static void alarm_handler(int signum) {}
 
 // Init thread main function - continuously reaps zombie children
 static void* init_thread_func(void* arg) {
-    while (scheduler_state->terminated_processes.head != NULL) {
-        pcb_t* terminated = linked_list_pop_head(&scheduler_state->terminated_processes);
-        LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
-        k_proc_cleanup(terminated);
+    LOG_INFO("running init thread");
+    while (1) {
+        if (scheduler_state->terminated_processes.head != NULL) {
+            // Get the process to terminate
+            pcb_t* terminated = scheduler_state->terminated_processes.head;
+            LOG_INFO("Processing terminated process %d", terminated->pid);
+            
+            // Remove from terminated queue first
+            scheduler_state->terminated_processes.head = terminated->next;
+            if (terminated->next != NULL) {
+                terminated->next->prev = NULL;
+            } else {
+                scheduler_state->terminated_processes.tail = NULL;
+            }
+            terminated->next = NULL;
+            terminated->prev = NULL;
+            
+            // The process should already be removed from its priority queue in run_next_process
+            // when it was detected as terminated. We just need to clean it up.
+            LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
+            k_proc_cleanup(terminated);        }
     }
-    return NULL;
+   return NULL;
 }
 
 void init_scheduler() {
@@ -229,6 +246,10 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             if (ret != 0 && proc->pid != 0) {
                 linked_list_remove(&scheduler_state->priority_high, proc);
+                linked_list_remove(&scheduler_state->processes, proc);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->prev = NULL;
+                proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
                 current++;
@@ -254,6 +275,9 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             if (ret != 0 && proc->pid != 0) {
                 linked_list_remove(&scheduler_state->priority_medium, proc);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->prev = NULL;
+                proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
                 current++;
@@ -281,6 +305,9 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             if (ret != 0 && proc->pid != 0) {
                 linked_list_remove(&scheduler_state->priority_low, proc);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->prev = NULL;
+                proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
                 current++;
@@ -288,7 +315,6 @@ void run_next_process() {
             }
             
             // Move to back of queue for next round if suspended
-            // After suspending, move to back of queue
             linked_list_remove(&scheduler_state->priority_low, proc);
             linked_list_push_tail(&scheduler_state->priority_low, proc);
             current++;
