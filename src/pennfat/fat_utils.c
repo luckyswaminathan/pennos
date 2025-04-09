@@ -13,7 +13,6 @@ uint16_t block_size_of_config(uint8_t block_size_config) {
 	}
 }
 
-
 int parse_first_fat_entry(uint16_t first_entry, uint16_t* block_size_ptr, uint8_t* blocks_in_fat_ptr) {
 	*blocks_in_fat_ptr = first_entry >> 8;
 	*block_size_ptr = block_size_of_config((uint8_t) first_entry);

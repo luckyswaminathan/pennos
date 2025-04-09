@@ -70,6 +70,7 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 	return val;
 }
 
+// TODO: add all the signal handling stuff
 int main(void) {
 	fat16_fs fs;
 	bool mounted = false;
@@ -179,6 +180,63 @@ int main(void) {
 			}
 			mounted = false;
 
+		} else if (strcmp(tokens[0], "touch") == 0) {
+			if (n_tokens != 2) {
+				fprintf(stderr, "touch got wrong number of arguments (expected 1 argument)\n");
+				goto cleanup_tokens;
+			}
+			if (!mounted) {
+				fprintf(stderr, "touch: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+			
+			int fd = k_open(&fs, tokens[1], F_APPEND); // don't truncate file
+			if (fd < 0) {
+				fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
+				goto cleanup_tokens;
+			}
+			if (k_write(&fs, fd, NULL, 0) < 0) {
+				fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
+				goto cleanup_tokens;
+			}
+			k_close(&fs, fd);
+		} else if (strcmp(tokens[0], "mv") == 0) {
+			if (n_tokens != 3) {
+				fprintf(stderr, "mv got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
+			if (!mounted) {
+				fprintf(stderr, "mv: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+
+		} else if (strcmp(tokens[0], "rm") == 0) {
+			if (n_tokens != 2) {
+				fprintf(stderr, "rm got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
+			if (!mounted) {
+				fprintf(stderr, "rm: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+		} else if (strcmp(tokens[0], "cat") == 0) {
+			if (!mounted) {
+				fprintf(stderr, "cat: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+			if (n_tokens <= 2) {
+				fprintf(stderr, "cat got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
+		} else if (strcmp(tokens[0], "cp") == 0) {
+			if (!mounted) {
+				fprintf(stderr, "cat: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+			if (n_tokens <= 2) {
+				fprintf(stderr, "cat got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
 		} else {
 			fprintf(stderr, "Unrecognized command\n");
 			goto cleanup_tokens;

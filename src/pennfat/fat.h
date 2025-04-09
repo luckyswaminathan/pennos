@@ -38,8 +38,11 @@ _Static_assert(sizeof(directory_entry) == 64, "directory_entry must be 64 byes")
 
 typedef struct global_fd_entry_st {
     size_t ref_count;
-    directory_entry* ptr_to_dir_entry; // mmapped write-through dir entry
+    directory_entry* ptr_to_dir_entry; // an in-memory copy of the dir entry. This should be maintained so it always matches what is on disk
+    uint16_t dir_entry_block_num;
+    uint8_t dir_entry_idx; 
     bool write_locked; // mutex for whether this file is already being written to by another file
+    uint32_t offset; // offset can be no greater than the size, which is specified in the directory entry
 } global_fd_entry;
 
 /**
@@ -64,3 +67,9 @@ int unmount(fat16_fs* ptr_to_fs);
  * TODO
  */
 int k_open(fat16_fs* ptr_to_fs, const char* fname, int mode);
+
+int k_close(fat16_fs* ptr_to_fs, int fd);
+
+int k_write(fat16_fs* ptr_to_fs, int fd, const char *str, int n);
+
+int k_unlink(fat16_fs* ptr_to_fs, const char* fname);

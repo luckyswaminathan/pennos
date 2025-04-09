@@ -3,3 +3,6 @@ sched-demo:
 
 pennfat: $(wildcard src/pennfat/*.c) $(wildcard src/pennfat/*.h)
 	clang -o bin/pennfat src/pennfat/*.c -I. -g
+
+cram-pennfat: pennfat
+	uvx cram -i test/pennfat/cram-tests/*

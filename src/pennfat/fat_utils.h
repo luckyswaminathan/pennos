@@ -11,4 +11,3 @@ uint16_t block_size_of_config(uint8_t block_size_config);
  * Parse the first entry of the fat into block_size and blocks_in_fat 
  */
 int parse_first_fat_entry(uint16_t first_entry, uint16_t* block_size_ptr, uint8_t* blocks_in_fat_ptr);
-
