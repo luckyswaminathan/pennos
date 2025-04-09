@@ -184,10 +184,20 @@ static void log_queue_state() {
 
 // Check if there are any runnable processes
 static bool has_runnable_processes() {
-    return scheduler_state->priority_high.head != NULL ||
-           scheduler_state->priority_medium.head != NULL ||
-           scheduler_state->priority_low.head != NULL ||
-           scheduler_state->sleeping_processes.head != NULL;
+    // Check high priority queue
+    if (scheduler_state->priority_high.head != NULL)
+        return true;
+
+    // Check medium priority queue, but if it only contains init process (pid 0), don't count it
+    if (scheduler_state->priority_medium.head != NULL) {
+        if (scheduler_state->priority_medium.head->next != NULL || 
+            ((pcb_t*)scheduler_state->priority_medium.head)->pid != 0)
+        return true;
+    }
+    if (scheduler_state->priority_low.head != NULL)
+        return true;
+
+    return false;
 }
 
 void run_scheduler() {
@@ -195,14 +205,16 @@ void run_scheduler() {
     sigfillset(&mask);
     sigdelset(&mask, SIGALRM);
     
-    while (has_runnable_processes()) {
+    while (1) {
         log_queue_state();
-        sigsuspend(&mask); 
+        
+        // Only run processes and decrease sleep if we have runnable processes
         run_next_process();
         decrease_sleep();
+        
+        // Always suspend to wait for next signal
+        sigsuspend(&mask);
     }
-    
-    LOG_INFO("No more runnable processes, scheduler exiting");
 }
 
 void block_process(pcb_t* proc) {
@@ -318,10 +330,12 @@ void run_next_process() {
             quantum++;
             return;
         }
-        // Check if we have any runnable processes left
+        // If we reach here, no processes in any priority queue are ready
         if (!has_runnable_processes()) {
-            LOG_INFO("No more runnable processes, scheduler exiting");
-            quantum++;
+            LOG_INFO("No runnable processes, scheduler idling");
+            // Use sigsuspend to idle until a signal arrives
+            sigsuspend(&suspend_set);
+            // After waking up, don't increment quantum - let the next iteration handle that
             return;
         }
     }
