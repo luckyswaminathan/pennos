@@ -65,4 +65,4 @@ format:
 	clang-format -i --verbose --style=Chromium $(MAIN_FILES) $(TEST_MAINS) $(SRCS) $(HDRS)
 
 clean:
-	rm $(OBJS) $(EXECS) $(TEST_EXECS)
+	-rm -f $(EXECS)
