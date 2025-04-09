@@ -18,13 +18,6 @@
 #define MAX_FILENAME_SIZE 31
 #define FAT_END_OF_FILE 0xFFFF
 
-#define P_NO_FILE_PERMISSION 0
-#define P_WRITE_ONLY_FILE_PERMISSION 2
-#define P_READ_ONLY_FILE_PERMISSION 4
-#define P_READ_AND_EXECUTABLE_FILE_PERMISSION 5
-#define P_READ_WRITE_FILE_PERMISSION 6
-#define P_READ_WRITE_AND_EXECUTABLE_FILE_PERMISSION 5
-
 global_fd_entry global_fd_table[GLOBAL_FD_TABLE_SIZE] = {0};
 
 int min(int a, int b) {
@@ -423,19 +416,6 @@ uint16_t find_empty_fd() {
     return fd_idx;
 }
 
-#define EK_OPEN_FILENAME_TOO_LONG -1
-#define EK_OPEN_INVALID_FILENAME_CHARSET -2
-#define EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED -3
-#define EK_OPEN_GLOBAL_FD_TABLE_FULL -4
-#define EK_OPEN_FILE_DOES_NOT_EXIST -5
-#define EK_OPEN_MALLOC_FAILED -6
-#define EK_OPEN_TIME_FAILED -7
-#define EK_OPEN_ALREADY_WRITE_LOCKED -8
-#define EK_OPEN_FILENAME_TOO_SHORT -9
-#define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
-#define EK_OPEN_NO_EMPTY_BLOCKS -11
-#define EK_OPEN_WRONG_PERMISSIONS -12
-
 int k_open(fat16_fs* ptr_to_fs, const char* fname, int mode) {
     bool acquire_write_lock = (mode == F_WRITE) || (mode == F_APPEND);
     uint8_t strlen = strnlen(fname, MAX_FILENAME_SIZE);
@@ -562,9 +542,6 @@ void clear_fat_file(fat16_fs* ptr_to_fs, uint16_t block) {
     }
 }
 
-#define EK_CLOSE_FD_OUT_OF_RANGE -1
-#define EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED -2
-
 int k_close(fat16_fs* ptr_to_fs, int fd) {
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0) {
         return EK_CLOSE_FD_OUT_OF_RANGE;
@@ -596,12 +573,6 @@ int k_close(fat16_fs* ptr_to_fs, int fd) {
     return 0;
 }
 
-#define EK_READ_FD_OUT_OF_RANGE -1
-#define EK_READ_FD_NOT_IN_TABLE -2
-// this is an unexpected error (almost a panic) because
-// this should never happen if lseek is implemented correctly
-#define EK_READ_COULD_NOT_JUMP_TO_BLOCK_FOR_OFFSET -3
-#define EK_READ_WRONG_PERMISSIONS -4
 
 int k_read(fat16_fs* ptr_to_fs, int fd, int n, char* buf) {
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0) {
@@ -664,24 +635,6 @@ int k_read(fat16_fs* ptr_to_fs, int fd, int n, char* buf) {
     return n_copied;
 }
 
-#define F_SEEK_SET 1
-#define F_SEEK_CUR 2
-#define F_SEEK_END 3
-#define EK_LSEEK_BAD_WHENCE -1
-#define EK_LSEEK_NEGATIVE_OFFSET -2
-#define EK_LSEEK_OFFSET_OVERFLOW -3
-#define EK_LSEEK_FD_OUT_OF_RANGE -4
-#define EK_LSEEK_FD_NOT_IN_TABLE -5
-#define EK_LSEEK_WRONG_PERMISSIONS -6
-
-/**
- * IMPORTANT: this function does not have the same signature as lseek(2) because
- * it returns a negative error code on error. On success, it returns the offset
- * which is guaranteed to fit in a uint32_t
- *
- * Returns the new offset on success and a negative value on error (see EK_LSEEK_*
- * error codes)
- */
 int64_t k_lseek(int fd, int offset, int whence) {
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0) {
         return EK_LSEEK_FD_OUT_OF_RANGE;
@@ -730,16 +683,6 @@ int64_t k_lseek(int fd, int offset, int whence) {
     fd_entry.offset = new_offset;
     return new_offset;
 }
-
-#define EK_WRITE_WRONG_PERMISSIONS -1
-#define EK_WRITE_FD_NOT_IN_TABLE -2
-#define EK_WRITE_FD_OUT_OF_RANGE -3
-#define EK_WRITE_GET_BLOCK_FAILED -5
-#define EK_WRITE_NEXT_BLOCK_NUM_FAILED -6
-#define EK_WRITE_WRITE_BLOCK_FAILED -7
-#define EK_WRITE_WRITE_ROOT_DIR_ENTRY_FAILED -8
-#define EK_WRITE_NO_EMPTY_BLOCKS -9
-#define EK_WRITE_TIME_FAILED -10
 
 int k_write(fat16_fs* ptr_to_fs, int fd, const char *str, int n) {
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0) {
@@ -918,10 +861,6 @@ int k_write(fat16_fs* ptr_to_fs, int fd, const char *str, int n) {
     }
     return n_copied;
 }
-
-#define EK_UNLINK_FILE_NOT_FOUND -1
-#define EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED -2
-#define EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED -3
 
 int k_unlink(fat16_fs* ptr_to_fs, const char* fname) {
     // TODO: add validation for fname here, otherwise it's possible
