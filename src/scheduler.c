@@ -184,10 +184,20 @@ static void log_queue_state() {
 
 // Check if there are any runnable processes
 static bool has_runnable_processes() {
-    return scheduler_state->priority_high.head != NULL ||
-           scheduler_state->priority_medium.head != NULL ||
-           scheduler_state->priority_low.head != NULL ||
-           scheduler_state->sleeping_processes.head != NULL;
+    // Check high priority queue
+    if (scheduler_state->priority_high.head != NULL)
+        return true;
+
+    // Check medium priority queue, but if it only contains init process (pid 0), don't count it
+    if (scheduler_state->priority_medium.head != NULL) {
+        if (scheduler_state->priority_medium.head->next != NULL || 
+            ((pcb_t*)scheduler_state->priority_medium.head)->pid != 0)
+        return true;
+    }
+    if (scheduler_state->priority_low.head != NULL)
+        return true;
+
+    return false;
 }
 
 void run_scheduler() {
@@ -195,14 +205,16 @@ void run_scheduler() {
     sigfillset(&mask);
     sigdelset(&mask, SIGALRM);
     
-    while (has_runnable_processes()) {
+    while (1) {
         log_queue_state();
-        sigsuspend(&mask); 
+        
+        // Only run processes and decrease sleep if we have runnable processes
         run_next_process();
         decrease_sleep();
+        
+        // Always suspend to wait for next signal
+        sigsuspend(&mask);
     }
-    
-    LOG_INFO("No more runnable processes, scheduler exiting");
 }
 
 void block_process(pcb_t* proc) {
@@ -232,7 +244,7 @@ void add_process_to_queue(pcb_t* proc) {
 
 void run_next_process() {
     int current = quantum % 18;
-    LOG_INFO("Quantum %d", quantum);
+    LOG_INFO("CURRENT: %d", current);
 
     // Try high priority first if in high priority time slot
     if (current < 9) {
@@ -246,13 +258,12 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             if (ret != 0 && proc->pid != 0) {
                 linked_list_remove(&scheduler_state->priority_high, proc);
-                linked_list_remove(&scheduler_state->processes, proc);
                 // Reset prev/next pointers before adding to terminated queue
                 proc->prev = NULL;
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
@@ -260,7 +271,7 @@ void run_next_process() {
             // After suspending, move to back of queue
             linked_list_remove(&scheduler_state->priority_high, proc);
             linked_list_push_tail(&scheduler_state->priority_high, proc);
-            current++;
+            quantum++;
             return;
         }
     }
@@ -280,7 +291,7 @@ void run_next_process() {
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
@@ -288,8 +299,7 @@ void run_next_process() {
             // After suspending, move to back of queue
             linked_list_remove(&scheduler_state->priority_medium, proc);
             linked_list_push_tail(&scheduler_state->priority_medium, proc);
-            current++;
-
+            quantum++;
             return;
         }
     }
@@ -310,23 +320,26 @@ void run_next_process() {
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                current++;
+                quantum++;
                 return;
             }
             
             // Move to back of queue for next round if suspended
             linked_list_remove(&scheduler_state->priority_low, proc);
             linked_list_push_tail(&scheduler_state->priority_low, proc);
-            current++;
+            quantum++;
             return;
         }
-        // Check if we have any runnable processes left
+        // If we reach here, no processes in any priority queue are ready
         if (!has_runnable_processes()) {
-            LOG_INFO("No more runnable processes, scheduler exiting");
+            LOG_INFO("No runnable processes, scheduler idling");
+            // Use sigsuspend to idle until a signal arrives
+            sigsuspend(&suspend_set);
+            // After waking up, don't increment quantum - let the next iteration handle that
             return;
         }
     }
-    current++;
+    quantum++;
 }
 
 void log_all_processes() {
