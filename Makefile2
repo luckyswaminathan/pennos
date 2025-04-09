@@ -1,0 +1,12 @@
+sched-demo:
+	clang -o bin/sched-demo test/sched-demo.c src/utils/spthread.c -I. -pthread --std=gnu2x
+
+pennfat: $(wildcard src/pennfat/*.c) $(wildcard src/pennfat/*.h)
+	clang -o bin/pennfat src/pennfat/*.c -I. -g
+
+cram-pennfat: pennfat
+	uvx cram -i test/pennfat/cram-tests/*
+
+unit-pennfat: pennfat $(wildcard test/pennfat/unit-tests/*.cpp) $(wildcard test/pennfat/unit-tests/*.hpp)
+	clang++ -std=c++17 -o test/pennfat/unit-tests/unit-pennfat test/pennfat/unit-tests/*.cpp  -I. -g
+
