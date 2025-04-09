@@ -11,8 +11,9 @@ CXX = clang++-15
 CFLAGS = -g3 -gdwarf-4 -pthread -Wall -Werror -Wno-gnu -O0 -g --std=gnu2x
 CXXFLAGS = -g3 -gdwarf-4 -pthread -Wall -Werror -Wno-gnu -O0 -g --std=gnu++2b
 
-# tells it to search for 
-CPPFLAGS = -I $(SRC_DIR)
+# tells it to search in the src dir and the current dir
+# so we support both "src/pennfat/fat.h" and "pennfat/fat.h" style includes
+CPPFLAGS = -I $(SRC_DIR) -I.
 
 # add each test name to this list
 # for example:
@@ -66,3 +67,35 @@ format:
 
 clean:
 	-rm -f $(EXECS)
+
+# configs for standalone pennfat
+# and pennfat tests
+PENNFAT_MAIN = $(SRC_DIR)/pennfat/pennfat.c
+PENNFAT_SRCS = $(filter-out $(PENNFAT_MAIN), $(wildcard $(SRC_DIR)/pennfat/*.c))
+PENNFAT_HDRS = $(wildcard $(SRC_DIR)/pennfat/*.h)
+PENNFAT_EXEC = $(BIN_DIR)/pennfat
+PENNFAT_OBJS = $(PENNFAT_SRCS:.c=.o)
+PENNFAT_TEST_HDRS = $(TESTS_DIR)/pennfat/acutest.h
+PENNFAT_TEST_MAIN = $(TESTS_DIR)/pennfat/test_pennfat.c
+PENNFAT_TEST_EXEC = $(TESTS_DIR)/pennfat/test_pennfat
+
+pennfat-info:
+	$(info PENNFAT_MAIN: $(PENNFAT_MAIN)) \
+	$(info PENNFAT_SRCS: $(PENNFAT_SRCS)) \
+	$(info PENNFAT_SRCS: $(PENNFAT_SRCS)) \
+	$(info PENNFAT_HDRS: $(PENNFAT_HDRS)) \
+	$(info PENNFAT_EXEC: $(PENNFAT_EXEC)) \
+	$(info PENNFAT_OBJS: $(PENNFAT_OBJS)) \
+	$(info PENNFAT_TEST_HDRS: $(PENNFAT_TEST_HDRS)) \
+	$(info PENNFAT_TEST_MAIN: $(PENNFAT_TEST_MAIN)) \
+	$(info PENNFAT_TEST_EXEC: $(PENNFAT_TEST_EXEC))
+
+pennfat-all: $(PENNFAT_EXEC) $(PENNFAT_TEST_EXEC)
+
+$(PENNFAT_TEST_EXEC): $(PENNFAT_OBJS) $(PENNFAT_TEST_MAIN) 
+
+$(PENNFAT_EXEC): $(PENNFAT_OBJS) $(PENNFAT_MAIN)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $^ -o $@
+
+$(PENNFAT_OBJS): %.o: %.c $(PENNFAT_HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<

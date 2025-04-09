@@ -304,7 +304,6 @@ int find_file_in_global_fd_table(const char* fname, uint16_t* ptr_to_fd_idx) {
 #define RFIND_EMPTY_SPOT_IN_ROOT_DIR_END_ENTRY 1
 
 int find_empty_spot_in_root_dir(fat16_fs* ptr_to_fs, uint16_t* ptr_to_block, uint8_t* ptr_to_offset) {
-    uint8_t directory_entry_offset = 0;
     uint16_t block = 1;
     directory_entry* dir_entry_buf = ptr_to_fs->block_buf;
     uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
@@ -450,8 +449,8 @@ int k_open(fat16_fs* ptr_to_fs, const char* fname, int mode) {
         uint8_t perm = fd_entry.ptr_to_dir_entry->perm;
         if (
                 perm == P_NO_FILE_PERMISSION ||
-                perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
-                (perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND)
+                (perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ) || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
+                ((perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND))
         ) {
             return EK_OPEN_WRONG_PERMISSIONS;
         }
@@ -671,14 +670,14 @@ int64_t k_lseek(int fd, int offset, int whence) {
             return EK_LSEEK_OFFSET_OVERFLOW;
         }
         new_offset = curr_offset + offset;
-    } else if (whence == F_SEEK_END) { 
+    } else { // whence == F_SEEK_END 
         if (offset < 0 && -offset > size) {
             return EK_LSEEK_NEGATIVE_OFFSET;
         } else if ((UINT32_MAX - size) < offset) {
             return EK_LSEEK_OFFSET_OVERFLOW;
         }
         new_offset = size + offset;
-    }
+    } 
 
     fd_entry.offset = new_offset;
     return new_offset;
@@ -868,6 +867,7 @@ int k_unlink(fat16_fs* ptr_to_fs, const char* fname) {
 
     uint16_t dir_entry_block_num;
     uint8_t dir_entry_idx;
+    directory_entry dir_entry; // we may or may not use this; see below
     directory_entry* ptr_to_updated_dir_entry;
     uint16_t fd_idx;
     
@@ -888,7 +888,7 @@ int k_unlink(fat16_fs* ptr_to_fs, const char* fname) {
         // - the file is already deleted, and thus we can't find it
         // We can't really distinguish between these cases, so we have to look for the file in the
         // root directory
-        
+        ptr_to_updated_dir_entry = &dir_entry;
         int find_file_in_root_dir_status = find_file_in_root_dir(ptr_to_fs, fname, ptr_to_updated_dir_entry, &dir_entry_block_num, &dir_entry_idx);
         if (find_file_in_root_dir_status < 0) {
             return EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED; 
