@@ -22,7 +22,7 @@ TEST_MAINS = $(TESTS_DIR)/sched-demo.c
 # list all files with their own main() function here
 # for example:
 # MAIN_FILES = $(SRC_DIR)/stand_alone_pennfat.c $(SRC_DIR)/helloworld.c $(SRC_DIR)/pennos.c
-MAIN_FILES = $(SRC_DIR)/pennos.c
+MAIN_FILES = $(SRC_DIR)/pennos.c 
 
 # to get the executables, remove the .c from the filename and put 
 # it in the BIN_DIR
@@ -30,9 +30,9 @@ EXECS = $(subst $(SRC_DIR),$(BIN_DIR),$(MAIN_FILES:.c=))
 TEST_EXECS = $(subst $(TESTS_DIR),$(BIN_DIR),$(TEST_MAINS:.c=))
 
 # srcs = all C files in SRC_DIR that are not listed in MAIN_FILES
-SRCS = $(filter-out $(MAIN_FILES), $(shell find $(SRC_DIR) -type f -name '*.c'))
-HDRS = $(shell find src -type f -name '*.h')
-OBJS = $(SRCS:.c=.o)
+SRCS = src/scheduler.c src/spthread.c src/logger.c shell/exiting_alloc.c src/kernel.c src/sys.c
+HDRS = src/scheduler.h src/spthread.h src/logger.h shell/exiting_alloc.h src/kernel.h lib/linked_list.h src/sys.h
+MAIN = src/sched-test.c
 
 TEST_OBJS = $($(wildcard $(TESTS_DIR)/*.c):.c=.o)
 
@@ -40,11 +40,11 @@ all: $(EXECS)
 
 tests: $(TEST_EXECS)
 
-$(EXECS): $(BIN_DIR)/%: $(SRC_DIR)/%.c $(OBJS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(OBJS) $<
+$(EXECS): $(BIN_DIR)/%: $(SRC_DIR)/%.c $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $<
 
-$(TEST_EXECS): $(BIN_DIR)/%: $(TESTS_DIR)/%.c $(OBJS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(OBJS) $(subst $(BIN_DIR)/,$(TESTS_DIR)/,$@).c
+$(TEST_EXECS): $(BIN_DIR)/%: $(TESTS_DIR)/%.c $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $(subst $(BIN_DIR)/,$(TESTS_DIR)/,$@).c
 
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
@@ -65,4 +65,4 @@ format:
 	clang-format -i --verbose --style=Chromium $(MAIN_FILES) $(TEST_MAINS) $(SRCS) $(HDRS)
 
 clean:
-	rm $(OBJS) $(EXECS) $(TEST_EXECS)
+	-rm -f $(EXECS)
