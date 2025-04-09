@@ -30,9 +30,9 @@ EXECS = $(subst $(SRC_DIR),$(BIN_DIR),$(MAIN_FILES:.c=))
 TEST_EXECS = $(subst $(TESTS_DIR),$(BIN_DIR),$(TEST_MAINS:.c=))
 
 # srcs = all C files in SRC_DIR that are not listed in MAIN_FILES
-SRCS = $(SRC_DIR)/scheduler.c $(SRC_DIR)/spthread.c $(SRC_DIR)/logger.c $(SRC_DIR)/kernel.c $(SRC_DIR)/sys.c shell/exiting_alloc.c
-HDRS = $(SRC_DIR)/scheduler.h $(SRC_DIR)/spthread.h $(SRC_DIR)/logger.h $(SRC_DIR)/kernel.h $(SRC_DIR)/sys.h shell/exiting_alloc.h lib/linked_list.h
-MAIN = $(SRC_DIR)/sched-test.c
+SRCS = src/scheduler.c src/spthread.c src/logger.c shell/exiting_alloc.c src/kernel.c src/sys.c
+HDRS = src/scheduler.h src/spthread.h src/logger.h shell/exiting_alloc.h src/kernel.h lib/linked_list.h src/sys.h
+MAIN = src/sched-test.c
 
 TEST_OBJS = $($(wildcard $(TESTS_DIR)/*.c):.c=.o)
 
@@ -40,11 +40,11 @@ all: $(EXECS)
 
 tests: $(TEST_EXECS)
 
-$(EXECS): $(BIN_DIR)/%: $(SRC_DIR)/%.c $(OBJS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(OBJS) $<
+$(EXECS): $(BIN_DIR)/%: $(SRC_DIR)/%.c $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $<
 
-$(TEST_EXECS): $(BIN_DIR)/%: $(TESTS_DIR)/%.c $(OBJS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(OBJS) $(subst $(BIN_DIR)/,$(TESTS_DIR)/,$@).c
+$(TEST_EXECS): $(BIN_DIR)/%: $(TESTS_DIR)/%.c $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $(subst $(BIN_DIR)/,$(TESTS_DIR)/,$@).c
 
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
