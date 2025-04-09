@@ -22,7 +22,7 @@ TEST_MAINS = $(TESTS_DIR)/sched-demo.c
 # list all files with their own main() function here
 # for example:
 # MAIN_FILES = $(SRC_DIR)/stand_alone_pennfat.c $(SRC_DIR)/helloworld.c $(SRC_DIR)/pennos.c
-MAIN_FILES = $(SRC_DIR)/pennos.c
+MAIN_FILES = $(SRC_DIR)/pennos.c 
 
 # to get the executables, remove the .c from the filename and put 
 # it in the BIN_DIR
@@ -30,9 +30,9 @@ EXECS = $(subst $(SRC_DIR),$(BIN_DIR),$(MAIN_FILES:.c=))
 TEST_EXECS = $(subst $(TESTS_DIR),$(BIN_DIR),$(TEST_MAINS:.c=))
 
 # srcs = all C files in SRC_DIR that are not listed in MAIN_FILES
-SRCS = $(filter-out $(MAIN_FILES), $(shell find $(SRC_DIR) -type f -name '*.c'))
-HDRS = $(shell find src -type f -name '*.h')
-OBJS = $(SRCS:.c=.o)
+SRCS = $(SRC_DIR)/scheduler.c $(SRC_DIR)/spthread.c $(SRC_DIR)/logger.c $(SRC_DIR)/kernel.c $(SRC_DIR)/sys.c shell/exiting_alloc.c
+HDRS = $(SRC_DIR)/scheduler.h $(SRC_DIR)/spthread.h $(SRC_DIR)/logger.h $(SRC_DIR)/kernel.h $(SRC_DIR)/sys.h shell/exiting_alloc.h lib/linked_list.h
+MAIN = $(SRC_DIR)/sched-test.c
 
 TEST_OBJS = $($(wildcard $(TESTS_DIR)/*.c):.c=.o)
 
