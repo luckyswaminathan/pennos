@@ -12,3 +12,6 @@ src/scheduler.log
 build/ 
 
 *.sh
+
+# test filesystems
+testfs*
