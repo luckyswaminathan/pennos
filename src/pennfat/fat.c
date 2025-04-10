@@ -1288,3 +1288,29 @@ cleanup:
     free(dir_entry_buf);
     return status;
 }
+
+int k_chmod(const char *fname, uint8_t perm) {
+    if (!is_mounted()) {
+        return EFS_NOT_MOUNTED;
+    }
+
+    // TODO: add filename validation here
+
+    uint16_t dir_entry_block_num;
+    uint8_t dir_entry_idx;
+    directory_entry dir_entry;
+    if (find_file_in_root_dir(fname, &dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0) {
+        return EK_CHMOD_FILE_NOT_FOUND;
+    }
+
+    if (perm < 0 || perm > 7) {
+        return EK_CHMOD_WRONG_PERMISSIONS;
+    }
+
+    dir_entry.perm = perm;
+    if (write_root_dir_entry(&dir_entry, dir_entry_block_num, dir_entry_idx) != 0) {
+        return EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED;
+    }
+
+    return 0;
+}

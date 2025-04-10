@@ -495,28 +495,12 @@ int main(void) {
 			}
 			
 			uint8_t perm = tokens[1][0] - '0';
-			
-			// Open the file to update its permission
-			int fd = k_open(tokens[2], F_READ);
-			if (fd < 0) {
-				fprintf(stderr, "chmod: failed to open file with error code %d\n", fd);
+
+			int chmod_status = k_chmod(tokens[2], perm);
+			if (chmod_status != 0) {
+				fprintf(stderr, "chmod: failed with error code %d\n", chmod_status);
 				goto cleanup_tokens;
 			}
-			
-			// Update the permission (this requires direct access to the directory entry)
-			global_fd_entry *entry = &global_fd_table[fd];
-			entry->ptr_to_dir_entry->perm = perm;
-			
-			// Write the updated directory entry back to disk
-			if (write_root_dir_entry(entry->ptr_to_dir_entry, 
-				entry->dir_entry_block_num, entry->dir_entry_idx) != 0) {
-				fprintf(stderr, "chmod: failed to update file permissions\n");
-				k_close(fd);
-				goto cleanup_tokens;
-			}
-			
-			k_close(fd);
-			
 		} else if (strcmp(tokens[0], "ls") == 0) {
 			if (!is_mounted()) {
 				fprintf(stderr, "ls: there is no filesystem mounted\n");

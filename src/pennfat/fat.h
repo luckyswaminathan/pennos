@@ -155,3 +155,8 @@ int k_unlink(const char *fname);
 #define EK_LS_GET_BLOCK_FAILED -5
 #define EK_LS_NEXT_BLOCK_NUM_FAILED -6
 int k_ls(const char *filename);
+
+#define EK_CHMOD_FILE_NOT_FOUND -1
+#define EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED -2
+#define EK_CHMOD_WRONG_PERMISSIONS -3
+int k_chmod(const char *fname, uint8_t perm);
