@@ -20,6 +20,13 @@
 #define FAT_END_OF_FILE 0xFFFF
 
 global_fd_entry global_fd_table[GLOBAL_FD_TABLE_SIZE] = {0};
+fat16_fs fs = {
+    .fat = NULL,
+    .fat_size = 0,
+    .block_size = 0,
+    .blocks_in_fat = 0,
+    .fd = -1,
+    .block_buf = NULL};
 
 int min(int a, int b)
 {
@@ -28,8 +35,18 @@ int min(int a, int b)
     return b;
 }
 
-int mount(char *fs_name, fat16_fs *ptr_to_fs)
+bool is_mounted(void)
 {
+    return fs.fd != -1;
+}
+
+int mount(char *fs_name)
+{
+    if (is_mounted())
+    {
+        return EMOUNT_ALREADY_MOUNTED;
+    }
+
     int fs_fd = open(fs_name, O_RDWR);
     if (fs_fd == -1)
     {
@@ -63,7 +80,7 @@ int mount(char *fs_name, fat16_fs *ptr_to_fs)
         return EMOUNT_MALLOC_FAILED;
     }
 
-    *ptr_to_fs = (fat16_fs){
+    fs = (fat16_fs){
         .fat = fat,
         .fat_size = fat_size,
         .block_size = block_size,
@@ -87,21 +104,26 @@ int mount(char *fs_name, fat16_fs *ptr_to_fs)
     return 0;
 }
 
-int unmount(fat16_fs *ptr_to_fs)
+int unmount(void)
 {
-    free(ptr_to_fs->block_buf);
-    if (munmap(ptr_to_fs->fat, ptr_to_fs->fat_size) == -1)
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
+    free(fs.block_buf);
+    if (munmap(fs.fat, fs.fat_size) == -1)
     {
         return EUNMOUNT_MUNMAP_FAILED;
     }
-    if (close(ptr_to_fs->fd) != 0)
+    if (close(fs.fd) != 0)
     {
         return EUNMOUNT_CLOSE_FAILED;
     }
-    *ptr_to_fs = (fat16_fs){0};
-    ptr_to_fs->fat = NULL; // just to be safe, set the ptr to NULL (in case NULL != 0)
-    ptr_to_fs->block_buf = NULL;
-    ptr_to_fs->fd = -1;
+    fs = (fat16_fs){0};
+    fs.fat = NULL; // just to be safe, set the ptr to NULL (in case NULL != 0)
+    fs.block_buf = NULL;
+    fs.fd = -1;
     return 0;
 }
 
@@ -109,13 +131,13 @@ int unmount(fat16_fs *ptr_to_fs)
  * Finds the first empty block by walking the fat from index 1. Returns the
  * block index if such a block exists and 0 if there is no empty block
  */
-uint16_t first_empty_block(fat16_fs *ptr_to_fs)
+uint16_t first_empty_block(void)
 {
     // look for the first empty block in the fat
-    uint16_t n_fat_entries = ptr_to_fs->fat_size / 2;
+    uint16_t n_fat_entries = fs.fat_size / 2;
     for (uint16_t i = 1; i < n_fat_entries; i++)
     {
-        if (ptr_to_fs->fat[i] == 0)
+        if (fs.fat[i] == 0)
         {
             return i;
         }
@@ -145,14 +167,14 @@ bool check_filename_charset(const char *str, uint8_t strlen)
     return true;
 }
 
-uint32_t get_blocks_in_data_region(fat16_fs *ptr_to_fs)
+uint32_t get_blocks_in_data_region(void)
 {
-    return ((ptr_to_fs->fat_size) / 2) - 1;
+    return ((fs.fat_size) / 2) - 1;
 }
 
-uint32_t get_byte_offset_of_block(fat16_fs *ptr_to_fs, uint16_t block_num)
+uint32_t get_byte_offset_of_block(uint16_t block_num)
 {
-    return ptr_to_fs->fat_size + ((size_t)block_num - 1) * ptr_to_fs->block_size;
+    return fs.fat_size + ((size_t)block_num - 1) * fs.block_size;
 }
 
 #define EGET_BLOCK_BLOCK_NUM_0 1
@@ -164,13 +186,13 @@ uint32_t get_byte_offset_of_block(fat16_fs *ptr_to_fs, uint16_t block_num)
 /**
  * Get the data inside of a block and store it into the buffer pointed to
  * by data. It is assumed that the memory pointed to by data has sufficient
- * capacity to store a full block (ptr_to_fs->block_size).
+ * capacity to store a full block (fs.block_size).
  *
  * Returns 0 on success and an error code on error. See the EGET_BLOCK_* error code.
  */
-int get_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
+int get_block(uint16_t block_num, void *data)
 {
-    uint32_t blocks_in_data_region = get_blocks_in_data_region(ptr_to_fs);
+    uint32_t blocks_in_data_region = get_blocks_in_data_region();
     if (block_num < 1)
     {
         return EGET_BLOCK_BLOCK_NUM_0;
@@ -181,18 +203,18 @@ int get_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
         return EGET_BLOCK_BLOCK_NUM_TOO_HIGH;
     }
 
-    if (lseek(ptr_to_fs->fd, get_byte_offset_of_block(ptr_to_fs, block_num), SEEK_SET) < 0)
+    if (lseek(fs.fd, get_byte_offset_of_block(block_num), SEEK_SET) < 0)
     {
         return EGET_BLOCK_LSEEK_FAILED;
     }
 
-    ssize_t bytes_read = read(ptr_to_fs->fd, data, ptr_to_fs->block_size);
+    ssize_t bytes_read = read(fs.fd, data, fs.block_size);
     if (bytes_read == -1)
     {
         return EGET_BLOCK_READ_FAILED;
     }
 
-    if (bytes_read < ptr_to_fs->block_size)
+    if (bytes_read < fs.block_size)
     {
         return EGET_BLOCK_TOO_FEW_BYTES_READ;
     }
@@ -207,9 +229,9 @@ int get_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
 /**
  * Get the next block number from the FAT table.
  */
-int next_block_num(fat16_fs *ptr_to_fs, uint16_t block_num, uint16_t *next_block_num)
+int next_block_num(uint16_t block_num, uint16_t *next_block_num)
 {
-    uint32_t blocks_in_data_region = get_blocks_in_data_region(ptr_to_fs);
+    uint32_t blocks_in_data_region = get_blocks_in_data_region();
     if (block_num < 1)
     {
         return ENEXT_BLOCK_NUM_BLOCK_NUM_0;
@@ -219,7 +241,7 @@ int next_block_num(fat16_fs *ptr_to_fs, uint16_t block_num, uint16_t *next_block
     {
         return ENEXT_BLOCK_NUM_BLOCK_NUM_TOO_HIGH;
     }
-    *next_block_num = ptr_to_fs->fat[block_num];
+    *next_block_num = fs.fat[block_num];
     return 0;
 }
 
@@ -232,9 +254,9 @@ int next_block_num(fat16_fs *ptr_to_fs, uint16_t block_num, uint16_t *next_block
 /**
  * A thin wrapper around wrapper that makes it easier to write exactly 1 block of data
  */
-int write_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
+int write_block(uint16_t block_num, void *data)
 {
-    uint32_t blocks_in_data_region = get_blocks_in_data_region(ptr_to_fs);
+    uint32_t blocks_in_data_region = get_blocks_in_data_region();
     if (block_num < 1)
     {
         return EWRITE_BLOCK_BLOCK_NUM_0;
@@ -245,18 +267,18 @@ int write_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
         return EWRITE_BLOCK_BLOCK_NUM_TOO_HIGH;
     }
 
-    if (lseek(ptr_to_fs->fd, get_byte_offset_of_block(ptr_to_fs, block_num), SEEK_SET) < 0)
+    if (lseek(fs.fd, get_byte_offset_of_block(block_num), SEEK_SET) < 0)
     {
         return EWRITE_BLOCK_LSEEK_FAILED;
     }
 
-    ssize_t bytes_written = write(ptr_to_fs->fd, data, ptr_to_fs->block_size);
+    ssize_t bytes_written = write(fs.fd, data, fs.block_size);
     if (bytes_written == -1)
     {
         return EWRITE_BLOCK_WRITE_FAILED;
     }
 
-    if (bytes_written < ptr_to_fs->block_size)
+    if (bytes_written < fs.block_size)
     {
         return EWRITE_BLOCK_TOO_FEW_BYTES_WRITTEN;
     }
@@ -276,16 +298,16 @@ int write_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
  *
  * Returns >= 0 on success (see RFIND_FILE_IN_ROOT_DIR_* return codes) and < 0 on error (see EFIND_FILE_IN_ROOT_DIR_* error codes)
  */
-int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
+int find_file_in_root_dir(const char *fname, directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
 {
     uint16_t block = 1;
-    directory_entry *dir_entry_buf = ptr_to_fs->block_buf;
+    directory_entry *dir_entry_buf = fs.block_buf;
     // n_dir_entry_per_block is at most 4096 / 64 = 64
-    uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
+    uint8_t n_dir_entry_per_block = fs.block_size / sizeof(directory_entry);
 
     while (true)
     {
-        if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+        if (get_block(block, dir_entry_buf) != 0)
         {
             return EFIND_FILE_IN_ROOT_DIR_GET_BLOCK_FAILED;
         }
@@ -303,7 +325,7 @@ int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entr
             if (strcmp(fname, curr_dir_entry.name) == 0)
             {
                 // memcpy into the passed buffer so we're not
-                // pointing to the ptr_to_fs->block_buf, which could
+                // pointing to the fs.block_buf, which could
                 // change
                 memcpy(ptr_to_dir_entry, dir_entry_buf + i, sizeof(directory_entry));
                 *ptr_to_block = block;
@@ -318,7 +340,7 @@ int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entr
             }
         }
 
-        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        if (next_block_num(block, &block) != 0)
         {
             return EFIND_FILE_IN_ROOT_DIR_GET_BLOCK_FAILED;
         }
@@ -359,14 +381,14 @@ int find_file_in_global_fd_table(const char *fname, uint16_t *ptr_to_fd_idx)
 #define RFIND_EMPTY_SPOT_IN_ROOT_DIR_DELETED 0
 #define RFIND_EMPTY_SPOT_IN_ROOT_DIR_END_ENTRY 1
 
-int find_empty_spot_in_root_dir(fat16_fs *ptr_to_fs, uint16_t *ptr_to_block, uint8_t *ptr_to_offset)
+int find_empty_spot_in_root_dir(uint16_t *ptr_to_block, uint8_t *ptr_to_offset)
 {
     uint16_t block = 1;
-    directory_entry *dir_entry_buf = ptr_to_fs->block_buf;
-    uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
+    directory_entry *dir_entry_buf = fs.block_buf;
+    uint8_t n_dir_entry_per_block = fs.block_size / sizeof(directory_entry);
     while (true)
     {
-        if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+        if (get_block(block, dir_entry_buf) != 0)
         {
             return EFIND_EMPTY_SPOT_IN_ROOT_DIR_GET_BLOCK_FAILED;
         }
@@ -392,7 +414,7 @@ int find_empty_spot_in_root_dir(fat16_fs *ptr_to_fs, uint16_t *ptr_to_block, uin
             }
         }
 
-        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        if (next_block_num(block, &block) != 0)
         {
             return EFIND_EMPTY_SPOT_IN_ROOT_DIR_NEXT_BLOCK_FAILED;
         }
@@ -403,10 +425,10 @@ int find_empty_spot_in_root_dir(fat16_fs *ptr_to_fs, uint16_t *ptr_to_block, uin
 #define EWRITE_ROOT_DIR_ENTRY_NO_EMPTY_BLOCKS 2
 #define EWRITE_ROOT_DIR_ENTRY_WRITE_BLOCK_FAILED 3
 
-int write_root_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry, uint16_t block, uint8_t directory_entry_offset)
+int write_root_dir_entry(directory_entry *ptr_to_dir_entry, uint16_t block, uint8_t directory_entry_offset)
 {
-    directory_entry *dir_entry_buf = (directory_entry *)ptr_to_fs->block_buf;
-    if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+    directory_entry *dir_entry_buf = (directory_entry *)fs.block_buf;
+    if (get_block(block, dir_entry_buf) != 0)
     {
         return EWRITE_ROOT_DIR_ENTRY_GET_BLOCK_FAILED;
     }
@@ -416,7 +438,7 @@ int write_root_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry,
     dir_entry_buf[directory_entry_offset] = *ptr_to_dir_entry;
 
     // write the block
-    if (write_block(ptr_to_fs, block, dir_entry_buf) != 0)
+    if (write_block(block, dir_entry_buf) != 0)
     {
         return EWRITE_ROOT_DIR_ENTRY_WRITE_BLOCK_FAILED;
     }
@@ -426,30 +448,30 @@ int write_root_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry,
 #define EWRITE_NEW_ROOT_DIR_ENTRY_FIND_EMPTY_SPOT_IN_ROOT_DIR_FAILED 1
 #define EWRITE_NEW_ROOT_DIR_ENTRY_WRITE_ROOT_DIR_ENTRY_FAILED 2
 
-int write_new_root_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
+int write_new_root_dir_entry(directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
 {
     // look for an empty spot in the root directory
     uint16_t block;                 // the block where we found an empty spot
     uint8_t directory_entry_offset; // the offset (in terms of directory_entry entries) where we found the empty spot
 
-    int find_empty_spot_status = find_empty_spot_in_root_dir(ptr_to_fs, &block, &directory_entry_offset);
+    int find_empty_spot_status = find_empty_spot_in_root_dir(&block, &directory_entry_offset);
     if (find_empty_spot_status < 0)
     {
         return EWRITE_NEW_ROOT_DIR_ENTRY_FIND_EMPTY_SPOT_IN_ROOT_DIR_FAILED;
     }
 
-    bool is_last_in_block = directory_entry_offset == (ptr_to_fs->block_size / sizeof(directory_entry) - 1);
+    bool is_last_in_block = directory_entry_offset == (fs.block_size / sizeof(directory_entry) - 1);
     if (find_empty_spot_status == RFIND_EMPTY_SPOT_IN_ROOT_DIR_END_ENTRY && !is_last_in_block)
     {
         // case where we need to create an entry for the end of the block
         directory_entry empty_dir_entry = {0};
-        write_root_dir_entry(ptr_to_fs, &empty_dir_entry, block, directory_entry_offset + 1);
+        write_root_dir_entry(&empty_dir_entry, block, directory_entry_offset + 1);
     }
     else if (find_empty_spot_status == RFIND_EMPTY_SPOT_IN_ROOT_DIR_END_ENTRY && is_last_in_block)
     {
         // case where we need to allocate a new block for the directory
 
-        uint16_t empty_block = first_empty_block(ptr_to_fs);
+        uint16_t empty_block = first_empty_block();
         if (empty_block == 0)
         {
             return EWRITE_ROOT_DIR_ENTRY_NO_EMPTY_BLOCKS;
@@ -458,18 +480,18 @@ int write_new_root_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_en
         // zero out the new block
         // this makes the first directory_entry in the new block
         // the end directory entry
-        memset(ptr_to_fs->block_buf, 0, ptr_to_fs->block_size);
-        if (write_block(ptr_to_fs, empty_block, ptr_to_fs->block_buf) != 0)
+        memset(fs.block_buf, 0, fs.block_size);
+        if (write_block(empty_block, fs.block_buf) != 0)
         {
             return EWRITE_ROOT_DIR_ENTRY_WRITE_BLOCK_FAILED;
         }
 
         // add the new block to the FAT
-        ptr_to_fs->fat[block] = empty_block;
-        ptr_to_fs->fat[empty_block] = FAT_END_OF_FILE;
+        fs.fat[block] = empty_block;
+        fs.fat[empty_block] = FAT_END_OF_FILE;
     }
 
-    if (write_root_dir_entry(ptr_to_fs, ptr_to_dir_entry, block, directory_entry_offset) != 0)
+    if (write_root_dir_entry(ptr_to_dir_entry, block, directory_entry_offset) != 0)
     {
         return EWRITE_NEW_ROOT_DIR_ENTRY_WRITE_ROOT_DIR_ENTRY_FAILED;
     }
@@ -494,8 +516,13 @@ uint16_t find_empty_fd()
     return fd_idx;
 }
 
-int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
+int k_open(const char *fname, int mode)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     bool acquire_write_lock = (mode == F_WRITE) || (mode == F_APPEND);
     uint8_t strlen = strnlen(fname, MAX_FILENAME_SIZE);
     if (strlen < 1)
@@ -563,7 +590,7 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
     {
         return EK_OPEN_MALLOC_FAILED;
     }
-    int find_dir_entry_status = find_file_in_root_dir(ptr_to_fs, fname, ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx);
+    int find_dir_entry_status = find_file_in_root_dir(fname, ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx);
     if (find_dir_entry_status < 0)
     { // indicates an error
         return EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED;
@@ -585,12 +612,12 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
             return EK_OPEN_TIME_FAILED;
         }
 
-        uint16_t empty_block = first_empty_block(ptr_to_fs);
+        uint16_t empty_block = first_empty_block();
         if (empty_block == 0)
         {
             return EK_OPEN_NO_EMPTY_BLOCKS;
         }
-        ptr_to_fs->fat[empty_block] = FAT_END_OF_FILE;
+        fs.fat[empty_block] = FAT_END_OF_FILE;
         *ptr_to_dir_entry = (directory_entry){
             .name = {0},
             .size = 0,
@@ -601,7 +628,7 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
         strcpy(ptr_to_dir_entry->name, fname); // can safely use strcpy because we checked fname
 
         // write the dir entry
-        if (write_new_root_dir_entry(ptr_to_fs, ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
+        if (write_new_root_dir_entry(ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
         {
             return EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED;
         }
@@ -626,18 +653,23 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
  * stage (including the initially passed block) are in bounds. It assumes
  * the FAT is maintained as valid.
  */
-void clear_fat_file(fat16_fs *ptr_to_fs, uint16_t block)
+void clear_fat_file(uint16_t block)
 {
     while (block != FAT_END_OF_FILE)
     {
-        uint16_t next_block = ptr_to_fs->fat[block];
-        ptr_to_fs->fat[block] = 0;
+        uint16_t next_block = fs.fat[block];
+        fs.fat[block] = 0;
         block = next_block;
     }
 }
 
-int k_close(fat16_fs *ptr_to_fs, int fd)
+int k_close(int fd)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_CLOSE_FD_OUT_OF_RANGE;
@@ -655,14 +687,14 @@ int k_close(fat16_fs *ptr_to_fs, int fd)
         if (global_fd_table[fd].ptr_to_dir_entry->name[0] == 2)
         {
             uint16_t first_block = global_fd_table[fd].ptr_to_dir_entry->first_block;
-            clear_fat_file(ptr_to_fs, first_block);
+            clear_fat_file(first_block);
 
             // mark the file as deleted and write it through
             directory_entry *ptr_to_dir_entry = global_fd_table[fd].ptr_to_dir_entry;
             uint16_t dir_entry_block_num = global_fd_table[fd].dir_entry_block_num;
             uint8_t dir_entry_idx = global_fd_table[fd].dir_entry_idx;
             ptr_to_dir_entry->name[0] = 1;
-            if (write_root_dir_entry(ptr_to_fs, ptr_to_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
+            if (write_root_dir_entry(ptr_to_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
             {
                 return EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED;
             }
@@ -676,8 +708,13 @@ int k_close(fat16_fs *ptr_to_fs, int fd)
     return 0;
 }
 
-int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
+int k_read(int fd, int n, char *buf)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_READ_FD_OUT_OF_RANGE;
@@ -706,7 +743,7 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
     // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
     uint32_t file_size = fd_entry.ptr_to_dir_entry->size;
     uint32_t offset = fd_entry.offset;
-    uint16_t block_size = ptr_to_fs->block_size;
+    uint16_t block_size = fs.block_size;
     uint16_t block = fd_entry.ptr_to_dir_entry->first_block;
     uint8_t perm = fd_entry.ptr_to_dir_entry->perm;
 
@@ -729,7 +766,7 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
     // skip to the right block
     for (int i = 0; i < n_blocks_to_skip; i++)
     {
-        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        if (next_block_num(block, &block) != 0)
         {
             // TODO: we should separate out the error case when n_blocks_to_skip is simply too many jumps
             // and we end up jumping to to FFFF!
@@ -738,12 +775,12 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
     }
 
     // start reading the blocks sequentialy and then memcpy-ing them out
-    char *char_buf = (char *)ptr_to_fs->block_buf;
+    char *char_buf = (char *)fs.block_buf;
     int n_copied = 0;
     n = min(n, file_size - offset); // read at most the rest of the file
     while (n > n_copied && block != FAT_END_OF_FILE)
     { // NOTE: we shouldn't need to check for EOF here since we won't read more than the file size, but just in case
-        get_block(ptr_to_fs, block, ptr_to_fs->block_buf);
+        get_block(block, fs.block_buf);
         // we want to read at most the rest of the block
         // but if n is smaller than that, then we should only read n
         uint16_t n_to_copy = min(n - n_copied, block_size - offset_in_block);
@@ -752,7 +789,7 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
         // read the next block from the start
         offset_in_block = 0;
         // identify the next block
-        next_block_num(ptr_to_fs, block, &block);
+        next_block_num(block, &block);
     }
     // increment the file offset by the number of bytes read
     global_fd_table[fd].offset += n_copied;
@@ -761,6 +798,11 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
 
 int64_t k_lseek(int fd, int offset, int whence)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_LSEEK_FD_OUT_OF_RANGE;
@@ -830,8 +872,13 @@ int64_t k_lseek(int fd, int offset, int whence)
     return new_offset;
 }
 
-int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
+int k_write(int fd, const char *str, int n)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_WRITE_FD_OUT_OF_RANGE;
@@ -868,7 +915,7 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
     uint32_t file_size = fd_entry.ptr_to_dir_entry->size;
     uint32_t offset = fd_entry.offset;
-    uint16_t block_size = ptr_to_fs->block_size;
+    uint16_t block_size = fs.block_size;
     uint16_t block = fd_entry.ptr_to_dir_entry->first_block;
     uint16_t dir_entry_block_num = fd_entry.dir_entry_block_num;
     uint8_t dir_entry_idx = fd_entry.dir_entry_idx;
@@ -912,12 +959,12 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
 
     // Try to get to the offset_block by
     // using the blocks in the file.
-    char *char_buf = (char *)ptr_to_fs->block_buf;
+    char *char_buf = (char *)fs.block_buf;
     uint16_t n_blocks_deep = 0;
     while (n_blocks_deep < offset_block)
     {
         uint16_t next_block;
-        if (next_block_num(ptr_to_fs, block, &next_block) != 0)
+        if (next_block_num(block, &next_block) != 0)
         {
             return EK_WRITE_NEXT_BLOCK_NUM_FAILED;
         }
@@ -927,12 +974,12 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
         {
             // need to 0 out whatever remains in this block
             uint16_t n_file_bytes_in_block = file_size % block_size;
-            if (get_block(ptr_to_fs, block, char_buf) != 0)
+            if (get_block(block, char_buf) != 0)
             {
                 return EK_WRITE_GET_BLOCK_FAILED;
             }
             memset(char_buf + n_file_bytes_in_block, 0, block_size - n_file_bytes_in_block);
-            if (write_block(ptr_to_fs, block, ptr_to_fs->block_buf) != 0)
+            if (write_block(block, fs.block_buf) != 0)
             {
                 return EK_WRITE_WRITE_BLOCK_FAILED;
             }
@@ -947,21 +994,21 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     for (; n_blocks_deep < offset_block; n_blocks_deep++)
     {
         uint16_t prev_block = block;
-        block = first_empty_block(ptr_to_fs);
+        block = first_empty_block();
         if (block == 0)
         {
             // no free blocks
-            ptr_to_fs->fat[prev_block] = FAT_END_OF_FILE;
+            fs.fat[prev_block] = FAT_END_OF_FILE;
             return EK_WRITE_NO_EMPTY_BLOCKS;
             // TODO: technically, we shouldn't return an error here
         }
 
         // set FAT linkages
-        ptr_to_fs->fat[prev_block] = block;
+        fs.fat[prev_block] = block;
 
         // write block as empty
-        memset(ptr_to_fs->block_buf, 0, block_size);
-        if (write_block(ptr_to_fs, block, ptr_to_fs->block_buf) != 0)
+        memset(fs.block_buf, 0, block_size);
+        if (write_block(block, fs.block_buf) != 0)
         {
             return EK_WRITE_WRITE_BLOCK_FAILED;
         }
@@ -986,13 +1033,13 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
         }
         else
         {
-            get_block(ptr_to_fs, block, char_buf);
+            get_block(block, char_buf);
         }
 
         uint16_t n_to_copy = min(n - n_copied, block_size - offset_in_block);
         memcpy(char_buf + offset_in_block, str + n_copied, n_to_copy);
         n_copied += n_to_copy; // n_copied out of buf into the file
-        if (write_block(ptr_to_fs, block, char_buf))
+        if (write_block(block, char_buf))
         {
             return EK_WRITE_WRITE_BLOCK_FAILED;
         }
@@ -1002,10 +1049,10 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
 
         // try to get the next block of the file
         uint16_t next_block;
-        ptr_to_fs->fat[block] = FAT_END_OF_FILE; // prevent a loop where we keep getting the same blocks
+        fs.fat[block] = FAT_END_OF_FILE; // prevent a loop where we keep getting the same blocks
         if (!is_writing_new_blocks)
         {
-            if (next_block_num(ptr_to_fs, block, &next_block) != 0)
+            if (next_block_num(block, &next_block) != 0)
             {
                 return EK_WRITE_NEXT_BLOCK_NUM_FAILED;
             }
@@ -1016,17 +1063,17 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
         }
         else
         {
-            next_block = first_empty_block(ptr_to_fs);
+            next_block = first_empty_block();
             if (next_block == 0)
             {
                 // TODO: technically should return 0
                 return EK_WRITE_NO_EMPTY_BLOCKS;
             }
         }
-        ptr_to_fs->fat[block] = next_block;
+        fs.fat[block] = next_block;
         block = next_block;
     }
-    ptr_to_fs->fat[block] = FAT_END_OF_FILE;
+    fs.fat[block] = FAT_END_OF_FILE;
 
     // increment the file offset by the number of bytes read
     global_fd_table[fd].offset += n_copied;
@@ -1040,7 +1087,7 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     global_fd_table[fd].ptr_to_dir_entry->mtime = mtime;
     global_fd_table[fd].ptr_to_dir_entry->size = offset + n_copied;
     // write through to the updated entry to the filesystem
-    if (write_root_dir_entry(ptr_to_fs, fd_entry.ptr_to_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
+    if (write_root_dir_entry(fd_entry.ptr_to_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
     {
         // TODO: should we rollback the ptr_to_dir_entry state on failure?
         return EK_WRITE_WRITE_ROOT_DIR_ENTRY_FAILED;
@@ -1048,8 +1095,13 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     return n_copied;
 }
 
-int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
+int k_unlink(const char *fname)
 {
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
     // TODO: add validation for fname here, otherwise it's possible
     // we'll expose filenames that were deleted
 
@@ -1070,7 +1122,7 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
         else
         {
             ptr_to_updated_dir_entry->name[0] = 1;
-            clear_fat_file(ptr_to_fs, ptr_to_updated_dir_entry->first_block);
+            clear_fat_file(ptr_to_updated_dir_entry->first_block);
         }
         dir_entry_block_num = global_fd_table[fd_idx].dir_entry_block_num;
         dir_entry_idx = global_fd_table[fd_idx].dir_entry_idx;
@@ -1083,7 +1135,7 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
         // We can't really distinguish between these cases, so we have to look for the file in the
         // root directory
         ptr_to_updated_dir_entry = &dir_entry;
-        int find_file_in_root_dir_status = find_file_in_root_dir(ptr_to_fs, fname, ptr_to_updated_dir_entry, &dir_entry_block_num, &dir_entry_idx);
+        int find_file_in_root_dir_status = find_file_in_root_dir(fname, ptr_to_updated_dir_entry, &dir_entry_block_num, &dir_entry_idx);
         if (find_file_in_root_dir_status < 0)
         {
             return EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED;
@@ -1095,11 +1147,11 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
             return EK_UNLINK_FILE_NOT_FOUND;
         }
         ptr_to_updated_dir_entry->name[0] = 1; // mark as deleted
-        clear_fat_file(ptr_to_fs, ptr_to_updated_dir_entry->first_block);
+        clear_fat_file(ptr_to_updated_dir_entry->first_block);
     }
 
     // write through to the updated entry to the filesystem
-    if (write_root_dir_entry(ptr_to_fs, ptr_to_updated_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
+    if (write_root_dir_entry(ptr_to_updated_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
     {
         return EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED;
     }
@@ -1110,7 +1162,7 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
 #define EK_LS_WRITE_FAILED -1
 #define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
 #define EK_LS_NOT_IMPLEMENTED -3
-int ls_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry)
+int ls_dir_entry(directory_entry *ptr_to_dir_entry)
 {
     // TODO: implement nice formatting
 
@@ -1124,7 +1176,7 @@ int ls_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry)
     // Including the 4 spaces between the columns, this is 68 bytes. Including the final newline and the null terminator, this is 70 bytes.
     // so our block size of at least 256 is sufficient.
 
-    char *buf = (char *)ptr_to_fs->block_buf;
+    char *buf = (char *)fs.block_buf;
     int total_bytes_written = 0;
     int n_bytes_written = sprintf(buf, "%3d", ptr_to_dir_entry->first_block);
     if (n_bytes_written < 0)
@@ -1169,41 +1221,41 @@ int ls_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry)
     }
     total_bytes_written += n_bytes_written;
 
-    k_write(ptr_to_fs, STDOUT_FD, buf, total_bytes_written);
+    k_write(STDOUT_FD, buf, total_bytes_written);
 
     return 0;
 }
 
-int k_ls(fat16_fs *ptr_to_fs, const char *filename)
+int k_ls(const char *filename)
 {
     if (filename != NULL)
     {
         directory_entry dir_entry;
         uint16_t dir_entry_block_num;
         uint8_t dir_entry_idx;
-        if (find_file_in_root_dir(ptr_to_fs, filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
+        if (find_file_in_root_dir(filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
         {
             // either failed or the file doesn't exist (we don't distinguish here)
             return EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED;
         }
-        return ls_dir_entry(ptr_to_fs, &dir_entry);
+        return ls_dir_entry(&dir_entry);
     }
 
     uint16_t block = 1;
-    // we'll need a second buffer here, since ls_dir_entry uses the ptr_to_fs->block_buf
+    // we'll need a second buffer here, since ls_dir_entry uses the fs.block_buf
     // and we'll need to keep track of the block as we go
-    directory_entry *dir_entry_buf = (directory_entry *)malloc(ptr_to_fs->block_size);
+    directory_entry *dir_entry_buf = (directory_entry *)malloc(fs.block_size);
     if (dir_entry_buf == NULL)
     {
         return EK_LS_MALLOC_FAILED;
     }
 
     // n_dir_entry_per_block is at most 4096 / 64 = 64
-    uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
+    uint8_t n_dir_entry_per_block = fs.block_size / sizeof(directory_entry);
     int status;
     while (true)
     {
-        if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+        if (get_block(block, dir_entry_buf) != 0)
         {
             status = EK_LS_GET_BLOCK_FAILED;
             goto cleanup;
@@ -1222,10 +1274,10 @@ int k_ls(fat16_fs *ptr_to_fs, const char *filename)
                 continue;
             }
 
-            ls_dir_entry(ptr_to_fs, &curr_dir_entry);
+            ls_dir_entry(&curr_dir_entry);
         }
 
-        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        if (next_block_num(block, &block) != 0)
         {
             status = EK_LS_NEXT_BLOCK_NUM_FAILED;
             goto cleanup;

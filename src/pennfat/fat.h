@@ -3,14 +3,17 @@
 #include <stddef.h>
 #include <time.h>
 
+#define EFS_NOT_MOUNTED 99
+
 #define EMOUNT_BAD_FAT_FIRST_ENTRY 1
+#define EMOUNT_ALREADY_MOUNTED 2
 #define EMOUNT_MALLOC_FAILED 4
 #define EMOUNT_OPEN_FAILED 5
 #define EMOUNT_MMAP_FAILED 6
 #define EMOUNT_READ_FAILED 8
 
 #define EUNMOUNT_MUNMAP_FAILED 1
-#define EUNMOUNT_CLOSE_FAILED 1
+#define EUNMOUNT_CLOSE_FAILED 2
 
 #define F_WRITE 0
 #define F_READ 1
@@ -70,7 +73,7 @@ typedef struct global_fd_entry_st
  * Return 0 on success, and an error code on error (see the EMOUNT_* error codes
  * defined in this header).
  */
-int mount(char *fs_name, fat16_fs *ptr_to_fs);
+int mount(char *fs_name);
 
 /**
  * Unmount the pennfat (fat16) filesystem from the struct pointed to by ptr_to_fs.
@@ -79,7 +82,9 @@ int mount(char *fs_name, fat16_fs *ptr_to_fs);
  * Return 0 on success, and an error code on error (see the EUNMOUNT_* error codes
  * defined in this header).
  */
-int unmount(fat16_fs *ptr_to_fs);
+int unmount(void);
+
+bool is_mounted(void);
 
 #define EK_OPEN_FILENAME_TOO_LONG -1
 #define EK_OPEN_INVALID_FILENAME_CHARSET -2
@@ -93,12 +98,12 @@ int unmount(fat16_fs *ptr_to_fs);
 #define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
 #define EK_OPEN_NO_EMPTY_BLOCKS -11
 #define EK_OPEN_WRONG_PERMISSIONS -12
-int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode);
+int k_open(const char *fname, int mode);
 
 #define EK_CLOSE_FD_OUT_OF_RANGE -1
 #define EK_CLOSE_SPECIAL_FD -2
 #define EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED -3
-int k_close(fat16_fs *ptr_to_fs, int fd);
+int k_close(int fd);
 
 #define EK_READ_FD_OUT_OF_RANGE -1
 #define EK_READ_FD_NOT_IN_TABLE -2
@@ -107,7 +112,7 @@ int k_close(fat16_fs *ptr_to_fs, int fd);
 #define EK_READ_COULD_NOT_JUMP_TO_BLOCK_FOR_OFFSET -3
 #define EK_READ_WRONG_PERMISSIONS -4
 #define EK_READ_READ_FAILED -5
-int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf);
+int k_read(int fd, int n, char *buf);
 
 #define EK_LSEEK_BAD_WHENCE -1
 #define EK_LSEEK_NEGATIVE_OFFSET -2
@@ -136,12 +141,12 @@ int64_t k_lseek(int fd, int offset, int whence);
 #define EK_WRITE_NO_EMPTY_BLOCKS -9
 #define EK_WRITE_TIME_FAILED -10
 #define EK_WRITE_WRITE_FAILED -11
-int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n);
+int k_write(int fd, const char *str, int n);
 
 #define EK_UNLINK_FILE_NOT_FOUND -1
 #define EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED -2
 #define EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED -3
-int k_unlink(fat16_fs *ptr_to_fs, const char *fname);
+int k_unlink(const char *fname);
 
 #define EK_LS_WRITE_FAILED -1
 #define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
@@ -149,4 +154,4 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname);
 #define EK_LS_MALLOC_FAILED -4
 #define EK_LS_GET_BLOCK_FAILED -5
 #define EK_LS_NEXT_BLOCK_NUM_FAILED -6
-int k_ls(fat16_fs *ptr_to_fs, const char *filename);
+int k_ls(const char *filename);
