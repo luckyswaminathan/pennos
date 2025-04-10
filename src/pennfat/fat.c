@@ -70,6 +70,20 @@ int mount(char *fs_name, fat16_fs *ptr_to_fs)
         .blocks_in_fat = blocks_in_fat,
         .fd = fs_fd,
         .block_buf = block_buf};
+
+    // initialize the global fd table with entries for 0, 1, 2
+    // as STDIN, STDOUT, and STDERR
+    // These are special non-closeable files
+    for (int i = 0; i < 3; i++)
+    {
+        global_fd_table[i].ref_count = 1;
+        global_fd_table[i].ptr_to_dir_entry = NULL;
+        global_fd_table[i].dir_entry_block_num = 0;
+        global_fd_table[i].dir_entry_idx = 0;
+        global_fd_table[i].write_locked = false;
+        global_fd_table[i].offset = 0;
+    }
+
     return 0;
 }
 
@@ -322,7 +336,8 @@ int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entr
  */
 int find_file_in_global_fd_table(const char *fname, uint16_t *ptr_to_fd_idx)
 {
-    for (uint16_t i = 0; i < GLOBAL_FD_TABLE_SIZE; i++)
+    // Skip the first 3 entries because they are special
+    for (uint16_t i = 3; i < GLOBAL_FD_TABLE_SIZE; i++)
     {
         // use strcmp because both fname and the directory entries in the fat/global fd table should
         // have been checked for proper null termination
@@ -465,7 +480,8 @@ uint16_t find_empty_fd()
 {
     // find an empty fd_idx // TODO: refactor into its own function
     uint16_t fd_idx = GLOBAL_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL;
-    for (uint16_t i = 0; i < GLOBAL_FD_TABLE_SIZE; i++)
+    // Skip the first 3 entries because they are special
+    for (uint16_t i = 3; i < GLOBAL_FD_TABLE_SIZE; i++)
     {
         if (global_fd_table[i].ref_count == 0)
         {
@@ -524,6 +540,7 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
 
         // acquire the write lock
         global_fd_table[fd_idx].write_locked = acquire_write_lock;
+        global_fd_table[fd_idx].offset = 0;
         return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
     }
 
@@ -594,7 +611,8 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
         .dir_entry_block_num = dir_entry_block_num,
         .dir_entry_idx = dir_entry_idx,
         .ptr_to_dir_entry = ptr_to_dir_entry,
-        .write_locked = acquire_write_lock};
+        .write_locked = acquire_write_lock,
+        .offset = 0};
     return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
 }
 
@@ -621,6 +639,10 @@ int k_close(fat16_fs *ptr_to_fs, int fd)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_CLOSE_FD_OUT_OF_RANGE;
+    }
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        return EK_CLOSE_SPECIAL_FD;
     }
 
     global_fd_table[fd].ref_count -= 1;
@@ -657,6 +679,20 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_READ_FD_OUT_OF_RANGE;
+    }
+
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        // special case read for stdin, stdout, stderr
+        // we just read from the buffer
+        int bytes_read = read(fd, buf, n); // NOTE: unix systems typically assign STDIN, STDOUT, STDERR in the same way we do, so this should work
+        // We allow reading from stdin here because it's possible that there has been some redirection
+        // so we let it play out
+        if (bytes_read < 0)
+        {
+            return EK_READ_READ_FAILED;
+        };
+        return bytes_read;
     }
 
     global_fd_entry fd_entry = global_fd_table[fd];
@@ -728,6 +764,11 @@ int64_t k_lseek(int fd, int offset, int whence)
         return EK_LSEEK_FD_OUT_OF_RANGE;
     }
 
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        return EK_LSEEK_SPECIAL_FD;
+    }
+
     global_fd_entry fd_entry = global_fd_table[fd];
     if (fd_entry.ref_count == 0)
     {
@@ -792,6 +833,20 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_WRITE_FD_OUT_OF_RANGE;
+    }
+
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        // special case write for stdin, stdout, stderr
+        // we just write to the buffer
+        int bytes_written = write(fd, str, n); // NOTE: unix systems typically assign STDIN, STDOUT, STDERR in the same way we do, so this should work
+        // We allow writing to stdin here because it's possible that there has been some redirection
+        // so we let it play out
+        if (bytes_written < 0)
+        {
+            return EK_WRITE_WRITE_FAILED;
+        };
+        return bytes_written;
     }
 
     global_fd_entry fd_entry = global_fd_table[fd];
@@ -956,7 +1011,9 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
             {
                 is_writing_new_blocks = true;
             }
-        } else {
+        }
+        else
+        {
             next_block = first_empty_block(ptr_to_fs);
             if (next_block == 0)
             {
