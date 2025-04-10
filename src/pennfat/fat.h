@@ -20,6 +20,10 @@
 #define F_SEEK_CUR 2
 #define F_SEEK_END 3
 
+#define STDIN_FD 0
+#define STDOUT_FD 1
+#define STDERR_FD 2
+
 #define P_NO_FILE_PERMISSION 0
 #define P_WRITE_ONLY_FILE_PERMISSION 2
 #define P_READ_ONLY_FILE_PERMISSION 4
@@ -27,33 +31,36 @@
 #define P_READ_WRITE_FILE_PERMISSION 6
 #define P_READ_WRITE_AND_EXECUTABLE_FILE_PERMISSION 5
 
-typedef struct fat16_fs_st {
-    uint16_t* fat;
+typedef struct fat16_fs_st
+{
+    uint16_t *fat;
     size_t fat_size; // the total size of the fat
     uint16_t block_size;
-    uint16_t blocks_in_fat; 
-    int fd; // fd to the file of the FAT
-    void* block_buf; // buffer of size block_size bytes
+    uint16_t blocks_in_fat;
+    int fd;          // fd to the file of the FAT
+    void *block_buf; // buffer of size block_size bytes
 } fat16_fs;
 
-typedef struct directory_entry_st {
-    char name[32];       // 32 bytes
-    uint32_t size;       // 4
+typedef struct directory_entry_st
+{
+    char name[32];        // 32 bytes
+    uint32_t size;        // 4
     uint16_t first_block; // 2
-    uint8_t type;        // 1
-    uint8_t perm;        // 1
-    time_t mtime;        // 8
-    char padding[16];    // 16
-} directory_entry; // 64 bytes in total!
+    uint8_t type;         // 1
+    uint8_t perm;         // 1
+    time_t mtime;         // 8
+    char padding[16];     // 16
+} directory_entry;        // 64 bytes in total!
 _Static_assert(sizeof(directory_entry) == 64, "directory_entry must be 64 byes");
 
-typedef struct global_fd_entry_st {
+typedef struct global_fd_entry_st
+{
     size_t ref_count;
-    directory_entry* ptr_to_dir_entry; // an in-memory copy of the dir entry. This should be maintained so it always matches what is on disk
+    directory_entry *ptr_to_dir_entry; // an in-memory copy of the dir entry. This should be maintained so it always matches what is on disk
     uint16_t dir_entry_block_num;
-    uint8_t dir_entry_idx; 
+    uint8_t dir_entry_idx;
     bool write_locked; // mutex for whether this file is already being written to by another file
-    uint32_t offset; // offset can be no greater than the size, which is specified in the directory entry
+    uint32_t offset;   // offset can be no greater than the size, which is specified in the directory entry
 } global_fd_entry;
 
 /**
@@ -63,7 +70,7 @@ typedef struct global_fd_entry_st {
  * Return 0 on success, and an error code on error (see the EMOUNT_* error codes
  * defined in this header).
  */
-int mount(char *fs_name, fat16_fs* ptr_to_fs);
+int mount(char *fs_name, fat16_fs *ptr_to_fs);
 
 /**
  * Unmount the pennfat (fat16) filesystem from the struct pointed to by ptr_to_fs.
@@ -72,7 +79,7 @@ int mount(char *fs_name, fat16_fs* ptr_to_fs);
  * Return 0 on success, and an error code on error (see the EUNMOUNT_* error codes
  * defined in this header).
  */
-int unmount(fat16_fs* ptr_to_fs);
+int unmount(fat16_fs *ptr_to_fs);
 
 #define EK_OPEN_FILENAME_TOO_LONG -1
 #define EK_OPEN_INVALID_FILENAME_CHARSET -2
@@ -86,11 +93,12 @@ int unmount(fat16_fs* ptr_to_fs);
 #define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
 #define EK_OPEN_NO_EMPTY_BLOCKS -11
 #define EK_OPEN_WRONG_PERMISSIONS -12
-int k_open(fat16_fs* ptr_to_fs, const char* fname, int mode);
+int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode);
 
 #define EK_CLOSE_FD_OUT_OF_RANGE -1
-#define EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED -2
-int k_close(fat16_fs* ptr_to_fs, int fd);
+#define EK_CLOSE_SPECIAL_FD -2
+#define EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED -3
+int k_close(fat16_fs *ptr_to_fs, int fd);
 
 #define EK_READ_FD_OUT_OF_RANGE -1
 #define EK_READ_FD_NOT_IN_TABLE -2
@@ -98,7 +106,8 @@ int k_close(fat16_fs* ptr_to_fs, int fd);
 // this should never happen if lseek is implemented correctly
 #define EK_READ_COULD_NOT_JUMP_TO_BLOCK_FOR_OFFSET -3
 #define EK_READ_WRONG_PERMISSIONS -4
-int k_read(fat16_fs* ptr_to_fs, int fd, int n, char* buf);
+#define EK_READ_READ_FAILED -5
+int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf);
 
 #define EK_LSEEK_BAD_WHENCE -1
 #define EK_LSEEK_NEGATIVE_OFFSET -2
@@ -106,7 +115,7 @@ int k_read(fat16_fs* ptr_to_fs, int fd, int n, char* buf);
 #define EK_LSEEK_FD_OUT_OF_RANGE -4
 #define EK_LSEEK_FD_NOT_IN_TABLE -5
 #define EK_LSEEK_WRONG_PERMISSIONS -6
-
+#define EK_LSEEK_SPECIAL_FD -7
 /**
  * IMPORTANT: this function does not have the same signature as lseek(2) because
  * it returns a negative error code on error. On success, it returns the offset
@@ -126,9 +135,18 @@ int64_t k_lseek(int fd, int offset, int whence);
 #define EK_WRITE_WRITE_ROOT_DIR_ENTRY_FAILED -8
 #define EK_WRITE_NO_EMPTY_BLOCKS -9
 #define EK_WRITE_TIME_FAILED -10
-int k_write(fat16_fs* ptr_to_fs, int fd, const char *str, int n);
+#define EK_WRITE_WRITE_FAILED -11
+int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n);
 
 #define EK_UNLINK_FILE_NOT_FOUND -1
 #define EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED -2
 #define EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED -3
-int k_unlink(fat16_fs* ptr_to_fs, const char* fname);
+int k_unlink(fat16_fs *ptr_to_fs, const char *fname);
+
+#define EK_LS_WRITE_FAILED -1
+#define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
+#define EK_LS_NOT_IMPLEMENTED -3
+#define EK_LS_MALLOC_FAILED -4
+#define EK_LS_GET_BLOCK_FAILED -5
+#define EK_LS_NEXT_BLOCK_NUM_FAILED -6
+int k_ls(fat16_fs *ptr_to_fs, const char *filename);

@@ -70,6 +70,20 @@ int mount(char *fs_name, fat16_fs *ptr_to_fs)
         .blocks_in_fat = blocks_in_fat,
         .fd = fs_fd,
         .block_buf = block_buf};
+
+    // initialize the global fd table with entries for 0, 1, 2
+    // as STDIN, STDOUT, and STDERR
+    // These are special non-closeable files
+    for (int i = 0; i < 3; i++)
+    {
+        global_fd_table[i].ref_count = 1;
+        global_fd_table[i].ptr_to_dir_entry = NULL;
+        global_fd_table[i].dir_entry_block_num = 0;
+        global_fd_table[i].dir_entry_idx = 0;
+        global_fd_table[i].write_locked = false;
+        global_fd_table[i].offset = 0;
+    }
+
     return 0;
 }
 
@@ -259,6 +273,8 @@ int write_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
 /**
  * Find the file with name fname in the root directory of the filesystem. If it is found,
  * mallocs new directory_entry and returns a pointer to it via the ptr_to_dir_entry_buf
+ *
+ * Returns >= 0 on success (see RFIND_FILE_IN_ROOT_DIR_* return codes) and < 0 on error (see EFIND_FILE_IN_ROOT_DIR_* error codes)
  */
 int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
 {
@@ -322,7 +338,8 @@ int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entr
  */
 int find_file_in_global_fd_table(const char *fname, uint16_t *ptr_to_fd_idx)
 {
-    for (uint16_t i = 0; i < GLOBAL_FD_TABLE_SIZE; i++)
+    // Skip the first 3 entries because they are special
+    for (uint16_t i = 3; i < GLOBAL_FD_TABLE_SIZE; i++)
     {
         // use strcmp because both fname and the directory entries in the fat/global fd table should
         // have been checked for proper null termination
@@ -465,7 +482,8 @@ uint16_t find_empty_fd()
 {
     // find an empty fd_idx // TODO: refactor into its own function
     uint16_t fd_idx = GLOBAL_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL;
-    for (uint16_t i = 0; i < GLOBAL_FD_TABLE_SIZE; i++)
+    // Skip the first 3 entries because they are special
+    for (uint16_t i = 3; i < GLOBAL_FD_TABLE_SIZE; i++)
     {
         if (global_fd_table[i].ref_count == 0)
         {
@@ -524,6 +542,7 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
 
         // acquire the write lock
         global_fd_table[fd_idx].write_locked = acquire_write_lock;
+        global_fd_table[fd_idx].offset = 0;
         return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
     }
 
@@ -594,7 +613,8 @@ int k_open(fat16_fs *ptr_to_fs, const char *fname, int mode)
         .dir_entry_block_num = dir_entry_block_num,
         .dir_entry_idx = dir_entry_idx,
         .ptr_to_dir_entry = ptr_to_dir_entry,
-        .write_locked = acquire_write_lock};
+        .write_locked = acquire_write_lock,
+        .offset = 0};
     return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
 }
 
@@ -621,6 +641,10 @@ int k_close(fat16_fs *ptr_to_fs, int fd)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_CLOSE_FD_OUT_OF_RANGE;
+    }
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        return EK_CLOSE_SPECIAL_FD;
     }
 
     global_fd_table[fd].ref_count -= 1;
@@ -657,6 +681,20 @@ int k_read(fat16_fs *ptr_to_fs, int fd, int n, char *buf)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_READ_FD_OUT_OF_RANGE;
+    }
+
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        // special case read for stdin, stdout, stderr
+        // we just read from the buffer
+        int bytes_read = read(fd, buf, n); // NOTE: unix systems typically assign STDIN, STDOUT, STDERR in the same way we do, so this should work
+        // We allow reading from stdin here because it's possible that there has been some redirection
+        // so we let it play out
+        if (bytes_read < 0)
+        {
+            return EK_READ_READ_FAILED;
+        };
+        return bytes_read;
     }
 
     global_fd_entry fd_entry = global_fd_table[fd];
@@ -728,6 +766,11 @@ int64_t k_lseek(int fd, int offset, int whence)
         return EK_LSEEK_FD_OUT_OF_RANGE;
     }
 
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        return EK_LSEEK_SPECIAL_FD;
+    }
+
     global_fd_entry fd_entry = global_fd_table[fd];
     if (fd_entry.ref_count == 0)
     {
@@ -792,6 +835,20 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
     if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
     {
         return EK_WRITE_FD_OUT_OF_RANGE;
+    }
+
+    if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
+    {
+        // special case write for stdin, stdout, stderr
+        // we just write to the buffer
+        int bytes_written = write(fd, str, n); // NOTE: unix systems typically assign STDIN, STDOUT, STDERR in the same way we do, so this should work
+        // We allow writing to stdin here because it's possible that there has been some redirection
+        // so we let it play out
+        if (bytes_written < 0)
+        {
+            return EK_WRITE_WRITE_FAILED;
+        };
+        return bytes_written;
     }
 
     global_fd_entry fd_entry = global_fd_table[fd];
@@ -956,7 +1013,9 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
             {
                 is_writing_new_blocks = true;
             }
-        } else {
+        }
+        else
+        {
             next_block = first_empty_block(ptr_to_fs);
             if (next_block == 0)
             {
@@ -1046,4 +1105,134 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
     }
 
     return 0;
+}
+
+#define EK_LS_WRITE_FAILED -1
+#define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
+#define EK_LS_NOT_IMPLEMENTED -3
+int ls_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry)
+{
+    // TODO: implement nice formatting
+
+    // can write no more than block_size bytes
+    // this should be enough since
+    // - the block number is at most 65535 (5 bytes to represent)
+    // - the permission is 3 bytes
+    // - the size is at most 4,294,967,295 which is 10 bytes
+    // - the time is at most 18 bytes
+    // - the name is at most 31 bytes (since it's a null-terminated string)
+    // Including the 4 spaces between the columns, this is 68 bytes. Including the final newline and the null terminator, this is 70 bytes.
+    // so our block size of at least 256 is sufficient.
+
+    char *buf = (char *)ptr_to_fs->block_buf;
+    int total_bytes_written = 0;
+    int n_bytes_written = sprintf(buf, "%3d", ptr_to_dir_entry->first_block);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    // construct the permission string
+    char perm_str[4];
+    perm_str[0] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
+    perm_str[1] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
+    perm_str[2] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
+    perm_str[3] = '\0';
+
+    n_bytes_written = sprintf(buf + n_bytes_written, " %s", perm_str);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = sprintf(buf + total_bytes_written, " %d", ptr_to_dir_entry->size);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = strftime(buf + total_bytes_written, 19, " %b %d %H:%M %Y", localtime(&ptr_to_dir_entry->mtime));
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = sprintf(buf + total_bytes_written, " %s\n", ptr_to_dir_entry->name);
+
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    k_write(ptr_to_fs, STDOUT_FD, buf, total_bytes_written);
+
+    return 0;
+}
+
+int k_ls(fat16_fs *ptr_to_fs, const char *filename)
+{
+    if (filename != NULL)
+    {
+        directory_entry dir_entry;
+        uint16_t dir_entry_block_num;
+        uint8_t dir_entry_idx;
+        if (find_file_in_root_dir(ptr_to_fs, filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
+        {
+            // either failed or the file doesn't exist (we don't distinguish here)
+            return EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED;
+        }
+        return ls_dir_entry(ptr_to_fs, &dir_entry);
+    }
+
+    uint16_t block = 1;
+    // we'll need a second buffer here, since ls_dir_entry uses the ptr_to_fs->block_buf
+    // and we'll need to keep track of the block as we go
+    directory_entry *dir_entry_buf = (directory_entry *)malloc(ptr_to_fs->block_size);
+    if (dir_entry_buf == NULL)
+    {
+        return EK_LS_MALLOC_FAILED;
+    }
+
+    // n_dir_entry_per_block is at most 4096 / 64 = 64
+    uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
+    int status;
+    while (true)
+    {
+        if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+        {
+            status = EK_LS_GET_BLOCK_FAILED;
+            goto cleanup;
+        }
+
+        for (uint8_t i = 0; i < n_dir_entry_per_block; i++)
+        {
+            directory_entry curr_dir_entry = dir_entry_buf[i];
+            if (curr_dir_entry.name[0] == 0)
+            {
+                status = 0;
+                goto cleanup;
+            }
+            if (curr_dir_entry.name[0] == 1 || curr_dir_entry.name[0] == 2)
+            {
+                continue;
+            }
+
+            ls_dir_entry(ptr_to_fs, &curr_dir_entry);
+        }
+
+        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        {
+            status = EK_LS_NEXT_BLOCK_NUM_FAILED;
+            goto cleanup;
+        }
+    };
+
+cleanup:
+    free(dir_entry_buf);
+    return status;
 }
