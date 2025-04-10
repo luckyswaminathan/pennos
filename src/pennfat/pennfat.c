@@ -74,9 +74,6 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 
 // TODO: add all the signal handling stuff
 int main(void) {
-	fat16_fs fs;
-	bool mounted = false;
-
 	while (true) {
 		fprintf(stderr, "PENNFAT> ");
 		char* line = NULL;
@@ -159,55 +156,52 @@ int main(void) {
 				goto cleanup_tokens;
 			}
 
-			int mount_err = mount(tokens[1], &fs);
+			int mount_err = mount(tokens[1]);
 			if (mount_err != 0) {
 				fprintf(stderr, "Failed to mount with error code %d\n", mount_err);
 				goto cleanup_tokens;
 			}
-			mounted = true;
 		} else if (strcmp(tokens[0], "unmount") == 0) {
 			if (n_tokens != 1) {
 				fprintf(stderr, "unmount got wrong number of arguments (expected no arguments)\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "unmount: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
 
-			int unmount_err = unmount(&fs);
+			int unmount_err = unmount();
 			if (unmount_err != 0) {
 				fprintf(stderr, "Failed to unmount with error code %d\n", unmount_err);
 				goto cleanup_tokens;
 			}
-			mounted = false;
-
 		} else if (strcmp(tokens[0], "touch") == 0) {
 			if (n_tokens != 2) {
 				fprintf(stderr, "touch got wrong number of arguments (expected 1 argument)\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "touch: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
 			
-			int fd = k_open(&fs, tokens[1], F_APPEND); // don't truncate file
+			int fd = k_open(tokens[1], F_APPEND); // don't truncate file
 			if (fd < 0) {
 				fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
 				goto cleanup_tokens;
 			}
-			if (k_write(&fs, fd, NULL, 0) < 0) {
+			if (k_write(fd, NULL, 0) < 0) {
 				fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
 				goto cleanup_tokens;
 			}
-			k_close(&fs, fd);
+			k_close(fd);
 		} else if (strcmp(tokens[0], "mv") == 0) {
 			if (n_tokens != 3) {
 				fprintf(stderr, "mv got wrong number of arguments\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "mv: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -254,7 +248,7 @@ int main(void) {
 				fprintf(stderr, "rm got wrong number of arguments\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "rm: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -268,7 +262,7 @@ int main(void) {
 			}
 			
 		} else if (strcmp(tokens[0], "cat") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "cat: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -376,7 +370,8 @@ int main(void) {
 			}
 			
 		} else if (strcmp(tokens[0], "cp") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
+
 				fprintf(stderr, "cp: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -483,7 +478,7 @@ int main(void) {
 			}
 			
 		} else if (strcmp(tokens[0], "chmod") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "chmod: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -523,7 +518,154 @@ int main(void) {
 			k_close(&fs, fd);
 			
 		} else if (strcmp(tokens[0], "ls") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
+				fprintf(stderr, "ls: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+			
+			// cp -h HOST_FILE PENNFAT_FILE (from host to pennfat)
+			if (n_tokens == 4 && strcmp(tokens[1], "-h") == 0) {
+				// Open host file
+				int host_fd = open(tokens[2], O_RDONLY);
+				if (host_fd < 0) {
+					fprintf(stderr, "cp: failed to open host file: %s\n", tokens[2]);
+					goto cleanup_tokens;
+				}
+				
+				// Create destination file in PennFAT
+				int pennfat_fd = k_open(&fs, tokens[3], F_WRITE);
+				if (pennfat_fd < 0) {
+					fprintf(stderr, "cp: failed to create PennFAT file with error code %d\n", pennfat_fd);
+					close(host_fd);
+					goto cleanup_tokens;
+				}
+				
+				// Copy data
+				char buffer[1024];
+				ssize_t bytes_read;
+				while ((bytes_read = read(host_fd, buffer, sizeof(buffer))) > 0) {
+					if (k_write(&fs, pennfat_fd, buffer, bytes_read) < 0) {
+						fprintf(stderr, "cp: failed to write to PennFAT file\n");
+						close(host_fd);
+						k_close(&fs, pennfat_fd);
+						goto cleanup_tokens;
+					}
+				}
+				
+				close(host_fd);
+				k_close(&fs, pennfat_fd);
+			}
+			// cp PENNFAT_FILE -h HOST_FILE (from pennfat to host)
+			else if (n_tokens == 4 && strcmp(tokens[2], "-h") == 0) {
+				// Open PennFAT file
+				int pennfat_fd = k_open(&fs, tokens[1], F_READ);
+				if (pennfat_fd < 0) {
+					fprintf(stderr, "cp: failed to open PennFAT file with error code %d\n", pennfat_fd);
+					goto cleanup_tokens;
+				}
+				
+				// Create host file
+				int host_fd = open(tokens[3], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+				if (host_fd < 0) {
+					fprintf(stderr, "cp: failed to create host file: %s\n", tokens[3]);
+					k_close(&fs, pennfat_fd);
+					goto cleanup_tokens;
+				}
+				
+				// Copy data
+				char buffer[1024];
+				int bytes_read;
+				while ((bytes_read = k_read(&fs, pennfat_fd, sizeof(buffer), buffer)) > 0) {
+					if (write(host_fd, buffer, bytes_read) < 0) {
+						fprintf(stderr, "cp: failed to write to host file\n");
+						k_close(&fs, pennfat_fd);
+						close(host_fd);
+						goto cleanup_tokens;
+					}
+				}
+				
+				k_close(&fs, pennfat_fd);
+				close(host_fd);
+			}
+			// cp SOURCE DEST (both in PennFAT)
+			else if (n_tokens == 3) {
+				// Open source file
+				int src_fd = k_open(&fs, tokens[1], F_READ);
+				if (src_fd < 0) {
+					fprintf(stderr, "cp: failed to open source file with error code %d\n", src_fd);
+					goto cleanup_tokens;
+				}
+				
+				// Create destination file
+				int dest_fd = k_open(&fs, tokens[2], F_WRITE);
+				if (dest_fd < 0) {
+					fprintf(stderr, "cp: failed to create destination file with error code %d\n", dest_fd);
+					k_close(&fs, src_fd);
+					goto cleanup_tokens;
+				}
+				
+				// Copy data
+				char buffer[1024];
+				int bytes_read;
+				while ((bytes_read = k_read(&fs, src_fd, sizeof(buffer), buffer)) > 0) {
+					if (k_write(&fs, dest_fd, buffer, bytes_read) < 0) {
+						fprintf(stderr, "cp: failed to write to destination file\n");
+						k_close(&fs, src_fd);
+						k_close(&fs, dest_fd);
+						goto cleanup_tokens;
+					}
+				}
+				
+				k_close(&fs, src_fd);
+				k_close(&fs, dest_fd);
+			}
+			else {
+				fprintf(stderr, "cp: invalid arguments\n");
+				goto cleanup_tokens;
+			}
+			
+		} else if (strcmp(tokens[0], "chmod") == 0) {
+			if (!is_mounted()) {
+				fprintf(stderr, "chmod: there is no filesystem mounted\n");
+				goto cleanup_tokens;
+			}
+			
+			if (n_tokens != 3) {
+				fprintf(stderr, "chmod: got wrong number of arguments\n");
+				goto cleanup_tokens;
+			}
+			
+			// Parse permission mode
+			if (strlen(tokens[1]) != 1 || tokens[1][0] < '0' || tokens[1][0] > '7') {
+				fprintf(stderr, "chmod: invalid permission mode (must be 0-7)\n");
+				goto cleanup_tokens;
+			}
+			
+			uint8_t perm = tokens[1][0] - '0';
+			
+			// Open the file to update its permission
+			int fd = k_open(&fs, tokens[2], F_READ);
+			if (fd < 0) {
+				fprintf(stderr, "chmod: failed to open file with error code %d\n", fd);
+				goto cleanup_tokens;
+			}
+			
+			// Update the permission (this requires direct access to the directory entry)
+			global_fd_entry *entry = &global_fd_table[fd];
+			entry->ptr_to_dir_entry->perm = perm;
+			
+			// Write the updated directory entry back to disk
+			if (write_root_dir_entry(&fs, entry->ptr_to_dir_entry, 
+				entry->dir_entry_block_num, entry->dir_entry_idx) != 0) {
+				fprintf(stderr, "chmod: failed to update file permissions\n");
+				k_close(&fs, fd);
+				goto cleanup_tokens;
+			}
+			
+			k_close(&fs, fd);
+			
+		} else if (strcmp(tokens[0], "ls") == 0) {
+			if (!is_mounted()) {
 				fprintf(stderr, "ls: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
