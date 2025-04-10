@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-#include "./exiting_alloc.h"
+#include "../../lib/exiting_alloc.h"
 #include "./exiting_signal.h"
 #include "./print.h"
 #include "./command_execution.h"

@@ -3,15 +3,15 @@
 #include <errno.h>
 #include <unistd.h> 
 #include "./parser.h"
-#include "../src/logger.h"
+#include "../scheduler/logger.h"
 #include "./command_execution.h"
 #include "./shell_porcelain.h"
 #include "./Job.h"
 #include "./jobs.h"
-#include "./exiting_alloc.h"
+#include "../../lib/exiting_alloc.h"
 #include "./signals.h"
-#include "../src/scheduler.h"
-#include "../src/sys.h"
+#include "../scheduler/scheduler.h"
+#include "../scheduler/sys.h"
 
 jid_t job_id = 0;
 

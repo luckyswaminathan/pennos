@@ -20,7 +20,7 @@ PROMPT='"$(PROG)> "'
 
 # Remove -DNDEBUG during development if assert(3) is used
 #
-override CPPFLAGS += -DNDEBUG -DPROMPT=$(PROMPT)
+override CPPFLAGS += -DNDEBUG -DPROMPT=$(PROMPT) -I. -I.. -I../scheduler -I../../lib
 
 CC = clang-15
 
@@ -50,7 +50,7 @@ YOUR_HEADERS = $(filter-out parser.h, $(HEADERS))
 all: $(PROG) tidy-check
 
 $(PROG) : $(OBJS) $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) ../src/scheduler.o ../src/spthread.o ../src/logger.o ../src/kernel.o ../src/sys.o
+	$(CC) $(CFLAGS) -o $@ $(OBJS) ../scheduler/scheduler.o ../scheduler/spthread.o ../scheduler/logger.o ../scheduler/kernel.o ../scheduler/sys.o ../../lib/exiting_alloc.o
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
