@@ -2,8 +2,8 @@
 #include <stdlib.h> 
 #include "scheduler.h"
 #include "logger.h"
-#include "../shell/exiting_alloc.h"
-#include "../lib/linked_list.h"
+#include "../../lib/exiting_alloc.h"
+#include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <sys/time.h>
 #include "kernel.h"

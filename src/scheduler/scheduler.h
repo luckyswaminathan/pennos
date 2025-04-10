@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include <sys/types.h> // For pid_t
 
-#include "../lib/linked_list.h" 
+#include "../../lib/linked_list.h" 
 
 #include "./spthread.h" 
 

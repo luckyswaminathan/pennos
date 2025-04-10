@@ -1,8 +1,8 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include "../shell/exiting_alloc.h"
-#include "../lib/linked_list.h"
+#include "../../lib/exiting_alloc.h"
+#include "../../lib/linked_list.h"
 #include "spthread.h"
 
 

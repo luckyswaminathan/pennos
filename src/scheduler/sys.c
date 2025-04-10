@@ -1,8 +1,8 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include "../shell/exiting_alloc.h"
-#include "../lib/linked_list.h"
+#include "../../lib/exiting_alloc.h"
+#include "../../lib/linked_list.h"
 #include "spthread.h"
 
 
@@ -22,6 +22,29 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
 }
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
+    LOG_INFO("teset");
+    if (pid == -1) {
+        LOG_INFO("Waiting for any process");
+        // Search through all processes
+        pcb_t* proc = scheduler_state->terminated_processes.head;
+        while (proc != NULL) {
+            // Found a terminated process
+            pid_t terminated_pid = proc->pid;
+            // Remove from terminated queue and clean up
+            linked_list_remove(&scheduler_state->terminated_processes, proc);
+            linked_list_remove(&scheduler_state->processes, proc);
+            k_proc_cleanup(proc);
+            return terminated_pid;
+        }
+        // No terminated processes found
+        if (nohang) {
+            return -1;
+        }
+        // If not nohang, yield and try again
+        return s_waitpid(-1, wstatus, nohang);
+    }
+    
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
         if (proc->pid == pid) {
