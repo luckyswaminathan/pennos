@@ -146,4 +146,7 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname);
 #define EK_LS_WRITE_FAILED -1
 #define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
 #define EK_LS_NOT_IMPLEMENTED -3
+#define EK_LS_MALLOC_FAILED -4
+#define EK_LS_GET_BLOCK_FAILED -5
+#define EK_LS_NEXT_BLOCK_NUM_FAILED -6
 int k_ls(fat16_fs *ptr_to_fs, const char *filename);

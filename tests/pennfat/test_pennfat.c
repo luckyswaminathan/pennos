@@ -291,14 +291,99 @@ void test_k_ls_on_one_file(void)
 
     TEST_CHECK(strcmp(out, "y") == 0);
 }
+
+void test_k_ls_after_unlink(void)
+{
+    remove(test_fs_name); // assume this succeeded
+
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
+    fat16_fs fs;
+    TEST_CHECK(mount(test_fs_name, &fs) == 0);
+
+    // 31 char filename
+    int fd = k_open(&fs, "this-is-aagam-s-first-ever-file", F_WRITE);
+    TEST_CHECK(fd >= 0);
+    TEST_MSG("Produced fd: %d", fd);
+
+    TEST_CHECK(k_ls(&fs, NULL) == 0);
+
+    TEST_CHECK(k_unlink(&fs, "this-is-aagam-s-first-ever-file") == 0);
+
+    // get input that the output is correct (using k_write and k_read for fun)
+    char out[2];
+    out[1] = '\0';
+    k_write(&fs, STDOUT_FD, "Does k_ls work? [y/N] ", 22);
+    int bytes_read = k_read(&fs, STDIN_FD, 1, out);
+    TEST_CHECK(bytes_read == 1);
+    TEST_MSG("Expected %d", 1);
+    TEST_MSG("Produced %d", bytes_read);
+
+    TEST_CHECK(strcmp(out, "y") == 0);
+}
+
+void test_k_ls_on_non_existent_file(void)
+{
+    remove(test_fs_name); // assume this succeeded
+
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
+    fat16_fs fs;
+    TEST_CHECK(mount(test_fs_name, &fs) == 0);
+
+    int status = k_ls(&fs, "this-is-aagam-s-first-ever-file");
+    TEST_CHECK(status == EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED);
+    TEST_MSG("Expected %d", EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED);
+    TEST_MSG("Produced %d", status);
+
+    TEST_CHECK(unmount(&fs) == 0);
+}
+
+void test_k_ls_multiple_files(void)
+{
+    remove(test_fs_name); // assume this succeeded
+
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
+    fat16_fs fs;
+    TEST_CHECK(mount(test_fs_name, &fs) == 0);
+
+    int fd = k_open(&fs, "a", F_WRITE);
+    TEST_CHECK(fd >= 0);
+
+    TEST_CHECK(k_write(&fs, fd, "hello", 5) == 5);
+    TEST_CHECK(k_close(&fs, fd) == 0);
+
+    fd = k_open(&fs, "b", F_WRITE);
+    TEST_CHECK(fd >= 0);
+
+    TEST_CHECK(k_write(&fs, fd, "0", 1) == 1);
+    TEST_CHECK(k_close(&fs, fd) == 0);
+
+    TEST_CHECK(k_ls(&fs, NULL) == 0);
+
+    // get input that the output is correct (using k_write and k_read for fun)
+    char out[2];
+    out[1] = '\0';
+    k_write(&fs, STDOUT_FD, "Does k_ls work? [y/N] ", 22);
+    int bytes_read = k_read(&fs, STDIN_FD, 1, out);
+    TEST_CHECK(bytes_read == 1);
+    TEST_CHECK(strcmp(out, "y") == 0);
+
+    TEST_CHECK(unmount(&fs) == 0);
+}
+
 TEST_LIST = {
     {"test_k_write_read", test_k_write_read},
     {"test_k_lseek_past_end", test_k_lseek_past_end},
     {"test_k_lseek_various", test_k_lseek_various},
     //    { "test_k_many_opens", test_k_many_opens }, // TODO: fix this
     {"test_big_write_and_read", test_big_write_and_read},
-    // {"test_stdin_stdout_stderr", test_stdin_stdout_stderr}, // This one is a visual test (using the terminal), so it's annoying to run every time
+    // {"test_stdin_stdout_stderr", test_stdin_stdout_stderr}, // This one requires input and is annoying to run every time
     {"test_operating_on_special_fds", test_operating_on_special_fds},
     {"test_k_ls_on_one_file", test_k_ls_on_one_file},
+    {"test_k_ls_after_unlink", test_k_ls_after_unlink},
+    {"test_k_ls_on_non_existent_file", test_k_ls_on_non_existent_file},
+    {"test_k_ls_multiple_files", test_k_ls_multiple_files},
     {NULL, NULL} // important: need to have this
 };

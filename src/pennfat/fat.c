@@ -1181,17 +1181,54 @@ int k_ls(fat16_fs *ptr_to_fs, const char *filename)
         directory_entry dir_entry;
         uint16_t dir_entry_block_num;
         uint8_t dir_entry_idx;
-        if (find_file_in_root_dir(ptr_to_fs, filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) < 0)
+        if (find_file_in_root_dir(ptr_to_fs, filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
         {
+            // either failed or the file doesn't exist (we don't distinguish here)
             return EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED;
         }
         return ls_dir_entry(ptr_to_fs, &dir_entry);
     }
-    else
-    {
-        // list all files in the root directory
 
-        // not yet implemented!
-        return EK_LS_NOT_IMPLEMENTED;
+    uint16_t block = 1;
+    // we'll need a second buffer here, since ls_dir_entry uses the ptr_to_fs->block_buf
+    // and we'll need to keep track of the block as we go
+    directory_entry *dir_entry_buf = (directory_entry *)malloc(ptr_to_fs->block_size);
+    if (dir_entry_buf == NULL)
+    {
+        return EK_LS_MALLOC_FAILED;
     }
+
+    // n_dir_entry_per_block is at most 4096 / 64 = 64
+    uint8_t n_dir_entry_per_block = ptr_to_fs->block_size / sizeof(directory_entry);
+    int status;
+    while (true)
+    {
+        if (get_block(ptr_to_fs, block, dir_entry_buf) != 0)
+        {
+            status = EK_LS_GET_BLOCK_FAILED;
+            goto cleanup;
+        }
+
+        for (uint8_t i = 0; i < n_dir_entry_per_block; i++)
+        {
+            directory_entry curr_dir_entry = dir_entry_buf[i];
+            if (curr_dir_entry.name[0] == 0)
+            {
+                status = 0;
+                goto cleanup;
+            }
+
+            ls_dir_entry(ptr_to_fs, &curr_dir_entry);
+        }
+
+        if (next_block_num(ptr_to_fs, block, &block) != 0)
+        {
+            status = EK_LS_NEXT_BLOCK_NUM_FAILED;
+            goto cleanup;
+        }
+    };
+
+cleanup:
+    free(dir_entry_buf);
+    return status;
 }
