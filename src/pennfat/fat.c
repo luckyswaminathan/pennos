@@ -273,6 +273,8 @@ int write_block(fat16_fs *ptr_to_fs, uint16_t block_num, void *data)
 /**
  * Find the file with name fname in the root directory of the filesystem. If it is found,
  * mallocs new directory_entry and returns a pointer to it via the ptr_to_dir_entry_buf
+ *
+ * Returns >= 0 on success (see RFIND_FILE_IN_ROOT_DIR_* return codes) and < 0 on error (see EFIND_FILE_IN_ROOT_DIR_* error codes)
  */
 int find_file_in_root_dir(fat16_fs *ptr_to_fs, const char *fname, directory_entry *ptr_to_dir_entry, uint16_t *ptr_to_block, uint8_t *ptr_to_dir_entry_idx)
 {
@@ -1103,4 +1105,93 @@ int k_unlink(fat16_fs *ptr_to_fs, const char *fname)
     }
 
     return 0;
+}
+
+#define EK_LS_WRITE_FAILED -1
+#define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
+#define EK_LS_NOT_IMPLEMENTED -3
+int ls_dir_entry(fat16_fs *ptr_to_fs, directory_entry *ptr_to_dir_entry)
+{
+    // TODO: implement nice formatting
+
+    // can write no more than block_size bytes
+    // this should be enough since
+    // - the block number is at most 65535 (5 bytes to represent)
+    // - the permission is 3 bytes
+    // - the size is at most 4,294,967,295 which is 10 bytes
+    // - the time is at most 18 bytes
+    // - the name is at most 31 bytes (since it's a null-terminated string)
+    // Including the 4 spaces between the columns, this is 68 bytes. Including the final newline and the null terminator, this is 70 bytes.
+    // so our block size of at least 256 is sufficient.
+
+    char *buf = (char *)ptr_to_fs->block_buf;
+    int total_bytes_written = 0;
+    int n_bytes_written = sprintf(buf, "%3d", ptr_to_dir_entry->first_block);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    // construct the permission string
+    char perm_str[4];
+    perm_str[0] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
+    perm_str[1] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
+    perm_str[2] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
+    perm_str[3] = '\0';
+
+    n_bytes_written = sprintf(buf + n_bytes_written, " %s", perm_str);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = sprintf(buf + total_bytes_written, " %d", ptr_to_dir_entry->size);
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = strftime(buf + total_bytes_written, 19, " %b %d %H:%M %Y", localtime(&ptr_to_dir_entry->mtime));
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    n_bytes_written = sprintf(buf + total_bytes_written, " %s\n", ptr_to_dir_entry->name);
+
+    if (n_bytes_written < 0)
+    {
+        return EK_LS_WRITE_FAILED;
+    }
+    total_bytes_written += n_bytes_written;
+
+    k_write(ptr_to_fs, STDOUT_FD, buf, total_bytes_written);
+
+    return 0;
+}
+
+int k_ls(fat16_fs *ptr_to_fs, const char *filename)
+{
+    if (filename != NULL)
+    {
+        directory_entry dir_entry;
+        uint16_t dir_entry_block_num;
+        uint8_t dir_entry_idx;
+        if (find_file_in_root_dir(ptr_to_fs, filename, &dir_entry, &dir_entry_block_num, &dir_entry_idx) < 0)
+        {
+            return EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED;
+        }
+        return ls_dir_entry(ptr_to_fs, &dir_entry);
+    }
+    else
+    {
+        // list all files in the root directory
+
+        // not yet implemented!
+        return EK_LS_NOT_IMPLEMENTED;
+    }
 }

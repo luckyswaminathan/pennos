@@ -261,6 +261,36 @@ void test_operating_on_special_fds(void)
     TEST_CHECK(unmount(&fs) == 0);
 }
 
+void test_k_ls_on_one_file(void)
+{
+    remove(test_fs_name); // assume this succeeded
+
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
+    fat16_fs fs;
+    TEST_CHECK(mount(test_fs_name, &fs) == 0);
+
+    // 31 char filename
+    int fd = k_open(&fs, "this-is-aagam-s-first-ever-file", F_WRITE);
+    TEST_CHECK(fd >= 0);
+    TEST_MSG("Produced fd: %d", fd);
+
+    TEST_CHECK(k_write(&fs, fd, "hello", 5) == 5);
+    TEST_CHECK(k_close(&fs, fd) == 0);
+
+    TEST_CHECK(k_ls(&fs, "this-is-aagam-s-first-ever-file") == 0);
+
+    // get input that the output is correct (using k_write and k_read for fun)
+    char out[2];
+    out[1] = '\0';
+    k_write(&fs, STDOUT_FD, "Does k_ls work? [y/N] ", 22);
+    int bytes_read = k_read(&fs, STDIN_FD, 1, out);
+    TEST_CHECK(bytes_read == 1);
+    TEST_MSG("Expected %d", 1);
+    TEST_MSG("Produced %d", bytes_read);
+
+    TEST_CHECK(strcmp(out, "y") == 0);
+}
 TEST_LIST = {
     {"test_k_write_read", test_k_write_read},
     {"test_k_lseek_past_end", test_k_lseek_past_end},
@@ -269,5 +299,6 @@ TEST_LIST = {
     {"test_big_write_and_read", test_big_write_and_read},
     // {"test_stdin_stdout_stderr", test_stdin_stdout_stderr}, // This one is a visual test (using the terminal), so it's annoying to run every time
     {"test_operating_on_special_fds", test_operating_on_special_fds},
+    {"test_k_ls_on_one_file", test_k_ls_on_one_file},
     {NULL, NULL} // important: need to have this
 };
