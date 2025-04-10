@@ -63,6 +63,7 @@ int s_kill(pid_t pid) {
             }
             proc->state = PROCESS_TERMINATED;
             linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+            spthread_cancel(*proc->thread);
             return 0;
         }
         proc = proc->next;
