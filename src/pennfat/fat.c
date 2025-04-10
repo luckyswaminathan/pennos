@@ -945,6 +945,7 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
 
         // try to get the next block of the file
         uint16_t next_block;
+        ptr_to_fs->fat[block] = FAT_END_OF_FILE; // prevent a loop where we keep getting the same blocks
         if (!is_writing_new_blocks)
         {
             if (next_block_num(ptr_to_fs, block, &next_block) != 0)
@@ -966,6 +967,7 @@ int k_write(fat16_fs *ptr_to_fs, int fd, const char *str, int n)
         ptr_to_fs->fat[block] = next_block;
         block = next_block;
     }
+    ptr_to_fs->fat[block] = FAT_END_OF_FILE;
 
     // increment the file offset by the number of bytes read
     global_fd_table[fd].offset += n_copied;

@@ -5,20 +5,21 @@
 
 // this will be a min sized fs, so it will have
 // 1 block and 256 byte blocks
-char* test_fs_name = "testfs999";
+char *test_fs_name = "testfs999";
 
-void test_k_write_read(void) {
+void test_k_write_read(void)
+{
     remove(test_fs_name); // assume this succeeded
 
-    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0); 
-    
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
     fat16_fs fs;
     TEST_CHECK(mount(test_fs_name, &fs) == 0);
 
     int fd = k_open(&fs, "a", F_WRITE);
     TEST_CHECK(fd >= 0);
 
-    char* str = "hello world";
+    char *str = "hello world";
     int len = strlen(str);
     TEST_CHECK(k_write(&fs, fd, str, strlen(str)) == len);
 
@@ -47,11 +48,12 @@ void test_k_write_read(void) {
     TEST_CHECK(unmount(&fs) == 0);
 }
 
-void test_k_lseek_past_end(void) {
+void test_k_lseek_past_end(void)
+{
     remove(test_fs_name); // assume this succeeded
 
-    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0); 
-    
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
+
     fat16_fs fs;
     TEST_CHECK(mount(test_fs_name, &fs) == 0);
 
@@ -59,8 +61,8 @@ void test_k_lseek_past_end(void) {
     TEST_CHECK(fd >= 0);
 
     TEST_CHECK(k_lseek(fd, 100, F_SEEK_SET) == 100);
-    
-    char* str = "hello world";
+
+    char *str = "hello world";
     int len = strlen(str);
     TEST_CHECK(k_write(&fs, fd, str, strlen(str)) == len);
 
@@ -70,8 +72,9 @@ void test_k_lseek_past_end(void) {
     int bytes_read = k_read(&fs, fd, 200, out);
     TEST_CHECK(bytes_read == 100 + len);
     TEST_MSG("Expected %d", 100 + len);
-    
-    for (int i = 0; i < 100; i++) {
+
+    for (int i = 0; i < 100; i++)
+    {
         TEST_CHECK(out[i] == '\0');
     }
     TEST_CHECK(strcmp(out + 100, str) == 0);
@@ -80,10 +83,11 @@ void test_k_lseek_past_end(void) {
     TEST_CHECK(unmount(&fs) == 0);
 }
 
-void test_k_lseek_various(void) {
+void test_k_lseek_various(void)
+{
     remove(test_fs_name); // assume this succeeded
 
-    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0); 
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
 
     fat16_fs fs;
     TEST_CHECK(mount(test_fs_name, &fs) == 0);
@@ -114,7 +118,6 @@ void test_k_lseek_various(void) {
     TEST_MSG("Produced %c", out[0]);
     TEST_MSG("Produced out %s", out);
 
-    
     // Check we're at the 3rd byte
     TEST_CHECK(k_lseek(fd, 0, F_SEEK_CUR) == 3);
 
@@ -133,39 +136,44 @@ void test_k_lseek_various(void) {
     TEST_CHECK(unmount(&fs) == 0);
 }
 
-void test_k_many_opens(void) {
+void test_k_many_opens(void)
+{
     remove(test_fs_name); // assume this succeeded
 
-    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0); 
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
 
     fat16_fs fs;
     TEST_CHECK(mount(test_fs_name, &fs) == 0);
 
     int fds[1000];
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1000; i++)
+    {
         fds[i] = k_open(&fs, "a", F_WRITE);
         TEST_CHECK(fds[i] >= 0);
     }
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1000; i++)
+    {
         TEST_CHECK(k_close(&fs, fds[i]) == 0);
     }
-    
+
     TEST_CHECK(unmount(&fs) == 0);
 }
 
-
-void test_big_write_and_read(void) {
+void test_big_write_and_read(void)
+{
     remove(test_fs_name); // assume this succeeded
 
-    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0); 
+    TEST_CHECK(mkfs(test_fs_name, 1, 0) == 0);
 
     fat16_fs fs;
     TEST_CHECK(mount(test_fs_name, &fs) == 0);
 
     char str[1301] = "";
-    for (int i = 0; i < 26; i++) {
-        for (int j = 0; j < 50; j++) {
+    for (int i = 0; i < 26; i++)
+    {
+        for (int j = 0; j < 50; j++)
+        {
             str[i * 50 + j] = 'a' + i;
         }
     }
@@ -187,16 +195,15 @@ void test_big_write_and_read(void) {
     TEST_MSG("Expected str: %s", str);
     TEST_MSG("Produced str: %s", out);
 
-
     TEST_CHECK(k_close(&fs, fd) == 0);
     TEST_CHECK(unmount(&fs) == 0);
 }
 
 TEST_LIST = {
-//    { "test_k_write_read", test_k_write_read },
-//    { "test_k_lseek_past_end", test_k_lseek_past_end },
-//    { "test_k_lseek_various", test_k_lseek_various },
-//    { "test_k_many_opens", test_k_many_opens },
-   { "test_big_write_and_read", test_big_write_and_read },
-   { NULL, NULL } // important: need to have this
+    {"test_k_write_read", test_k_write_read},
+    {"test_k_lseek_past_end", test_k_lseek_past_end},
+    {"test_k_lseek_various", test_k_lseek_various},
+    //    { "test_k_many_opens", test_k_many_opens }, // TODO: fix this
+    {"test_big_write_and_read", test_big_write_and_read},
+    {NULL, NULL} // important: need to have this
 };
