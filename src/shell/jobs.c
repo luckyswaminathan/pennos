@@ -1,7 +1,7 @@
 #include "./Job.h"
 #include "./jobs.h"
 #include "./linked_list.h"
-#include "./exiting_alloc.h"
+#include "../../lib/exiting_alloc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -16,7 +16,7 @@
 #include "./valid_input.h"
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
-#include "../src/scheduler.h"
+#include "../scheduler/scheduler.h"
 
 #define DEFAULT_FILE_PERMISSIONS 0644  // User: read/write, Group: read, Others: read
 #define FORK_SETUP_DELAY_USEC 500     // Microseconds to wait for child process setup
@@ -26,6 +26,8 @@
  */
 
 pid_t current_pid;
+
+
 
 
 void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {

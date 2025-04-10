@@ -61,7 +61,7 @@ int main() {
     LOG_INFO("Spawned child process with pid %d", child_pid2);
     LOG_INFO("Spawned child process with pid %d", child_pid3);
     
-    // Set process 3 to low priority
+    // Set process 3 to high priority
     s_nice(child_pid2, PRIORITY_HIGH);
     s_kill(child_pid3);
     log_all_processes();

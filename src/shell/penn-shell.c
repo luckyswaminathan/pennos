@@ -3,14 +3,15 @@
 #include <errno.h>
 #include <unistd.h> 
 #include "./parser.h"
-#include "../src/logger.h"
+#include "../scheduler/logger.h"
 #include "./command_execution.h"
 #include "./shell_porcelain.h"
 #include "./Job.h"
 #include "./jobs.h"
-#include "./exiting_alloc.h"
+#include "../../lib/exiting_alloc.h"
 #include "./signals.h"
-#include "../src/scheduler.h"
+#include "../scheduler/scheduler.h"
+#include "../scheduler/sys.h"
 
 jid_t job_id = 0;
 
@@ -22,7 +23,7 @@ static void* shell_loop(void* arg) {
         display_prompt();  
 
         while (true) {
-            pid_t dead_pid = waitpid(-1, NULL, WNOHANG | WUNTRACED);
+            pid_t dead_pid = s_waitpid(-1, NULL, true);
             if (dead_pid == -1 && errno != ECHILD) {
                 perror("Failed to wait for background jobs");
                 exit(EXIT_FAILURE);
@@ -109,7 +110,7 @@ int main(int argc, char **argv) {
     init_shell_pgid();
 
     // Initialize logger and scheduler
-    init_logger("../src/scheduler.log");
+    init_logger("scheduler.log");
     init_scheduler();
     
     // Finally set up the job control handlers
@@ -117,20 +118,10 @@ int main(int argc, char **argv) {
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
 
-    // Create scheduler thread
-    spthread_t scheduler_thread;
-    if (spthread_create(&scheduler_thread, NULL, scheduler_thread_fn, NULL) != 0) {
-        perror("Failed to create scheduler thread");
-        exit(1);
-    }
 
-    // Create shell thread
-    spthread_t shell_thread;
-    if (spthread_create(&shell_thread, NULL, shell_loop, NULL) != 0) {
-        perror("Failed to create shell thread");
-        exit(1);
-    }
-
+    
+    s_spawn(shell_loop, NULL, STDIN_FILENO, STDOUT_FILENO);
+    run_scheduler();
 
     return EXIT_SUCCESS;
 }

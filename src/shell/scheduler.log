@@ -1,0 +1,85 @@
+[2025-04-10 19:39:11] [INFO] Spawning process 1
+[2025-04-10 19:39:11] [INFO] === Current Queue State ===
+[2025-04-10 19:39:11] [INFO] High Priority Queue:
+[2025-04-10 19:39:11] [INFO] Medium Priority Queue:
+[2025-04-10 19:39:11] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:39:11] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:39:11] [INFO] Low Priority Queue:
+[2025-04-10 19:39:11] [INFO] Sleeping Queue:
+[2025-04-10 19:39:11] [INFO] Terminated Queue:
+[2025-04-10 19:39:11] [INFO] ========================
+[2025-04-10 19:39:11] [INFO] CURRENT: 0
+[2025-04-10 19:39:11] [INFO] Running medium priority process
+[2025-04-10 19:39:11] [INFO] running init thread
+[2025-04-10 19:39:11] [INFO] === Current Queue State ===
+[2025-04-10 19:39:11] [INFO] High Priority Queue:
+[2025-04-10 19:39:11] [INFO] Medium Priority Queue:
+[2025-04-10 19:39:11] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:39:11] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:39:11] [INFO] Low Priority Queue:
+[2025-04-10 19:39:11] [INFO] Sleeping Queue:
+[2025-04-10 19:39:11] [INFO] Terminated Queue:
+[2025-04-10 19:39:11] [INFO] ========================
+[2025-04-10 19:39:11] [INFO] CURRENT: 1
+[2025-04-10 19:39:11] [INFO] Running medium priority process
+[2025-04-10 19:39:11] [INFO] Shell loop entered
+[2025-04-10 19:39:11] [INFO] PROC PID 1
+[2025-04-10 19:39:11] [INFO] Process 1 is not the one we're waiting for
+[2025-04-10 19:39:11] [INFO] PROC PID 0
+[2025-04-10 19:39:11] [INFO] Process 0 is not the one we're waiting for
+[2025-04-10 19:52:20] [INFO] Spawning process 1
+[2025-04-10 19:52:20] [INFO] === Current Queue State ===
+[2025-04-10 19:52:20] [INFO] High Priority Queue:
+[2025-04-10 19:52:20] [INFO] Medium Priority Queue:
+[2025-04-10 19:52:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:52:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:52:20] [INFO] Low Priority Queue:
+[2025-04-10 19:52:20] [INFO] Sleeping Queue:
+[2025-04-10 19:52:20] [INFO] Terminated Queue:
+[2025-04-10 19:52:20] [INFO] ========================
+[2025-04-10 19:52:20] [INFO] CURRENT: 0
+[2025-04-10 19:52:20] [INFO] Running medium priority process
+[2025-04-10 19:52:20] [INFO] running init thread
+[2025-04-10 19:52:20] [INFO] === Current Queue State ===
+[2025-04-10 19:52:20] [INFO] High Priority Queue:
+[2025-04-10 19:52:20] [INFO] Medium Priority Queue:
+[2025-04-10 19:52:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:52:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:52:20] [INFO] Low Priority Queue:
+[2025-04-10 19:52:20] [INFO] Sleeping Queue:
+[2025-04-10 19:52:20] [INFO] Terminated Queue:
+[2025-04-10 19:52:20] [INFO] ========================
+[2025-04-10 19:52:20] [INFO] CURRENT: 1
+[2025-04-10 19:52:20] [INFO] Running medium priority process
+[2025-04-10 19:52:20] [INFO] Shell loop entered
+[2025-04-10 19:52:20] [INFO] s_waitpid called with pid -1, nohang 1
+[2025-04-10 19:52:20] [INFO] teset
+[2025-04-10 19:52:20] [INFO] Waiting for any process
+[2025-04-10 19:55:59] [INFO] Spawning process 1
+[2025-04-10 19:55:59] [INFO] === Current Queue State ===
+[2025-04-10 19:55:59] [INFO] High Priority Queue:
+[2025-04-10 19:55:59] [INFO] Medium Priority Queue:
+[2025-04-10 19:55:59] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:55:59] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:55:59] [INFO] Low Priority Queue:
+[2025-04-10 19:55:59] [INFO] Sleeping Queue:
+[2025-04-10 19:55:59] [INFO] Terminated Queue:
+[2025-04-10 19:55:59] [INFO] ========================
+[2025-04-10 19:55:59] [INFO] CURRENT: 0
+[2025-04-10 19:55:59] [INFO] Running medium priority process
+[2025-04-10 19:55:59] [INFO] running init thread
+[2025-04-10 19:55:59] [INFO] === Current Queue State ===
+[2025-04-10 19:55:59] [INFO] High Priority Queue:
+[2025-04-10 19:55:59] [INFO] Medium Priority Queue:
+[2025-04-10 19:55:59] [INFO]   PID 1 (State: 0)
+[2025-04-10 19:55:59] [INFO]   PID 0 (State: 1)
+[2025-04-10 19:55:59] [INFO] Low Priority Queue:
+[2025-04-10 19:55:59] [INFO] Sleeping Queue:
+[2025-04-10 19:55:59] [INFO] Terminated Queue:
+[2025-04-10 19:55:59] [INFO] ========================
+[2025-04-10 19:55:59] [INFO] CURRENT: 1
+[2025-04-10 19:55:59] [INFO] Running medium priority process
+[2025-04-10 19:55:59] [INFO] Shell loop entered
+[2025-04-10 19:55:59] [INFO] s_waitpid called with pid -1, nohang 1
+[2025-04-10 19:55:59] [INFO] teset
+[2025-04-10 19:55:59] [INFO] Waiting for any process
