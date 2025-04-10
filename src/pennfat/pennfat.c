@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <errno.h>
-
+#include <unistd.h>
 
 char** whitespace_tokenize(char *string, size_t* n_tokens) {
 	size_t length = strlen(string) + 1; // +1 for the null terminator
@@ -72,9 +72,6 @@ long int safe_strtol(char *string, char* prefix, bool* ok) {
 
 // TODO: add all the signal handling stuff
 int main(void) {
-	fat16_fs fs;
-	bool mounted = false;
-
 	while (true) {
 		fprintf(stderr, "PENNFAT> ");
 		char* line = NULL;
@@ -157,55 +154,52 @@ int main(void) {
 				goto cleanup_tokens;
 			}
 
-			int mount_err = mount(tokens[1], &fs);
+			int mount_err = mount(tokens[1]);
 			if (mount_err != 0) {
 				fprintf(stderr, "Failed to mount with error code %d\n", mount_err);
 				goto cleanup_tokens;
 			}
-			mounted = true;
 		} else if (strcmp(tokens[0], "unmount") == 0) {
 			if (n_tokens != 1) {
 				fprintf(stderr, "unmount got wrong number of arguments (expected no arguments)\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "unmount: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
 
-			int unmount_err = unmount(&fs);
+			int unmount_err = unmount();
 			if (unmount_err != 0) {
 				fprintf(stderr, "Failed to unmount with error code %d\n", unmount_err);
 				goto cleanup_tokens;
 			}
-			mounted = false;
-
 		} else if (strcmp(tokens[0], "touch") == 0) {
 			if (n_tokens != 2) {
 				fprintf(stderr, "touch got wrong number of arguments (expected 1 argument)\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "touch: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
 			
-			int fd = k_open(&fs, tokens[1], F_APPEND); // don't truncate file
+			int fd = k_open(tokens[1], F_APPEND); // don't truncate file
 			if (fd < 0) {
 				fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
 				goto cleanup_tokens;
 			}
-			if (k_write(&fs, fd, NULL, 0) < 0) {
+			if (k_write(fd, NULL, 0) < 0) {
 				fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
 				goto cleanup_tokens;
 			}
-			k_close(&fs, fd);
+			k_close(fd);
 		} else if (strcmp(tokens[0], "mv") == 0) {
 			if (n_tokens != 3) {
 				fprintf(stderr, "mv got wrong number of arguments\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "mv: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -215,12 +209,12 @@ int main(void) {
 				fprintf(stderr, "rm got wrong number of arguments\n");
 				goto cleanup_tokens;
 			}
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "rm: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
 		} else if (strcmp(tokens[0], "cat") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "cat: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
@@ -229,7 +223,7 @@ int main(void) {
 				goto cleanup_tokens;
 			}
 		} else if (strcmp(tokens[0], "cp") == 0) {
-			if (!mounted) {
+			if (!is_mounted()) {
 				fprintf(stderr, "cat: there is no filesystem mounted\n");
 				goto cleanup_tokens;
 			}
