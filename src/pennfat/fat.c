@@ -1217,6 +1217,10 @@ int k_ls(fat16_fs *ptr_to_fs, const char *filename)
                 status = 0;
                 goto cleanup;
             }
+            if (curr_dir_entry.name[0] == 1 || curr_dir_entry.name[0] == 2)
+            {
+                continue;
+            }
 
             ls_dir_entry(ptr_to_fs, &curr_dir_entry);
         }

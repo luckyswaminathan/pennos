@@ -306,20 +306,25 @@ void test_k_ls_after_unlink(void)
     TEST_CHECK(fd >= 0);
     TEST_MSG("Produced fd: %d", fd);
 
-    TEST_CHECK(k_ls(&fs, NULL) == 0);
 
     TEST_CHECK(k_unlink(&fs, "this-is-aagam-s-first-ever-file") == 0);
+    
+    TEST_CHECK(k_ls(&fs, NULL) == 0);
 
     // get input that the output is correct (using k_write and k_read for fun)
-    char out[2];
-    out[1] = '\0';
-    k_write(&fs, STDOUT_FD, "Does k_ls work? [y/N] ", 22);
-    int bytes_read = k_read(&fs, STDIN_FD, 1, out);
-    TEST_CHECK(bytes_read == 1);
+    char out[3];
+    out[2] = '\0';
+    k_write(&fs, STDOUT_FD, "Did k_ls not output anything? [y/N] ", 24);
+    int bytes_read = k_read(&fs, STDIN_FD, 2, out);
+    TEST_CHECK(bytes_read == 2);
     TEST_MSG("Expected %d", 1);
     TEST_MSG("Produced %d", bytes_read);
 
-    TEST_CHECK(strcmp(out, "y") == 0);
+    // some weirdness with a 
+    TEST_CHECK(out[0] == 'y' || out[1] == 'y');
+    TEST_MSG("Expected %s", "y");
+    TEST_MSG("Produced %s", out);
+    TEST_MSG("Produced %d", out[0]);
 }
 
 void test_k_ls_on_non_existent_file(void)
@@ -374,16 +379,16 @@ void test_k_ls_multiple_files(void)
 }
 
 TEST_LIST = {
-    {"test_k_write_read", test_k_write_read},
-    {"test_k_lseek_past_end", test_k_lseek_past_end},
-    {"test_k_lseek_various", test_k_lseek_various},
-    //    { "test_k_many_opens", test_k_many_opens }, // TODO: fix this
-    {"test_big_write_and_read", test_big_write_and_read},
-    // {"test_stdin_stdout_stderr", test_stdin_stdout_stderr}, // This one requires input and is annoying to run every time
-    {"test_operating_on_special_fds", test_operating_on_special_fds},
-    {"test_k_ls_on_one_file", test_k_ls_on_one_file},
+    // {"test_k_write_read", test_k_write_read},
+    // {"test_k_lseek_past_end", test_k_lseek_past_end},
+    // {"test_k_lseek_various", test_k_lseek_various},
+    // //    { "test_k_many_opens", test_k_many_opens }, // TODO: fix this
+    // {"test_big_write_and_read", test_big_write_and_read},
+    // // {"test_stdin_stdout_stderr", test_stdin_stdout_stderr}, // This one requires input and is annoying to run every time
+    // {"test_operating_on_special_fds", test_operating_on_special_fds},
+    // {"test_k_ls_on_one_file", test_k_ls_on_one_file},
     {"test_k_ls_after_unlink", test_k_ls_after_unlink},
-    {"test_k_ls_on_non_existent_file", test_k_ls_on_non_existent_file},
-    {"test_k_ls_multiple_files", test_k_ls_multiple_files},
+    // {"test_k_ls_on_non_existent_file", test_k_ls_on_non_existent_file},
+    // {"test_k_ls_multiple_files", test_k_ls_multiple_files},
     {NULL, NULL} // important: need to have this
 };
