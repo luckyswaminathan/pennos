@@ -48,115 +48,66 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 
 
 int s_kill(pid_t pid) {
-    LOG_INFO("Searching for process %d to kill", pid);
-    pcb_t* proc = NULL;
-    
-    // Check high priority queue
-    proc = scheduler_state->priority_high.head;
-    while (proc != NULL && proc->pid != pid) {
-        LOG_INFO("PROC PID %d in high priority", proc->pid);
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        LOG_INFO("PROC PID %d", proc->pid);
+        if (proc->pid == pid) {
+            LOG_INFO("Killing process %d", proc->pid);
+            int priority = proc->priority;
+            if (priority == PRIORITY_HIGH) {
+                linked_list_remove(&scheduler_state->priority_high, proc);
+            } else if (priority == PRIORITY_MEDIUM) {
+                linked_list_remove(&scheduler_state->priority_medium, proc);
+            } else if (priority == PRIORITY_LOW) {
+                linked_list_remove(&scheduler_state->priority_low, proc);
+            }
+            proc->state = PROCESS_TERMINATED;
+            linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+            return 0;
+        }
         proc = proc->next;
     }
-    
-    // If not found, check medium priority queue
-    if (proc == NULL) {
-        proc = scheduler_state->priority_medium.head;
-        while (proc != NULL && proc->pid != pid) {
-            LOG_INFO("PROC PID %d in medium priority", proc->pid);
-            proc = proc->next;
-        }
-    }
-    
-    // If not found, check low priority queue
-    if (proc == NULL) {
-        proc = scheduler_state->priority_low.head;
-        while (proc != NULL && proc->pid != pid) {
-            LOG_INFO("PROC PID %d in low priority", proc->pid);
-            proc = proc->next;
-        }
-    }
-    
-    if (proc == NULL) {
-        LOG_INFO("Process %d not found", pid);
-        return -1;
-    }
-    
-    LOG_INFO("Found process %d, terminating", proc->pid);
-    
-    // Remove from current priority queue
-    if (proc->priority == PRIORITY_HIGH) {
-        linked_list_remove(&scheduler_state->priority_high, proc);
-    } else if (proc->priority == PRIORITY_MEDIUM) {
-        linked_list_remove(&scheduler_state->priority_medium, proc);
-    } else if (proc->priority == PRIORITY_LOW) {
-        linked_list_remove(&scheduler_state->priority_low, proc);
-    }
-    
-    proc->state = PROCESS_TERMINATED;
-    linked_list_push_tail(&scheduler_state->terminated_processes, proc);
-    LOG_INFO("Process %d terminated", pid);
-    return 0;
+    return -1;
 }
 
 int s_nice(pid_t pid, int priority) {
-    LOG_INFO("Searching for process %d to change priority to %d", pid, priority);
-    pcb_t* proc = NULL;
-    
-    // Check high priority queue
-    proc = scheduler_state->priority_high.head;
-    while (proc != NULL && proc->pid != pid) {
-        LOG_INFO("PROC PID %d in high priority", proc->pid);
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        LOG_INFO("PROC PID %d", proc->pid);
+        if (proc->pid == pid) {
+            LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
+            if (proc->priority != priority) {
+                if (priority == PRIORITY_HIGH) {
+                    if (proc->priority == PRIORITY_MEDIUM) {
+                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                    } else if (proc->priority == PRIORITY_LOW) {
+                        linked_list_remove(&scheduler_state->priority_low, proc);
+                    }
+                    proc->priority = priority;
+                    linked_list_push_tail(&scheduler_state->priority_high, proc);
+                } else if (priority == PRIORITY_MEDIUM) {
+                    if (proc->priority == PRIORITY_HIGH) {
+                        linked_list_remove(&scheduler_state->priority_high, proc);
+                    } else if (proc->priority == PRIORITY_LOW) {
+                        linked_list_remove(&scheduler_state->priority_low, proc);
+                    }
+                    proc->priority = priority;
+                    linked_list_push_tail(&scheduler_state->priority_medium, proc);
+                } else if (priority == PRIORITY_LOW) {
+                    if (proc->priority == PRIORITY_HIGH) {
+                        linked_list_remove(&scheduler_state->priority_high, proc);
+                    } else if (proc->priority == PRIORITY_MEDIUM) {
+                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                    }
+                    proc->priority = priority;
+                    linked_list_push_tail(&scheduler_state->priority_low, proc);
+                }
+            }
+            return 0;
+        }
         proc = proc->next;
     }
-    
-    // If not found, check medium priority queue
-    if (proc == NULL) {
-        proc = scheduler_state->priority_medium.head;
-        while (proc != NULL && proc->pid != pid) {
-            LOG_INFO("PROC PID %d in medium priority", proc->pid);
-            proc = proc->next;
-        }
-    }
-    
-    // If not found, check low priority queue
-    if (proc == NULL) {
-        proc = scheduler_state->priority_low.head;
-        while (proc != NULL && proc->pid != pid) {
-            LOG_INFO("PROC PID %d in low priority", proc->pid);
-            proc = proc->next;
-        }
-    }
-    
-    if (proc == NULL) {
-        LOG_INFO("Process %d not found", pid);
-        return -1;
-    }
-    
-    LOG_INFO("Found process %d, changing priority from %d to %d", proc->pid, proc->priority, priority);
-    
-    if (proc->priority != priority) {
-        // Remove from current priority queue
-        if (proc->priority == PRIORITY_HIGH) {
-            linked_list_remove(&scheduler_state->priority_high, proc);
-        } else if (proc->priority == PRIORITY_MEDIUM) {
-            linked_list_remove(&scheduler_state->priority_medium, proc);
-        } else if (proc->priority == PRIORITY_LOW) {
-            linked_list_remove(&scheduler_state->priority_low, proc);
-        }
-        
-        // Update priority and add to new queue
-        proc->priority = priority;
-        if (priority == PRIORITY_HIGH) {
-            linked_list_push_tail(&scheduler_state->priority_high, proc);
-        } else if (priority == PRIORITY_MEDIUM) {
-            linked_list_push_tail(&scheduler_state->priority_medium, proc);
-        } else if (priority == PRIORITY_LOW) {
-            linked_list_push_tail(&scheduler_state->priority_low, proc);
-        }
-    }
-    
-    LOG_INFO("Successfully changed priority of process %d to %d", pid, priority);
-    return 0;
+    return -1;
 }
     
 // void s_exit(void) {
