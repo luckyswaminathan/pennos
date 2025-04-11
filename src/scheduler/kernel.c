@@ -52,5 +52,15 @@ void k_proc_cleanup(pcb_t *proc) {
     if (proc->thread) {
         free(proc->thread);
     }
+    if (proc->children.head) {
+        pcb_t* head_child = proc->children.head;
+        while (head_child != NULL) {
+            LOG_INFO("freeing child %d", head_child->pid);
+            head_child->ppid = 0;
+            pcb_t* next_child = head_child->child_pointers.next;
+            linked_list_push_tail(&scheduler_state->init->children, head_child, child_pointers.prev, child_pointers.next);
+            head_child = next_child;
+        }
+    }
     free(proc);
 }

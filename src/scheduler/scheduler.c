@@ -363,6 +363,7 @@ void run_next_process() {
         if (!has_runnable_processes()) {
             LOG_INFO("No runnable processes, scheduler idling");
             // Use sigsuspend to idle until a signal arrives
+            quantum += 3;
             sigsuspend(&suspend_set);
             // After waking up, don't increment quantum - let the next iteration handle that
             return;
