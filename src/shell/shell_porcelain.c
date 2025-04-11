@@ -12,7 +12,7 @@
 #include "./parser.h"
 
 #ifndef PROMPT
-#define PROMPT "penn-shell> "
+#define PROMPT "$ "
 #endif
 
 #ifndef CATCHPHRASE

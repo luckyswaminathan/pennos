@@ -1,6 +1,7 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
+#include <errno.h>
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
@@ -8,17 +9,16 @@
 
 
 
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
-    LOG_INFO("s_spawn called with fd0 %d, fd1 %d", fd0, fd1);
-    pcb_t* proc = k_proc_create(scheduler_state->init);
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
-    proc->argv = argv;
+pid_t s_spawn(void* (*func)(void*), void* arg) {
+    
+    log_queue_state();
+    pcb_t* proc = k_proc_create(scheduler_state->curr, arg);
+    log_queue_state();
     proc->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
-    if (spthread_create(proc->thread, NULL, func, argv) != 0) {
+    if (spthread_create(proc->thread, NULL, func, arg) != 0) {
         LOG_ERROR("Failed to create thread for process %d", proc->pid);
         return -1;
-    }
+    }   
     return proc->pid;
 }
 
@@ -32,8 +32,8 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
             // Found a terminated process
             pid_t terminated_pid = proc->pid;
             // Remove from terminated queue and clean up
-            linked_list_remove(&scheduler_state->terminated_processes, proc);
-            linked_list_remove(&scheduler_state->processes, proc);
+            linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
             k_proc_cleanup(proc);
             return terminated_pid;
         }
@@ -42,8 +42,10 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
         if (nohang) {
             return 0;
         }
-        // If not nohang, yield and try again
-        return s_waitpid(-1, wstatus, nohang);
+        // If not nohang, we should block until a process terminates
+        // For now, just return -1 and set errno to ECHILD to indicate no children
+        errno = ECHILD;
+        return -1;
     }
     
     pcb_t* proc = scheduler_state->processes.head;
@@ -65,7 +67,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 
         }
         LOG_INFO("Process %d is not the one we're waiting for", proc->pid);
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return 0;
 }
@@ -74,23 +76,22 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 int s_kill(pid_t pid) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
-        LOG_INFO("PROC PID %d", proc->pid);
         if (proc->pid == pid) {
             LOG_INFO("Killing process %d", proc->pid);
             int priority = proc->priority;
             if (priority == PRIORITY_HIGH) {
-                linked_list_remove(&scheduler_state->priority_high, proc);
+                linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             } else if (priority == PRIORITY_MEDIUM) {
-                linked_list_remove(&scheduler_state->priority_medium, proc);
+                linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             } else if (priority == PRIORITY_LOW) {
-                linked_list_remove(&scheduler_state->priority_low, proc);
+                linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
             proc->state = PROCESS_TERMINATED;
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
             spthread_cancel(*proc->thread);
             return 0;
         }
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return -1;
 }
@@ -98,39 +99,38 @@ int s_kill(pid_t pid) {
 int s_nice(pid_t pid, int priority) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
-        LOG_INFO("PROC PID %d", proc->pid);
         if (proc->pid == pid) {
             LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
             if (proc->priority != priority) {
                 if (priority == PRIORITY_HIGH) {
                     if (proc->priority == PRIORITY_MEDIUM) {
-                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_LOW) {
-                        linked_list_remove(&scheduler_state->priority_low, proc);
+                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_high, proc);
+                    linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                 } else if (priority == PRIORITY_MEDIUM) {
                     if (proc->priority == PRIORITY_HIGH) {
-                        linked_list_remove(&scheduler_state->priority_high, proc);
+                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_LOW) {
-                        linked_list_remove(&scheduler_state->priority_low, proc);
+                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_medium, proc);
+                    linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                 } else if (priority == PRIORITY_LOW) {
                     if (proc->priority == PRIORITY_HIGH) {
-                        linked_list_remove(&scheduler_state->priority_high, proc);
+                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_MEDIUM) {
-                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_low, proc);
+                    linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                 }
             }
             return 0;
         }
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return -1;
 }

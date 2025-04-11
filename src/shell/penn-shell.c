@@ -12,6 +12,7 @@
 #include "./signals.h"
 #include "../scheduler/scheduler.h"
 #include "../scheduler/sys.h"
+#include "commands.h"
 
 jid_t job_id = 0;
 
@@ -78,7 +79,7 @@ static void* shell_loop(void* arg) {
         } else {
             // status is already J_RUNNING_FG
             add_foreground_job(job_ptr);
-            
+
             // TODO: remove
             handle_jobs();
 
@@ -116,10 +117,8 @@ int main(int argc, char **argv) {
     setup_job_control_handlers();
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
-
-
     
-    s_spawn(shell_loop, NULL, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(shell_loop, NULL);
     run_scheduler();
 
     return EXIT_SUCCESS;

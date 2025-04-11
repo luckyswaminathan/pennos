@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include "./Job.h"
 #include "./jobs.h"
-#include "./linked_list.h"
+#include "../../lib/linked_list.h"
 #include "./command_execution.h"
 
 // Define the global variable here

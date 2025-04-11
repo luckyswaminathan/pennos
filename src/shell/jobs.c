@@ -1,6 +1,6 @@
 #include "./Job.h"
 #include "./jobs.h"
-#include "./linked_list.h"
+#include "../../lib/linked_list.h"
 #include "../../lib/exiting_alloc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>  // For kill() and SIGCONT
+#include "../scheduler/sys.h"
 
 typedef linked_list(job_ll_node) job_ll;
 
@@ -42,7 +43,7 @@ void handle_jobs() {
     fprintf(stderr, "[%lu] ", node->job->id);
     print_job_command(node->job);
     fprintf(stderr, "\n");
-    node = linked_list_next(node);
+    node = linked_list_next(node, prev, next);
   }
 }
 
@@ -58,7 +59,7 @@ void handle_fg(struct parsed_command* cmd) {
       if (node->job->id == target_id) {
         break;
       }
-      node = linked_list_prev(node);
+      node = linked_list_prev(node, prev, next);
     }
 
     // Check if we found the job
@@ -77,7 +78,7 @@ void handle_fg(struct parsed_command* cmd) {
   }
 
   // remove it from the linked list
-  linked_list_remove(jobs, node);
+  linked_list_remove(jobs, node, prev, next);
   job* job = node->job;
   free(node); // free the node (but not the job)
               // TODO: we should make use of the ele_dtor here
@@ -96,7 +97,7 @@ void handle_fg(struct parsed_command* cmd) {
   if (job->status == J_STOPPED) {
     kill(-job->pids[0], SIGCONT);
   }
-  waitpid(job->pids[0], NULL, WUNTRACED);
+  s_waitpid(job->pids[0], NULL, true);
 
   // Give terminal control back to the shell
   tcsetpgrp(STDIN_FILENO, getpid());
@@ -113,7 +114,7 @@ void handle_bg(struct parsed_command* cmd) {
       if (node->job->id == target_id) {
         break;
       }
-      node = linked_list_prev(node);
+      node = linked_list_prev(node, prev, next);
     }
 
     // Check if we found the job
@@ -181,7 +182,7 @@ void enqueue_job(job* job) {
   node->prev = NULL;
   node->next = NULL;
   node->job = job;
-  linked_list_push_tail(jobs, node);
+  linked_list_push_tail(jobs, node, prev, next);
   print_job_list();
 }
 
@@ -192,7 +193,7 @@ job* find_job_by_id(jid_t id) {
     if (node->job->id == id) {
       return node->job;
     }
-    node = node->next;
+    node = linked_list_next(node, prev, next);
   }
 
   return NULL;
@@ -213,7 +214,7 @@ job* find_job_by_pid(pid_t pid) {
         return node->job;
       }
     }
-    node = node->next;
+    node = linked_list_next(node, prev, next);
   }
 
   fprintf(stderr, "No job found with pid %d\n", pid);
@@ -225,7 +226,7 @@ void print_job_list() {
   job_ll_node* node = linked_list_head(jobs);
   while (node) {
     print_job(node->job);
-    node = linked_list_next(node);
+    node = linked_list_next(node, prev, next);
   }
 }
 
@@ -236,12 +237,12 @@ void remove_job_by_pid(pid_t pid) {
     if (node->job->pids[0] == pid) {
       break; // we've found the node with the PID
     }
-    node = node->next;
+    node = linked_list_next(node, prev, next);
   }
 
 
   if (node != NULL) {
-    linked_list_remove(jobs, node);
+    linked_list_remove(jobs, node, prev, next);
 
     // Print completion message
     fprintf(stderr, "Finished ");
@@ -262,7 +263,7 @@ void add_foreground_job(job* job) {
   node->prev = NULL;
   node->next = NULL;
   node->job = job;
-  linked_list_push_head(jobs, node);
+  linked_list_push_head(jobs, node, prev, next);
 }
 
 
@@ -271,9 +272,9 @@ void add_foreground_job(job* job) {
 void remove_foreground_job(job* job) {
   job_ll_node* node = linked_list_head(jobs);
   while (node != NULL) {
-    job_ll_node* next = node->next;
+    job_ll_node* next = linked_list_next(node, prev, next);
     if (node->job == job) {
-      linked_list_remove(jobs, node);
+      linked_list_remove(jobs, node, prev, next);
       free(node);  // Free the node after removing it
       break;  // Exit after removing the job
     }

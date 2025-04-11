@@ -17,7 +17,7 @@
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
 #include "../scheduler/scheduler.h"
-#include "context.h"
+#include "commands.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
 
@@ -94,18 +94,14 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
         context->stdout_fd = command_output_fd;
         context->next_input_fd = next_command_input_fd;
 
-        pid_t pid = s_spawn((void* (*)(void*))execute_command, context->command, context->stdin_fd, context->stdout_fd);
+        pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
         if (pid == -1)
         {
             perror("Failed to spawn command");
             exit(EXIT_FAILURE);
         }
 
-        if (pid == -1)
-        {
-            perror("Failed to fork off a command while executing a job");
-            exit(EXIT_FAILURE); // exit out of the job process // TODO: should we exit here?
-        }
+        
 
         // TODO: add the pid to the job struct
         current_pid = pid;
@@ -168,20 +164,18 @@ void execute_job(job* job)
         perror("Failed to allocate PIDs array");
         return;
     }
-    pid_t pid = fork();
-    if (pid == 0) {
-        // Child process
-        setpgid(0, 0);  // Create new process group in child
-        execute_job_lead_child(job, parsed_command);
-    }
 
-    if (pid == -1) {
-        perror("Failed to fork while executing a job");
-        free(job->pids);
-        job->pids = NULL;
-        return;
+    struct command_context* context = exiting_malloc(sizeof(struct command_context));
+    context->command = parsed_command->commands[0];
+    context->stdin_fd = STDIN_FILENO;
+    context->stdout_fd = STDOUT_FILENO;
+    context->next_input_fd = -1;
+    pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
+    if (pid == -1)
+    {
+        perror("Failed to spawn command");
+        exit(EXIT_FAILURE);
     }
-
     // Store the lead process ID
     job->pids[0] = pid;
     job->num_processes = parsed_command->num_commands;
@@ -191,7 +185,7 @@ void execute_job(job* job)
     if (job->status == J_RUNNING_FG) {   
         tcsetpgrp(STDIN_FILENO, pid);
         int status;
-        waitpid(pid, &status, WUNTRACED);
+        s_waitpid(pid, &status, true);
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel

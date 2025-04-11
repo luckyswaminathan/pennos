@@ -32,33 +32,33 @@ typedef void (*destroy_fn)(void*);
     (self)->tail;                 \
   })
 
-#define linked_list_push_head(self, ele) \
+#define linked_list_push_head(self, ele, prev_field, next_field) \
   ({                                     \
    if ((self)->head == NULL) {              \
       (self)->head = ele;                   \
       (self)->tail = ele;                   \
-      (ele)->prev = NULL;                  \
-      (ele)->next = NULL;                  \
+      (ele)->prev_field = NULL;                  \
+      (ele)->next_field = NULL;                  \
     } else {                             \
-      (self)->head->prev = ele;             \
-      (ele)->next = (self)->head;             \
-      (ele)->prev = NULL;                  \
+      (self)->head->prev_field = ele;             \
+      (ele)->next_field = (self)->head;             \
+      (ele)->prev_field = NULL;                  \
       (self)->head = ele;                   \
     }                                    \
   })
 
 
-#define linked_list_push_tail(self, ele) \
+#define linked_list_push_tail(self, ele, prev_field, next_field) \
   ({                                     \
    if ((self)->head == NULL) {              \
       (self)->head = ele;                   \
       (self)->tail = ele;                   \
-      (ele)->prev = NULL;                  \
-      (ele)->next = NULL;                  \
+      (ele)->prev_field = NULL;                  \
+      (ele)->next_field = NULL;                  \
     } else {                             \
-      (self)->tail->next = ele;             \
-      (ele)->prev = (self)->tail;             \
-      (ele)->next = NULL;                  \
+      (self)->tail->next_field = ele;             \
+      (ele)->prev_field = (self)->tail;             \
+      (ele)->next_field = NULL;                  \
       (self)->tail = ele;                   \
     }                                    \
   })
@@ -67,69 +67,69 @@ typedef void (*destroy_fn)(void*);
  * Note: if ele does not belong to the list
  * then this is indeterminate
  */
-#define linked_list_remove(self, ele) \
+#define linked_list_remove(self, ele, prev_field, next_field) \
   ({                             \
     if ((ele) == NULL) { \
       /* Do nothing */ \
     } else { \
-      if ((ele)->next != NULL) { \
-        (ele)->next->prev = (ele)->prev; \
+      if ((ele)->next_field != NULL) { \
+        (ele)->next_field->prev_field = (ele)->prev_field; \
         assert((self)->tail != (ele)); \
       } else { \
         assert((self)->tail == (ele)); \
-        (self)->tail = (ele)->prev; \
+        (self)->tail = (ele)->prev_field; \
       }\
-      if ((ele)->prev != NULL) { \
-        (ele)->prev->next = (ele)->next; \
+      if ((ele)->prev_field != NULL) { \
+        (ele)->prev_field->next_field = (ele)->next_field; \
         assert((self)->head != (ele)); \
       } else { \
         assert((self)->head == (ele)); \
-        (self)->head = (ele)->next; \
+        (self)->head = (ele)->next_field; \
      } \
-     (ele)->prev = NULL; \
-     (ele)->next = NULL; \
+     (ele)->prev_field = NULL; \
+     (ele)->next_field = NULL; \
    } \
   })
 
-#define linked_list_pop_head(self)  \
+#define linked_list_pop_head(self, prev_field, next_field)  \
   ({                                     \
     typeof((self)->head) __ret = (self)->head;  \
-    linked_list_remove(self, (self)->head); \
+    linked_list_remove(self, (self)->head, prev_field, next_field); \
     __ret;                               \
   })
 
 
-#define linked_list_pop_tail(self)       \
+#define linked_list_pop_tail(self, prev_field, next_field)       \
   ({                                     \
     typeof((self)->tail) __ret = (self)->tail;             \
-    linked_list_remove(self, (self)->tail); \
+    linked_list_remove(self, (self)->tail, prev_field, next_field); \
     __ret;                               \
   })
 
-#define linked_list_next(ele) \
+#define linked_list_next(ele, prev_field, next_field) \
   ({                          \
-    (ele)->next;                \
+    (ele)->next_field;                \
   })
 
-#define linked_list_prev(ele) \
+#define linked_list_prev(ele, prev_field, next_field) \
   ({                          \
-    (ele)->prev;                \
+    (ele)->prev_field;                \
   })
 
-#define linked_list_clear(self)          \
+#define linked_list_clear(self, prev_field, next_field)          \
   ({                                     \
     typeof((self)->head) __ele = (self)->head; \
     typeof((self)->head) __next_ele;        \
     (self)->head = NULL;                    \
     (self)->tail = NULL;                    \
     while (__ele != NULL) {              \
-      __next_ele = __ele->next;          \
-      __ele->prev = NULL;                \
-      __ele->next = NULL;                \
+      __next_ele = __ele->next_field;          \
+      __ele->prev_field = NULL;                \
+      __ele->next_field = NULL;                \
       if ((self)->ele_dtor != NULL) {       \
         (self)->ele_dtor(__ele);            \
       }                                  \
       __ele = __next_ele;                \
     }                                    \
-  )}
+  })
 

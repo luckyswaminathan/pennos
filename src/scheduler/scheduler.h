@@ -16,7 +16,8 @@ typedef enum {
     PROCESS_READY,
     PROCESS_RUNNING, 
     PROCESS_BLOCKED, 
-    PROCESS_TERMINATED 
+    PROCESS_TERMINATED,
+    PROCESS_SLEEPING
 } process_state;
 
 typedef enum {
@@ -30,6 +31,11 @@ typedef struct process_control_block pcb_t;
 
 // --- Process Control Block ---
 // Must have 'prev' and 'next' pointers for linked_list.h
+
+struct pointer_pair {
+    struct process_control_block* prev;
+    struct process_control_block* next;
+};
 struct process_control_block {
     pid_t pid;        
     pid_t ppid;        
@@ -40,10 +46,11 @@ struct process_control_block {
     process_state state;        
     priority_t priority;   
     double sleep_time;
+    char* command;
 
     spthread_t* thread;
-    struct process_control_block* prev;
-    struct process_control_block* next;
+    struct pointer_pair priority_pointers;
+    struct pointer_pair process_pointers;
     linked_list(pcb_t) children;
     char** argv;
 };
@@ -64,7 +71,9 @@ typedef struct scheduler {
 extern scheduler_t* scheduler_state;
 
 void init_scheduler();
+void log_queue_state();
 void run_scheduler();
+void add_process_to_queue(pcb_t* proc);
 void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 
 // Handle orphaned processes by transferring them to init

@@ -3,27 +3,43 @@
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include <string.h>
+#include "shell/commands.h"
 
 
 
-
-pcb_t* k_proc_create(pcb_t *parent) {
+pcb_t* k_proc_create(pcb_t *parent, void* arg) {
+    
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
-
+    LOG_INFO("Adding PID %d (priority %d) at address %p", scheduler_state->process_count, proc->priority, proc);
+    log_queue_state();
     proc->ppid = parent->pid;
+    LOG_INFO("Parent PID %d", proc->ppid);
     proc->pid = scheduler_state->process_count++;
     LOG_INFO("Spawning process %d", proc->pid);
-    proc->priority = PRIORITY_MEDIUM;
+    if (proc->pid <= 1) {
+        // PID 0 and 1 should be high priority
+        proc->priority = PRIORITY_HIGH;
+    } else {
+        proc->priority = PRIORITY_MEDIUM;
+    }
     proc->state = PROCESS_READY;
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
-    linked_list_push_tail(&scheduler_state->processes, proc);
-    if (proc->pid == 1) {
-        linked_list_push_tail(&scheduler_state->priority_high, proc);
+    proc->pgid = parent->pgid;
+    if (arg != NULL) {
+        struct command_context* ctx = (struct command_context*)arg;
+        char**command = ctx->command;
+        proc->command = strdup(*command);
     } else {
-    linked_list_push_tail(&scheduler_state->priority_medium, proc);
+        proc->command = "shell";
     }
+
+    linked_list_push_tail(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+    log_queue_state();
+    LOG_INFO("AFTER CREATING");
+    add_process_to_queue(proc);
     return proc;
 }
 
