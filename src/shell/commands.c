@@ -10,12 +10,19 @@
 
 // Print information about a single process
 static void print_process(pcb_t* proc, int output_fd) {
+    char state_char = 'R';
+    if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
+    } else if (proc->state == PROCESS_TERMINATED) {
+        state_char = 'T';
+    }
+    dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
     LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
 }
 
 // Print header for ps output
 static void print_header(int output_fd) {
-    const char* header = "PID PPID STATE PRIORITY COMMAND\n";
+    const char* header = "PID PPID PRI STAT CMD\n";
+    dprintf(output_fd, "%s", header);
     LOG_INFO("%s", header);
 }
 
@@ -26,10 +33,39 @@ void* ps(void* arg) {
     // Print header
     print_header(stdout_fd);
     
-    pcb_t* proc = scheduler_state->processes.head;
+    // Iterate through high priority queue
+    pcb_t* proc = scheduler_state->priority_high.head;
     while (proc != NULL) {
         print_process(proc, stdout_fd);
-        proc = proc->process_pointers.next;
+        proc = proc->priority_pointers.next;
+    }
+    
+    // Iterate through medium priority queue
+    proc = scheduler_state->priority_medium.head;
+    while (proc != NULL) {
+        print_process(proc, stdout_fd);
+        proc = proc->priority_pointers.next;
+    }
+    
+    // Iterate through low priority queue
+    proc = scheduler_state->priority_low.head;
+    while (proc != NULL) {
+        print_process(proc, stdout_fd);
+        proc = proc->priority_pointers.next;
+    }
+    
+    // Iterate through sleeping queue
+    proc = scheduler_state->sleeping_processes.head;
+    while (proc != NULL) {
+        print_process(proc, stdout_fd);
+        proc = proc->priority_pointers.next;
+    }
+    
+    // Iterate through terminated queue
+    proc = scheduler_state->terminated_processes.head;
+    while (proc != NULL) {
+        print_process(proc, stdout_fd);
+        proc = proc->priority_pointers.next;
     }
     
     return NULL;
