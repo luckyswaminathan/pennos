@@ -17,7 +17,7 @@
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
 #include "../scheduler/scheduler.h"
-#include "context.h"
+#include "commands.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
 
@@ -94,7 +94,7 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
         context->stdout_fd = command_output_fd;
         context->next_input_fd = next_command_input_fd;
 
-        pid_t pid = s_spawn((void* (*)(void*))execute_command, context->command, context->stdin_fd, context->stdout_fd);
+        pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
         if (pid == -1)
         {
             perror("Failed to spawn command");
@@ -170,7 +170,7 @@ void execute_job(job* job)
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
     context->next_input_fd = -1;
-    pid_t pid = s_spawn((void* (*)(void*))execute_command, context->command, context->stdin_fd, context->stdout_fd);
+    pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
     if (pid == -1)
     {
         perror("Failed to spawn command");

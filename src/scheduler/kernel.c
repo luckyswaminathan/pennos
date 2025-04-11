@@ -7,7 +7,7 @@
 
 
 
-pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1, char **argv) {
+pcb_t* k_proc_create(pcb_t *parent) {
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
     LOG_INFO("Adding PID %d (priority %d) at address %p", scheduler_state->process_count, proc->priority, proc);
     log_queue_state();
@@ -25,9 +25,7 @@ pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1, char **argv) {
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
-    proc->argv = argv;
+    proc->pgid = parent->pgid;
     
 
     linked_list_push_tail(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);

@@ -111,6 +111,7 @@ void init_scheduler() {
     scheduler_state->curr = init;
     scheduler_state->init = init; 
     linked_list_push_tail(&scheduler_state->priority_high, init, priority_pointers.prev, priority_pointers.next);
+    linked_list_push_tail(&scheduler_state->processes, init, process_pointers.prev, process_pointers.next);
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 
@@ -227,8 +228,21 @@ void run_scheduler() {
     }
 }
 
-void block_process(pcb_t* proc) {
+bool should_block_process_waitpid(pcb_t* proc) {
+    if (proc->pid <= 1) {  // Shell or Init
+        // Check if process is waiting for children
+        pcb_t* child = proc->children.head;
+        while (child != NULL) {
+            if (child->state != PROCESS_TERMINATED) {
+                return true;  // Block if any non-terminated children exist
+            }
+            child = child->process_pointers.next;
+        }
+    }
+    return false;
+}
 
+void block_process(pcb_t* proc) {
     if (proc->priority == PRIORITY_HIGH) {
         linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
     } else if (proc->priority == PRIORITY_MEDIUM) {
@@ -239,7 +253,7 @@ void block_process(pcb_t* proc) {
     
     proc->state = PROCESS_BLOCKED;
     linked_list_push_tail(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
-    LOG_INFO("Process %d blocked after %d quantums", proc->pid, quantum);
+    LOG_INFO("Process %d blocked waiting for child", proc->pid);
 }
 
 void add_process_to_queue(pcb_t *proc) {
@@ -264,10 +278,15 @@ void run_next_process() {
     // Try high priority first if in high priority time slot
     if (current < 9) {
         if (scheduler_state->priority_high.head != NULL) {
-            LOG_INFO("  Target queue: HIGH (list addr: %p)", &scheduler_state->priority_high);
-            LOG_INFO("  Target queue: MEDIUM (list addr: %p)", &scheduler_state->priority_medium);
             LOG_INFO("Running high priority process");
             pcb_t* proc = scheduler_state->priority_high.head;
+            
+            // Check if shell/init should be blocked for waitpid
+            if (proc->pid <= 1 && should_block_process_waitpid(proc)) {
+                block_process(proc);
+                quantum++;
+                return;
+            }
             
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);

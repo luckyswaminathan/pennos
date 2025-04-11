@@ -8,6 +8,8 @@ struct command_context {
     int next_input_fd;   // Next command's input fd (for pipelines)
 };
 
-void* execute_command(struct command_context* context);
+void* execute_command(void* arg);
+
+
 
 #endif // CONTEXT_H

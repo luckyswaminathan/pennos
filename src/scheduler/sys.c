@@ -9,20 +9,16 @@
 
 
 
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
-    LOG_INFO("s_spawn called with fd0 %d, fd1 %d", fd0, fd1);
+pid_t s_spawn(void* (*func)(void*), void* arg) {
     log_queue_state();
-    pcb_t* proc = k_proc_create(scheduler_state->curr, fd0, fd1, argv);
+    pcb_t* proc = k_proc_create(scheduler_state->curr);
     log_queue_state();
     proc->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
-    if (spthread_create(proc->thread, NULL, func, argv) != 0) {
+    if (spthread_create(proc->thread, NULL, func, arg) != 0) {
         LOG_ERROR("Failed to create thread for process %d", proc->pid);
         return -1;
-    }
+    }   
     return proc->pid;
-    
-
-    
 }
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
@@ -79,7 +75,6 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 int s_kill(pid_t pid) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
-        LOG_INFO("PROC PID %d", proc->pid);
         if (proc->pid == pid) {
             LOG_INFO("Killing process %d", proc->pid);
             int priority = proc->priority;
@@ -103,7 +98,6 @@ int s_kill(pid_t pid) {
 int s_nice(pid_t pid, int priority) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
-        LOG_INFO("PROC PID %d", proc->pid);
         if (proc->pid == pid) {
             LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
             if (proc->priority != priority) {

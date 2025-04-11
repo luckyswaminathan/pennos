@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
 
     
-    s_spawn(shell_loop, NULL, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(shell_loop, NULL);
     run_scheduler();
 
     return EXIT_SUCCESS;

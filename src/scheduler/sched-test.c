@@ -54,9 +54,9 @@ int main() {
     LOG_INFO("Scheduler initialized");
     
     // Spawn child processes
-    pid_t child_pid = s_spawn(child_func, NULL, -1, -1);
-    pid_t child_pid2 = s_spawn(child_func2, NULL, -1, -1);
-    pid_t child_pid3 = s_spawn(child_func3, NULL, -1, -1);
+    pid_t child_pid = s_spawn(child_func, NULL);
+    pid_t child_pid2 = s_spawn(child_func2, NULL);
+    pid_t child_pid3 = s_spawn(child_func3, NULL);
     LOG_INFO("Spawned child process with pid %d", child_pid);
     LOG_INFO("Spawned child process with pid %d", child_pid2);
     LOG_INFO("Spawned child process with pid %d", child_pid3);
