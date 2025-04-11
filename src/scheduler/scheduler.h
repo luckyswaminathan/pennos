@@ -30,6 +30,11 @@ typedef struct process_control_block pcb_t;
 
 // --- Process Control Block ---
 // Must have 'prev' and 'next' pointers for linked_list.h
+
+struct pointer_pair {
+    struct process_control_block* prev;
+    struct process_control_block* next;
+};
 struct process_control_block {
     pid_t pid;        
     pid_t ppid;        
@@ -42,10 +47,8 @@ struct process_control_block {
     double sleep_time;
 
     spthread_t* thread;
-    struct process_control_block* prev_priority;
-    struct process_control_block* next_priority;
-    struct process_control_block* prev;
-    struct process_control_block* next;
+    struct pointer_pair priority_pointers;
+    struct pointer_pair process_pointers;
     linked_list(pcb_t) children;
     char** argv;
 };

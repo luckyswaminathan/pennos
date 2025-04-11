@@ -35,8 +35,8 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
             // Found a terminated process
             pid_t terminated_pid = proc->pid;
             // Remove from terminated queue and clean up
-            linked_list_remove(&scheduler_state->terminated_processes, proc);
-            linked_list_remove(&scheduler_state->processes, proc);
+            linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
             k_proc_cleanup(proc);
             return terminated_pid;
         }
@@ -70,7 +70,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 
         }
         LOG_INFO("Process %d is not the one we're waiting for", proc->pid);
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return 0;
 }
@@ -84,18 +84,18 @@ int s_kill(pid_t pid) {
             LOG_INFO("Killing process %d", proc->pid);
             int priority = proc->priority;
             if (priority == PRIORITY_HIGH) {
-                linked_list_remove(&scheduler_state->priority_high, proc);
+                linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             } else if (priority == PRIORITY_MEDIUM) {
-                linked_list_remove(&scheduler_state->priority_medium, proc);
+                linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             } else if (priority == PRIORITY_LOW) {
-                linked_list_remove(&scheduler_state->priority_low, proc);
+                linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
             proc->state = PROCESS_TERMINATED;
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc);
+            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
             spthread_cancel(*proc->thread);
             return 0;
         }
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return -1;
 }
@@ -109,33 +109,33 @@ int s_nice(pid_t pid, int priority) {
             if (proc->priority != priority) {
                 if (priority == PRIORITY_HIGH) {
                     if (proc->priority == PRIORITY_MEDIUM) {
-                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_LOW) {
-                        linked_list_remove(&scheduler_state->priority_low, proc);
+                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_high, proc);
+                    linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                 } else if (priority == PRIORITY_MEDIUM) {
                     if (proc->priority == PRIORITY_HIGH) {
-                        linked_list_remove(&scheduler_state->priority_high, proc);
+                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_LOW) {
-                        linked_list_remove(&scheduler_state->priority_low, proc);
+                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_medium, proc);
+                    linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                 } else if (priority == PRIORITY_LOW) {
                     if (proc->priority == PRIORITY_HIGH) {
-                        linked_list_remove(&scheduler_state->priority_high, proc);
+                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
                     } else if (proc->priority == PRIORITY_MEDIUM) {
-                        linked_list_remove(&scheduler_state->priority_medium, proc);
+                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
                     }
                     proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_low, proc);
+                    linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                 }
             }
             return 0;
         }
-        proc = proc->next;
+        proc = proc->process_pointers.next;
     }
     return -1;
 }

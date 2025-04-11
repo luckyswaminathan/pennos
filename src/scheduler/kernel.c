@@ -30,7 +30,7 @@ pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1, char **argv) {
     proc->argv = argv;
     
 
-    linked_list_push_tail(&scheduler_state->processes, proc);
+    linked_list_push_tail(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
     log_queue_state();
     LOG_INFO("AFTER CREATING");
     add_process_to_queue(proc);
