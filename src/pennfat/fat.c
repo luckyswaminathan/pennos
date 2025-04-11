@@ -980,7 +980,7 @@ int k_write(int fd, const char *str, int n)
     // Finally, consider if our file fills up exactly 3 blocks. Let our offset be the same as previously.
     // In this case we have to write one fully empty block and then
 
-    // offset_block stores the 1-index of the offset block
+    // offset_block stores the 1-index of the block we want to start writing at within the file
     // Example 1:
     // 256 byte blocks. File is 256 bytes. Offset is 256 bytes. Then the offset_block is 2
     // and the offset_in_block = 0
@@ -990,13 +990,13 @@ int k_write(int fd, const char *str, int n)
     //
     // Example 3:
     // Offset is 255 bytes. Then the offset_block is 1 and the offset_in_block is 255
-    uint16_t offset_block = (offset + 1) / block_size + (offset % block_size != 0); // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
+    uint16_t offset_block = (offset + block_size) / block_size; // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
     uint16_t offset_in_block = offset % block_size;
 
     // Try to get to the offset_block by
     // using the blocks in the file.
     char *char_buf = (char *)fs.block_buf;
-    uint16_t n_blocks_deep = 0;
+    uint16_t n_blocks_deep = 0; // how many blocks we've traversed
     while (n_blocks_deep < offset_block)
     {
         uint16_t next_block;
@@ -1009,7 +1009,9 @@ int k_write(int fd, const char *str, int n)
         if (next_block == FAT_END_OF_FILE)
         {
             // need to 0 out whatever remains in this block
-            uint16_t n_file_bytes_in_block = file_size % block_size;
+            
+            // this is the number of bytes in the file that are in the last block
+            uint16_t n_file_bytes_in_block = file_size - (n_blocks_deep - 1) * block_size;
             if (get_block(block, char_buf) != 0)
             {
                 return EK_WRITE_GET_BLOCK_FAILED;
@@ -1079,7 +1081,7 @@ int k_write(int fd, const char *str, int n)
             return EK_WRITE_WRITE_BLOCK_FAILED;
         }
 
-        if (n_copied == n) // we're done
+        if (n_copied >= n) // we're done
         {
             break;
         }
