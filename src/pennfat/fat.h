@@ -98,6 +98,7 @@ bool is_mounted(void);
 #define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
 #define EK_OPEN_NO_EMPTY_BLOCKS -11
 #define EK_OPEN_WRONG_PERMISSIONS -12
+#define EK_OPEN_WRITE_ROOT_DIR_ENTRY_FAILED -13
 int k_open(const char *fname, int mode);
 
 #define EK_CLOSE_FD_OUT_OF_RANGE -1

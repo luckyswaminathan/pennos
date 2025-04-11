@@ -128,6 +128,24 @@ int unmount(void)
 }
 
 /**
+ * Clear a file starting at block. It is expected that block is
+ * the first block in the file. If it is not
+ *
+ * Note that this function does not validate that the blocks at each
+ * stage (including the initially passed block) are in bounds. It assumes
+ * the FAT is maintained as valid.
+ */
+void clear_fat_file(uint16_t block)
+{
+    while (block != FAT_END_OF_FILE)
+    {
+        uint16_t next_block = fs.fat[block];
+        fs.fat[block] = 0;
+        block = next_block;
+    }
+}
+
+/**
  * Finds the first empty block by walking the fat from index 1. Returns the
  * block index if such a block exists and 0 if there is no empty block
  */
@@ -566,102 +584,119 @@ int k_open(const char *fname, int mode)
         {
             return EK_OPEN_WRONG_PERMISSIONS;
         }
-
-        // acquire the write lock
-        global_fd_table[fd_idx].write_locked = acquire_write_lock;
-        global_fd_table[fd_idx].offset = 0;
-        return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
     }
-
-    // Otherwise: the fd_idx was not found so we need to make a new entry
-    // in the global file table
-    fd_idx = find_empty_fd();
-    if (fd_idx == GLOBAL_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
+    else
     {
-        return EK_OPEN_GLOBAL_FD_TABLE_FULL;
-    }
 
-    // find or create a dir entry (malloc here so we can keep a copy of the entry around and
-    // store it in the global file table)
-    directory_entry *ptr_to_dir_entry = (directory_entry *)malloc(sizeof(directory_entry));
-    uint16_t dir_entry_block_num;
-    uint8_t dir_entry_idx;
-    if (ptr_to_dir_entry == NULL)
-    {
-        return EK_OPEN_MALLOC_FAILED;
-    }
-    int find_dir_entry_status = find_file_in_root_dir(fname, ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx);
-    if (find_dir_entry_status < 0)
-    { // indicates an error
-        return EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED;
-    }
-
-    // case: we couldn't find the file
-    if (find_dir_entry_status != RFIND_FILE_IN_ROOT_DIR_FILE_FOUND)
-    {
-        // RFIND_FILE_IN_ROOT_DIR_FILE_NOT_FOUND or RFIND_FILE_IN_ROOT_DIR_FILE_DELETED
-        if (mode == F_READ)
+        // Otherwise: the fd_idx was not found so we need to make a new entry
+        // in the global file table
+        fd_idx = find_empty_fd();
+        if (fd_idx == GLOBAL_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
         {
-            return EK_OPEN_FILE_DOES_NOT_EXIST;
+            return EK_OPEN_GLOBAL_FD_TABLE_FULL;
         }
 
-        // create a dir entry
+        // find or create a dir entry (malloc here so we can keep a copy of the entry around and
+        // store it in the global file table)
+        directory_entry *ptr_to_dir_entry = (directory_entry *)malloc(sizeof(directory_entry));
+        uint16_t dir_entry_block_num;
+        uint8_t dir_entry_idx;
+        if (ptr_to_dir_entry == NULL)
+        {
+            return EK_OPEN_MALLOC_FAILED;
+        }
+        int find_dir_entry_status = find_file_in_root_dir(fname, ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx);
+        if (find_dir_entry_status < 0)
+        { // indicates an error
+            return EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED;
+        }
+
+        // case: we couldn't find the file
+        if (find_dir_entry_status != RFIND_FILE_IN_ROOT_DIR_FILE_FOUND)
+        {
+            // RFIND_FILE_IN_ROOT_DIR_FILE_NOT_FOUND or RFIND_FILE_IN_ROOT_DIR_FILE_DELETED
+            if (mode == F_READ)
+            {
+                return EK_OPEN_FILE_DOES_NOT_EXIST;
+            }
+
+            // create a dir entry
+            time_t mtime = time(NULL);
+            if (mtime == (time_t)-1)
+            {
+                return EK_OPEN_TIME_FAILED;
+            }
+
+            uint16_t empty_block = first_empty_block();
+            if (empty_block == 0)
+            {
+                return EK_OPEN_NO_EMPTY_BLOCKS;
+            }
+            fs.fat[empty_block] = FAT_END_OF_FILE;
+            *ptr_to_dir_entry = (directory_entry){
+                .name = {0},
+                .size = 0,
+                .first_block = empty_block,
+                .type = 1,
+                .perm = P_READ_WRITE_FILE_PERMISSION, // read and write
+                .mtime = mtime,
+                .padding = {0}};
+            strcpy(ptr_to_dir_entry->name, fname); // can safely use strcpy because we checked fname
+
+            // write the dir entry
+            if (write_new_root_dir_entry(ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
+            {
+                return EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED;
+            }
+        }
+        // create an entry in the global file table
+        global_fd_table[fd_idx] = (global_fd_entry){
+            .ref_count = 1,
+            .dir_entry_block_num = dir_entry_block_num,
+            .dir_entry_idx = dir_entry_idx,
+            .ptr_to_dir_entry = ptr_to_dir_entry,
+            .write_locked = acquire_write_lock,
+            .offset = 0};
+    }
+
+    // case: we need to truncate the file because we are opening it for writing
+    if (mode == F_WRITE && global_fd_table[fd_idx].ptr_to_dir_entry->size > 0)
+    {
+        // truncate the file
         time_t mtime = time(NULL);
         if (mtime == (time_t)-1)
         {
             return EK_OPEN_TIME_FAILED;
         }
-
-        uint16_t empty_block = first_empty_block();
-        if (empty_block == 0)
-        {
-            return EK_OPEN_NO_EMPTY_BLOCKS;
-        }
-        fs.fat[empty_block] = FAT_END_OF_FILE;
-        *ptr_to_dir_entry = (directory_entry){
-            .name = {0},
-            .size = 0,
-            .first_block = empty_block,
-            .type = 1,
-            .perm = P_READ_WRITE_FILE_PERMISSION, // read and write
-            .mtime = mtime,
-            .padding = {0}};
-        strcpy(ptr_to_dir_entry->name, fname); // can safely use strcpy because we checked fname
+        global_fd_table[fd_idx].ptr_to_dir_entry->size = 0;
+        global_fd_table[fd_idx].ptr_to_dir_entry->mtime = mtime;
+        clear_fat_file(global_fd_table[fd_idx].ptr_to_dir_entry->first_block);
+        fs.fat[global_fd_table[fd_idx].ptr_to_dir_entry->first_block] = FAT_END_OF_FILE;
 
         // write the dir entry
-        if (write_new_root_dir_entry(ptr_to_dir_entry, &dir_entry_block_num, &dir_entry_idx) != 0)
+        if (write_root_dir_entry(global_fd_table[fd_idx].ptr_to_dir_entry, global_fd_table[fd_idx].dir_entry_block_num, global_fd_table[fd_idx].dir_entry_idx) != 0)
         {
-            return EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED;
+            return EK_OPEN_WRITE_ROOT_DIR_ENTRY_FAILED;
         }
     }
 
-    // create an entry in the global file table
-    global_fd_table[fd_idx] = (global_fd_entry){
-        .ref_count = 1,
-        .dir_entry_block_num = dir_entry_block_num,
-        .dir_entry_idx = dir_entry_idx,
-        .ptr_to_dir_entry = ptr_to_dir_entry,
-        .write_locked = acquire_write_lock,
-        .offset = 0};
-    return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
-}
-
-/**
- * Clear a file starting at block. It is expected that block is
- * the first block in the file. If it is not
- *
- * Note that this function does not validate that the blocks at each
- * stage (including the initially passed block) are in bounds. It assumes
- * the FAT is maintained as valid.
- */
-void clear_fat_file(uint16_t block)
-{
-    while (block != FAT_END_OF_FILE)
+    uint32_t offset = 0;
+    if (mode == F_APPEND)
     {
-        uint16_t next_block = fs.fat[block];
-        fs.fat[block] = 0;
-        block = next_block;
+        offset = global_fd_table[fd_idx].ptr_to_dir_entry->size;
     }
+    else if (mode == F_WRITE)
+    {
+        offset = 0;
+    }
+    else if (mode == F_READ)
+    {
+        offset = global_fd_table[fd_idx].offset;
+    }
+    global_fd_table[fd_idx].write_locked = acquire_write_lock;
+    global_fd_table[fd_idx].offset = offset;
+
+    return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
 }
 
 int k_close(int fd)
