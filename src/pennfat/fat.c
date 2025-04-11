@@ -1060,7 +1060,7 @@ int k_write(int fd, const char *str, int n)
 
     bool is_writing_new_blocks = offset >= file_size;
     int n_copied = 0;
-    while (n > n_copied)
+    while (n > n_copied) // NOTE: this check is basically only used to check if n == 0 (following checks occur at the if statement in the loop body)
     {
         if (is_writing_new_blocks)
         {
@@ -1077,6 +1077,11 @@ int k_write(int fd, const char *str, int n)
         if (write_block(block, char_buf))
         {
             return EK_WRITE_WRITE_BLOCK_FAILED;
+        }
+
+        if (n_copied == n) // we're done
+        {
+            break;
         }
 
         // read the next block from the start
