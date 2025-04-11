@@ -27,7 +27,11 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
+    proc->child_pointers.prev = NULL;
+    proc->child_pointers.next = NULL;
     proc->pgid = parent->pgid;
+    
+   linked_list_push_tail(&parent->children, proc, child_pointers.prev, child_pointers.next);
     if (arg != NULL) {
         struct command_context* ctx = (struct command_context*)arg;
         char**command = ctx->command;

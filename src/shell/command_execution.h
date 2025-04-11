@@ -14,7 +14,5 @@ void execute_job(job* job);
 
 extern pid_t current_pid;
 
-// Execute the lead child process
-void execute_job_lead_child(job* job, struct parsed_command* parsed_command);
 
 #endif // COMMAND_EXECUTION_H_

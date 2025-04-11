@@ -24,51 +24,47 @@ pid_t s_spawn(void* (*func)(void*), void* arg) {
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
-    if (pid == -1) {
-        LOG_INFO("Waiting for any process");
-        // Search through all processes
-        pcb_t* proc = scheduler_state->terminated_processes.head;
-        while (proc != NULL) {
-            // Found a terminated process
+    
+    // First check terminated processes queue
+    pcb_t* proc = scheduler_state->terminated_processes.head;
+    while (proc != NULL) {
+        if (pid == -1 || proc->pid == pid) {
+            // Found a terminated process we're looking for
             pid_t terminated_pid = proc->pid;
-            // Remove from terminated queue and clean up
+            LOG_INFO("Found terminated process %d", terminated_pid);
+            
+            // Remove from terminated queue
             linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-            linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+            
+            // Clean up the process
             k_proc_cleanup(proc);
+            
             return terminated_pid;
         }
-        LOG_INFO("finished search");
-        // No terminated processes found
-        if (nohang) {
-            return 0;
-        }
-        // If not nohang, we should block until a process terminates
-        // For now, just return -1 and set errno to ECHILD to indicate no children
-        errno = ECHILD;
-        return -1;
+        proc = proc->priority_pointers.next;
     }
     
-    pcb_t* proc = scheduler_state->processes.head;
+    // If not found in terminated queue, check running processes
+    proc = scheduler_state->processes.head;
     while (proc != NULL) {
-        if (proc->pid == pid) {
-            LOG_INFO("Waiting for process %d", proc->pid);
+        if (pid == -1 || proc->pid == pid) {
+            LOG_INFO("Found running process %d", proc->pid);
             
             if (proc->state == PROCESS_TERMINATED) {
-                k_proc_cleanup(proc);
-                return pid;
+                return proc->pid;
             }
+            
             if (nohang) {
                 return 0;
             } else {
+                // Block until process completes
                 spthread_join(*proc->thread, (void**)wstatus);
-                k_proc_cleanup(proc);
-                return pid;
+                return proc->pid;
             }
-
         }
-        LOG_INFO("Process %d is not the one we're waiting for", proc->pid);
         proc = proc->process_pointers.next;
     }
+    
     return 0;
 }
 
