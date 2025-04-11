@@ -622,6 +622,7 @@ int k_open(const char *fname, int mode)
             .name = {0},
             .size = 0,
             .first_block = empty_block,
+            .type = 1,
             .perm = P_READ_WRITE_FILE_PERMISSION, // read and write
             .mtime = mtime,
             .padding = {0}};
@@ -1186,11 +1187,12 @@ int ls_dir_entry(directory_entry *ptr_to_dir_entry)
     total_bytes_written += n_bytes_written;
 
     // construct the permission string
-    char perm_str[4];
-    perm_str[0] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
-    perm_str[1] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
-    perm_str[2] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
-    perm_str[3] = '\0';
+    char perm_str[5];
+    perm_str[0] = (ptr_to_dir_entry->type == 2) ? 'd' : '-';
+    perm_str[1] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
+    perm_str[2] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
+    perm_str[3] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
+    perm_str[4] = '\0';
 
     n_bytes_written = sprintf(buf + n_bytes_written, " %s", perm_str);
     if (n_bytes_written < 0)
