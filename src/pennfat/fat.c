@@ -97,7 +97,7 @@ int mount(char *fs_name)
         global_fd_table[i].ptr_to_dir_entry = NULL;
         global_fd_table[i].dir_entry_block_num = 0;
         global_fd_table[i].dir_entry_idx = 0;
-        global_fd_table[i].write_locked = false;
+        global_fd_table[i].write_locked = 0;
         global_fd_table[i].offset = 0;
     }
 
@@ -541,7 +541,6 @@ int k_open(const char *fname, int mode)
         return EFS_NOT_MOUNTED;
     }
 
-    bool acquire_write_lock = (mode == F_WRITE) || (mode == F_APPEND);
     uint8_t strlen = strnlen(fname, MAX_FILENAME_SIZE);
     if (strlen < 1)
     {
@@ -571,7 +570,7 @@ int k_open(const char *fname, int mode)
         global_fd_entry fd_entry = global_fd_table[fd_idx];
 
         // we already have an entry in the global file table
-        if (fd_entry.write_locked && acquire_write_lock)
+        if (fd_entry.write_locked && (mode == F_WRITE || mode == F_APPEND))
         {
             return EK_OPEN_ALREADY_WRITE_LOCKED;
         }
@@ -649,7 +648,7 @@ int k_open(const char *fname, int mode)
             .dir_entry_block_num = dir_entry_block_num,
             .dir_entry_idx = dir_entry_idx,
             .ptr_to_dir_entry = ptr_to_dir_entry,
-            .write_locked = acquire_write_lock,
+            .write_locked = mode, // 0 for read, 1 for write, 2 for append
             .offset = 0};
     }
 
@@ -690,7 +689,7 @@ int k_open(const char *fname, int mode)
     {
         offset = global_fd_table[fd_idx].offset;
     }
-    global_fd_table[fd_idx].write_locked = acquire_write_lock;
+    global_fd_table[fd_idx].write_locked = mode;
     global_fd_table[fd_idx].offset = offset;
 
     return (int)fd_idx; // semi-safe cast because uint16_t should fit in int on most systems
@@ -740,7 +739,7 @@ int k_close(int fd)
         // free the memory we allocated for the the copy of the directory_entry
         free(global_fd_table[fd].ptr_to_dir_entry);
         global_fd_table[fd].ptr_to_dir_entry = NULL;
-        global_fd_table[fd].write_locked = false;
+        global_fd_table[fd].write_locked = 0;
     }
     return 0;
 }
@@ -803,8 +802,8 @@ int k_read(int fd, int n, char *buf)
 
     // first we need to get to the offset, which requires traversing some number of blocks
     uint16_t block = fd_entry.ptr_to_dir_entry->first_block;  // expect that this is non-zero since the file is non empty
-    uint16_t n_blocks_to_skip = fd_entry.offset / block_size; // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
-    uint16_t offset_in_block = fd_entry.offset % block_size;
+    uint16_t n_blocks_to_skip = offset / block_size; // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
+    uint16_t offset_in_block = offset % block_size;
 
     // skip to the right block
     for (int i = 0; i < n_blocks_to_skip; i++)
@@ -961,7 +960,7 @@ int k_write(int fd, const char *str, int n)
 
     // if the file is empty, then we need to allocate a new block
     uint32_t file_size = fd_entry.ptr_to_dir_entry->size;
-    uint32_t offset = fd_entry.offset;
+    uint32_t offset = fd_entry.write_locked == F_APPEND ? file_size : fd_entry.offset;
     uint16_t block_size = fs.block_size;
     uint16_t block = fd_entry.ptr_to_dir_entry->first_block;
     uint16_t dir_entry_block_num = fd_entry.dir_entry_block_num;
@@ -1055,10 +1054,12 @@ int k_write(int fd, const char *str, int n)
     // If in the previous step we exhausted the blocks in the file,
     // we continue iterating, up to the offset block, writing each
     // intermediate block as empty
+    bool is_writing_new_blocks = false;
     for (; n_blocks_deep < offset_block; n_blocks_deep++)
     {
         uint16_t prev_block = block;
         block = first_empty_block();
+        is_writing_new_blocks = true; // we're now using new and empty blocks -- so we need to set this flag
         if (block == 0)
         {
             // no free blocks
@@ -1086,7 +1087,6 @@ int k_write(int fd, const char *str, int n)
     // 3. `offset_block` was 1, block will hold the block number of the first/
     // last block in the file
 
-    bool is_writing_new_blocks = offset >= file_size;
     int n_copied = 0;
     while (n > n_copied) // NOTE: this check is basically only used to check if n == 0 (following checks occur at the if statement in the loop body)
     {
@@ -1143,7 +1143,7 @@ int k_write(int fd, const char *str, int n)
     fs.fat[block] = FAT_END_OF_FILE;
 
     // increment the file offset by the number of bytes written
-    global_fd_table[fd].offset += n_copied;
+    global_fd_table[fd].offset = offset + n_copied;
 
     // write the updated at time through to the directory entry
     time_t mtime = time(NULL);

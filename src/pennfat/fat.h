@@ -15,8 +15,8 @@
 #define EUNMOUNT_MUNMAP_FAILED 1
 #define EUNMOUNT_CLOSE_FAILED 2
 
-#define F_WRITE 0
-#define F_READ 1
+#define F_WRITE 1
+#define F_READ 0
 #define F_APPEND 2
 
 #define F_SEEK_SET 1
@@ -62,8 +62,8 @@ typedef struct global_fd_entry_st
     directory_entry *ptr_to_dir_entry; // an in-memory copy of the dir entry. This should be maintained so it always matches what is on disk
     uint16_t dir_entry_block_num;
     uint8_t dir_entry_idx;
-    bool write_locked; // mutex for whether this file is already being written to by another file
-    uint32_t offset;   // offset can be no greater than the size, which is specified in the directory entry
+    uint8_t write_locked; // mutex for whether this file is already being written to by another file. If the value is 0 the file is not write locked, 1 it opened with F_WRITE, and 2 it opened with F_APPEND
+    uint32_t offset;     // offset can be no greater than the size, which is specified in the directory entry
 } global_fd_entry;
 
 /**
