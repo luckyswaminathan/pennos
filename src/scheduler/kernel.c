@@ -26,10 +26,11 @@ pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1) {
     if (proc->pid == 1) {
         proc->priority = PRIORITY_HIGH;
         LOG_INFO("Adding process %d to high priority queue", proc->pid);
+        linked_list_push_tail(&scheduler_state->priority_high, proc);
     } else {
         LOG_INFO("Adding process %d to medium priority queue", proc->pid);
+        linked_list_push_tail(&scheduler_state->priority_medium, proc);
     }
-    add_process_to_queue(proc);
     return proc;
 }
 
