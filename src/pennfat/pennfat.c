@@ -177,6 +177,7 @@ int main(void) {
 				goto cleanup_tokens;
 			}
 		} else if (strcmp(tokens[0], "touch") == 0) {
+			// TODO: We should support creating more than one file at a time
 			if (n_tokens != 2) {
 				fprintf(stderr, "touch got wrong number of arguments (expected 1 argument)\n");
 				goto cleanup_tokens;
@@ -209,14 +210,14 @@ int main(void) {
 			// Open the source file for reading
 			int src_fd = k_open(tokens[1], F_READ);
 			if (src_fd < 0) {
-				fprintf(stderr, "mv: failed to open source file with error code %d\n", src_fd);
+				fprintf(stderr, "mv: Error - failed to open source file with error code %d\n", src_fd);
 				goto cleanup_tokens;
 			}
 			
 			// Create the destination file
 			int dest_fd = k_open(tokens[2], F_WRITE);
 			if (dest_fd < 0) {
-				fprintf(stderr, "mv: failed to open destination file with error code %d\n", dest_fd);
+				fprintf(stderr, "mv: Error - failed to open destination file with error code %d\n", dest_fd);
 				k_close(src_fd);
 				goto cleanup_tokens;
 			}
@@ -239,7 +240,7 @@ int main(void) {
 			
 			// Delete the source file
 			if (k_unlink(tokens[1]) < 0) {
-				fprintf(stderr, "mv: failed to remove source file\n");
+				fprintf(stderr, "mv: Error - failed to remove source file\n");
 				goto cleanup_tokens;
 			}
 
@@ -257,7 +258,7 @@ int main(void) {
 			// TODO: Check w/ Aagam if unlink is complete in fat.c
 			int unlink_status = k_unlink(tokens[1]);
 			if (unlink_status < 0) {
-				fprintf(stderr, "rm: failed to remove file with error code %d\n", unlink_status);
+				fprintf(stderr, "rm: Error - failed to remove file with error code %d\n", unlink_status);
 				goto cleanup_tokens;
 			}
 			
@@ -290,7 +291,7 @@ int main(void) {
 				int mode = write_mode ? F_WRITE : F_APPEND;
 				int fd = k_open(output_file, mode);
 				if (fd < 0) {
-					fprintf(stderr, "cat: failed to open output file with error code %d\n", fd);
+					fprintf(stderr, "cat: Error - failed to open output file with error code %d\n", fd);
 					goto cleanup_tokens;
 				}
 				
@@ -301,7 +302,7 @@ int main(void) {
 				
 				while ((bytes_read = read(STDIN_FD, buffer, sizeof(buffer))) > 0) {
 					if (k_write(fd, buffer, bytes_read) < 0) {
-						fprintf(stderr, "cat: failed to write to file\n");
+						fprintf(stderr, "cat: Error - failed to write to file\n");
 						k_close(fd);
 						goto cleanup_tokens;
 					}
@@ -317,7 +318,7 @@ int main(void) {
 					int mode = append_mode ? F_APPEND : F_WRITE;
 					out_fd = k_open(output_file, mode);
 					if (out_fd < 0) {
-						fprintf(stderr, "cat: failed to open output file with error code %d\n", out_fd);
+						fprintf(stderr, "cat: Error - failed to open output file with error code %d\n", out_fd);
 						goto cleanup_tokens;
 					}
 				}
@@ -333,7 +334,7 @@ int main(void) {
 					// Open current file
 					int in_fd = k_open(tokens[i], F_READ);
 					if (in_fd < 0) {
-						fprintf(stderr, "cat: failed to open input file %s with error code %d\n", 
+						fprintf(stderr, "cat: Error - failed to open input file %s with error code %d\n", 
 								tokens[i], in_fd);
 						if (out_fd >= 0) {
 							k_close(out_fd);
@@ -348,7 +349,7 @@ int main(void) {
 						// Write to output file if specified, otherwise to stdout
 						int write_fd = (out_fd >= 0) ? out_fd : STDOUT_FD;
 						if (k_write(write_fd, buffer, bytes_read) < 0) {
-							fprintf(stderr, "cat: write failed\n");
+							fprintf(stderr, "cat: Error - write failed\n");
 							k_close(in_fd);
 							if (out_fd >= 0) {
 								k_close(out_fd);
@@ -381,14 +382,14 @@ int main(void) {
 				// Open host file
 				int host_fd = open(tokens[2], O_RDONLY);
 				if (host_fd < 0) {
-					fprintf(stderr, "cp: failed to open host file: %s\n", tokens[2]);
+					fprintf(stderr, "cp: Error - failed to open host file: %s\n", tokens[2]);
 					goto cleanup_tokens;
 				}
 				
 				// Create destination file in PennFAT
 				int pennfat_fd = k_open(tokens[3], F_WRITE);
 				if (pennfat_fd < 0) {
-					fprintf(stderr, "cp: failed to create PennFAT file with error code %d\n", pennfat_fd);
+					fprintf(stderr, "cp: Error - failed to create PennFAT file with error code %d\n", pennfat_fd);
 					close(host_fd);
 					goto cleanup_tokens;
 				}
@@ -398,7 +399,7 @@ int main(void) {
 				ssize_t bytes_read;
 				while ((bytes_read = read(host_fd, buffer, sizeof(buffer))) > 0) {
 					if (k_write(pennfat_fd, buffer, bytes_read) < 0) {
-						fprintf(stderr, "cp: failed to write to PennFAT file\n");
+						fprintf(stderr, "cp: Error - failed to write to PennFAT file\n");
 						close(host_fd);
 						k_close(pennfat_fd);
 						goto cleanup_tokens;
@@ -413,14 +414,14 @@ int main(void) {
 				// Open PennFAT file
 				int pennfat_fd = k_open(tokens[1], F_READ);
 				if (pennfat_fd < 0) {
-					fprintf(stderr, "cp: failed to open PennFAT file with error code %d\n", pennfat_fd);
+					fprintf(stderr, "cp: Error - failed to open PennFAT file with error code %d\n", pennfat_fd);
 					goto cleanup_tokens;
 				}
 				
 				// Create host file
 				int host_fd = open(tokens[3], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 				if (host_fd < 0) {
-					fprintf(stderr, "cp: failed to create host file: %s\n", tokens[3]);
+					fprintf(stderr, "cp: Error - failed to create host file: %s\n", tokens[3]);
 					k_close(pennfat_fd);
 					goto cleanup_tokens;
 				}
@@ -430,7 +431,7 @@ int main(void) {
 				int bytes_read;
 				while ((bytes_read = k_read(pennfat_fd, sizeof(buffer), buffer)) > 0) {
 					if (write(host_fd, buffer, bytes_read) < 0) {
-						fprintf(stderr, "cp: failed to write to host file\n");
+						fprintf(stderr, "cp: Error - failed to write to host file\n");
 						k_close(pennfat_fd);
 						close(host_fd);
 						goto cleanup_tokens;
@@ -445,14 +446,14 @@ int main(void) {
 				// Open source file
 				int src_fd = k_open(tokens[1], F_READ);
 				if (src_fd < 0) {
-					fprintf(stderr, "cp: failed to open source file with error code %d\n", src_fd);
+					fprintf(stderr, "cp: Error - failed to open source file with error code %d\n", src_fd);
 					goto cleanup_tokens;
 				}
 				
 				// Create destination file
 				int dest_fd = k_open(tokens[2], F_WRITE);
 				if (dest_fd < 0) {
-					fprintf(stderr, "cp: failed to create destination file with error code %d\n", dest_fd);
+					fprintf(stderr, "cp: Error - failed to create destination file with error code %d\n", dest_fd);
 					k_close(src_fd);
 					goto cleanup_tokens;
 				}
@@ -462,7 +463,7 @@ int main(void) {
 				int bytes_read;
 				while ((bytes_read = k_read(src_fd, sizeof(buffer), buffer)) > 0) {
 					if (k_write(dest_fd, buffer, bytes_read) < 0) {
-						fprintf(stderr, "cp: failed to write to destination file\n");
+						fprintf(stderr, "cp: Error - failed to write to destination file\n");
 						k_close(src_fd);
 						k_close(dest_fd);
 						goto cleanup_tokens;
