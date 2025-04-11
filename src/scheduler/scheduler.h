@@ -46,6 +46,7 @@ struct process_control_block {
     process_state state;        
     priority_t priority;   
     double sleep_time;
+    char* command;
 
     spthread_t* thread;
     struct pointer_pair priority_pointers;

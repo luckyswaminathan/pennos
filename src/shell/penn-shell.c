@@ -12,6 +12,7 @@
 #include "./signals.h"
 #include "../scheduler/scheduler.h"
 #include "../scheduler/sys.h"
+#include "commands.h"
 
 jid_t job_id = 0;
 
@@ -116,8 +117,6 @@ int main(int argc, char **argv) {
     setup_job_control_handlers();
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
-
-
     
     s_spawn(shell_loop, NULL);
     run_scheduler();

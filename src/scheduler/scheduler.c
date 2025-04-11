@@ -94,6 +94,7 @@ void init_scheduler() {
     init->sleep_time = 0;
     init->priority = PRIORITY_HIGH;
     init->state = PROCESS_RUNNING;
+    init->command = "init";
     
     init->children.head = NULL;
     init->children.tail = NULL;

@@ -10,7 +10,7 @@
 
 // Print information about a single process
 static void print_process(pcb_t* proc, int output_fd) {
-    LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d", proc->pid, proc->ppid, proc->state);
+    LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
 }
 
 // Print header for ps output
