@@ -801,8 +801,8 @@ int k_read(int fd, int n, char *buf)
     }
 
     // first we need to get to the offset, which requires traversing some number of blocks
-    uint16_t block = fd_entry.ptr_to_dir_entry->first_block;  // expect that this is non-zero since the file is non empty
-    uint16_t n_blocks_to_skip = offset / block_size; // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
+    uint16_t block = fd_entry.ptr_to_dir_entry->first_block; // expect that this is non-zero since the file is non empty
+    uint16_t n_blocks_to_skip = offset / block_size;         // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
     uint16_t offset_in_block = offset % block_size;
 
     // skip to the right block
@@ -974,10 +974,8 @@ int k_write(int fd, const char *str, int n)
         }
         block = new_block;
         fs.fat[new_block] = FAT_END_OF_FILE;
+        global_fd_table[fd].ptr_to_dir_entry->first_block = new_block;
     }
-
-    // set the offset to be the end of the file if in append mode
-    // TODO
 
     // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
 
@@ -1096,7 +1094,10 @@ int k_write(int fd, const char *str, int n)
         }
         else
         {
-            get_block(block, char_buf);
+            if (get_block(block, char_buf) != 0)
+            {
+                return EK_WRITE_GET_BLOCK_FAILED;
+            }
         }
 
         uint16_t n_to_copy = min(n - n_copied, block_size - offset_in_block);

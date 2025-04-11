@@ -481,7 +481,7 @@ int main(void)
 					int k_write_status = k_write(pennfat_fd, buffer, bytes_read);
 					if (k_write_status < 0)
 					{
-						fprintf(stderr, "cp: Error - failed to write to PennFAT file %d\n", k_write_status);
+						fprintf(stderr, "cp: Error - failed to write to PennFAT file with error code %d\n", k_write_status);
 						close(host_fd);
 						k_close(pennfat_fd);
 						goto cleanup_tokens;
