@@ -198,7 +198,7 @@ int get_block(uint16_t block_num, void *data)
         return EGET_BLOCK_BLOCK_NUM_0;
     }
 
-    if (block_num >= blocks_in_data_region)
+    if (block_num > blocks_in_data_region)
     {
         return EGET_BLOCK_BLOCK_NUM_TOO_HIGH;
     }
@@ -237,7 +237,7 @@ int next_block_num(uint16_t block_num, uint16_t *next_block_num)
         return ENEXT_BLOCK_NUM_BLOCK_NUM_0;
     }
 
-    if (block_num >= blocks_in_data_region)
+    if (block_num > blocks_in_data_region)
     {
         return ENEXT_BLOCK_NUM_BLOCK_NUM_TOO_HIGH;
     }
@@ -262,7 +262,7 @@ int write_block(uint16_t block_num, void *data)
         return EWRITE_BLOCK_BLOCK_NUM_0;
     }
 
-    if (block_num >= blocks_in_data_region)
+    if (block_num > blocks_in_data_region)
     {
         return EWRITE_BLOCK_BLOCK_NUM_TOO_HIGH;
     }
