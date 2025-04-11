@@ -1049,7 +1049,6 @@ int k_write(int fd, const char *str, int n)
 
         // try to get the next block of the file
         uint16_t next_block;
-        fs.fat[block] = FAT_END_OF_FILE; // prevent a loop where we keep getting the same blocks
         if (!is_writing_new_blocks)
         {
             if (next_block_num(block, &next_block) != 0)
@@ -1063,10 +1062,10 @@ int k_write(int fd, const char *str, int n)
         }
         else
         {
+            fs.fat[block] = FAT_END_OF_FILE; // prevent a loop where we keep getting the same blocks
             next_block = first_empty_block();
             if (next_block == 0)
             {
-                // TODO: technically should return 0
                 break;
             }
         }
