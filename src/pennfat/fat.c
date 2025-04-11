@@ -627,16 +627,10 @@ int k_open(const char *fname, int mode)
                 return EK_OPEN_TIME_FAILED;
             }
 
-            uint16_t empty_block = first_empty_block();
-            if (empty_block == 0)
-            {
-                return EK_OPEN_NO_EMPTY_BLOCKS;
-            }
-            fs.fat[empty_block] = FAT_END_OF_FILE;
             *ptr_to_dir_entry = (directory_entry){
                 .name = {0},
                 .size = 0,
-                .first_block = empty_block,
+                .first_block = 0,
                 .type = 1,
                 .perm = P_READ_WRITE_FILE_PERMISSION, // read and write
                 .mtime = mtime,
@@ -670,8 +664,11 @@ int k_open(const char *fname, int mode)
         }
         global_fd_table[fd_idx].ptr_to_dir_entry->size = 0;
         global_fd_table[fd_idx].ptr_to_dir_entry->mtime = mtime;
-        clear_fat_file(global_fd_table[fd_idx].ptr_to_dir_entry->first_block);
-        fs.fat[global_fd_table[fd_idx].ptr_to_dir_entry->first_block] = FAT_END_OF_FILE;
+        if (global_fd_table[fd_idx].ptr_to_dir_entry->first_block != 0)
+        {
+            clear_fat_file(global_fd_table[fd_idx].ptr_to_dir_entry->first_block);
+        }
+        global_fd_table[fd_idx].ptr_to_dir_entry->first_block = 0;
 
         // write the dir entry
         if (write_root_dir_entry(global_fd_table[fd_idx].ptr_to_dir_entry, global_fd_table[fd_idx].dir_entry_block_num, global_fd_table[fd_idx].dir_entry_idx) != 0)
@@ -723,13 +720,17 @@ int k_close(int fd)
         if (global_fd_table[fd].ptr_to_dir_entry->name[0] == 2)
         {
             uint16_t first_block = global_fd_table[fd].ptr_to_dir_entry->first_block;
-            clear_fat_file(first_block);
+            if (first_block != 0)
+            {
+                clear_fat_file(first_block);
+            }
 
             // mark the file as deleted and write it through
             directory_entry *ptr_to_dir_entry = global_fd_table[fd].ptr_to_dir_entry;
             uint16_t dir_entry_block_num = global_fd_table[fd].dir_entry_block_num;
             uint8_t dir_entry_idx = global_fd_table[fd].dir_entry_idx;
             ptr_to_dir_entry->name[0] = 1;
+            ptr_to_dir_entry->first_block = 0;
             if (write_root_dir_entry(ptr_to_dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
             {
                 return EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED;
@@ -776,11 +777,9 @@ int k_read(int fd, int n, char *buf)
         return EK_READ_FD_NOT_IN_TABLE;
     }
 
-    // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
     uint32_t file_size = fd_entry.ptr_to_dir_entry->size;
     uint32_t offset = fd_entry.offset;
     uint16_t block_size = fs.block_size;
-    uint16_t block = fd_entry.ptr_to_dir_entry->first_block;
     uint8_t perm = fd_entry.ptr_to_dir_entry->perm;
 
     // can't read
@@ -790,12 +789,20 @@ int k_read(int fd, int n, char *buf)
     }
 
     // if the offset is at or past the end of the file, there's nothing for us to read
+    // this also checks that the file is non-empty
     if (offset >= file_size)
     {
         return 0;
     }
 
+    // if n = 0, then we just return 0
+    if (n == 0)
+    {
+        return 0;
+    }
+
     // first we need to get to the offset, which requires traversing some number of blocks
+    uint16_t block = fd_entry.ptr_to_dir_entry->first_block;  // expect that this is non-zero since the file is non empty
     uint16_t n_blocks_to_skip = fd_entry.offset / block_size; // TODO: is there any chance that offset means the n_blocks_to_skip exceeds uint16_t size?
     uint16_t offset_in_block = fd_entry.offset % block_size;
 
@@ -945,16 +952,35 @@ int k_write(int fd, const char *str, int n)
     {
         return EK_WRITE_WRONG_PERMISSIONS;
     }
-    // set the offset to be the end of the file if in append mode
-    // TODO
 
-    // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
+    // if n = 0, then we just return 0
+    if (n == 0)
+    {
+        return 0;
+    }
+
+    // if the file is empty, then we need to allocate a new block
     uint32_t file_size = fd_entry.ptr_to_dir_entry->size;
     uint32_t offset = fd_entry.offset;
     uint16_t block_size = fs.block_size;
     uint16_t block = fd_entry.ptr_to_dir_entry->first_block;
     uint16_t dir_entry_block_num = fd_entry.dir_entry_block_num;
     uint8_t dir_entry_idx = fd_entry.dir_entry_idx;
+    if (fd_entry.ptr_to_dir_entry->first_block == 0)
+    {
+        uint16_t new_block = first_empty_block();
+        if (new_block == 0)
+        {
+            return EK_WRITE_NO_EMPTY_BLOCKS;
+        }
+        block = new_block;
+        fs.fat[new_block] = FAT_END_OF_FILE;
+    }
+
+    // set the offset to be the end of the file if in append mode
+    // TODO
+
+    // expect that the fd_entry is fully valid (e.g., first_block should be non-zero etc)
 
     // first we need to get to the offset, which requires traversing some number of blocks
     //
@@ -1009,7 +1035,7 @@ int k_write(int fd, const char *str, int n)
         if (next_block == FAT_END_OF_FILE)
         {
             // need to 0 out whatever remains in this block
-            
+
             // this is the number of bytes in the file that are in the last block
             uint16_t n_file_bytes_in_block = file_size - (n_blocks_deep - 1) * block_size;
             if (get_block(block, char_buf) != 0)
@@ -1116,7 +1142,7 @@ int k_write(int fd, const char *str, int n)
     }
     fs.fat[block] = FAT_END_OF_FILE;
 
-    // increment the file offset by the number of bytes read
+    // increment the file offset by the number of bytes written
     global_fd_table[fd].offset += n_copied;
 
     // write the updated at time through to the directory entry
@@ -1163,7 +1189,10 @@ int k_unlink(const char *fname)
         else
         {
             ptr_to_updated_dir_entry->name[0] = 1;
-            clear_fat_file(ptr_to_updated_dir_entry->first_block);
+            if (ptr_to_updated_dir_entry->first_block != 0)
+            {
+                clear_fat_file(ptr_to_updated_dir_entry->first_block);
+            }
         }
         dir_entry_block_num = global_fd_table[fd_idx].dir_entry_block_num;
         dir_entry_idx = global_fd_table[fd_idx].dir_entry_idx;
@@ -1188,7 +1217,10 @@ int k_unlink(const char *fname)
             return EK_UNLINK_FILE_NOT_FOUND;
         }
         ptr_to_updated_dir_entry->name[0] = 1; // mark as deleted
-        clear_fat_file(ptr_to_updated_dir_entry->first_block);
+        if (ptr_to_updated_dir_entry->first_block != 0)
+        {
+            clear_fat_file(ptr_to_updated_dir_entry->first_block);
+        }
     }
 
     // write through to the updated entry to the filesystem
@@ -1219,12 +1251,25 @@ int ls_dir_entry(directory_entry *ptr_to_dir_entry)
 
     char *buf = (char *)fs.block_buf;
     int total_bytes_written = 0;
-    int n_bytes_written = sprintf(buf, "%3d", ptr_to_dir_entry->first_block);
-    if (n_bytes_written < 0)
+    int n_bytes_written;
+    if (ptr_to_dir_entry->first_block != 0)
     {
-        return EK_LS_WRITE_FAILED;
+        n_bytes_written = sprintf(buf, "%3d", ptr_to_dir_entry->first_block);
+        if (n_bytes_written < 0)
+        {
+            return EK_LS_WRITE_FAILED;
+        }
+        total_bytes_written += n_bytes_written;
     }
-    total_bytes_written += n_bytes_written;
+    else
+    {
+        n_bytes_written = sprintf(buf, "    ");
+        if (n_bytes_written < 0)
+        {
+            return EK_LS_WRITE_FAILED;
+        }
+        total_bytes_written += n_bytes_written;
+    }
 
     // construct the permission string
     char perm_str[5];
