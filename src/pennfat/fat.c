@@ -1000,8 +1000,7 @@ int k_write(int fd, const char *str, int n)
         {
             // no free blocks
             fs.fat[prev_block] = FAT_END_OF_FILE;
-            return EK_WRITE_NO_EMPTY_BLOCKS;
-            // TODO: technically, we shouldn't return an error here
+            return 0; // we've written 0 bytes since we never got to the offset
         }
 
         // set FAT linkages
@@ -1068,7 +1067,7 @@ int k_write(int fd, const char *str, int n)
             if (next_block == 0)
             {
                 // TODO: technically should return 0
-                return EK_WRITE_NO_EMPTY_BLOCKS;
+                break;
             }
         }
         fs.fat[block] = next_block;

@@ -398,8 +398,9 @@ int main(void) {
 				char buffer[1024];
 				ssize_t bytes_read;
 				while ((bytes_read = read(host_fd, buffer, sizeof(buffer))) > 0) {
-					if (k_write(pennfat_fd, buffer, bytes_read) < 0) {
-						fprintf(stderr, "cp: Error - failed to write to PennFAT file\n");
+					int k_write_status = k_write(pennfat_fd, buffer, bytes_read);
+					if (k_write_status < 0) {
+						fprintf(stderr, "cp: Error - failed to write to PennFAT file %d\n", k_write_status);
 						close(host_fd);
 						k_close(pennfat_fd);
 						goto cleanup_tokens;
