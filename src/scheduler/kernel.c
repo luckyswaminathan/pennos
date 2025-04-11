@@ -7,10 +7,11 @@
 
 
 
-pcb_t* k_proc_create(pcb_t *parent) {
+pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1) {
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
 
     proc->ppid = parent->pid;
+    LOG_INFO("Parent PID %d", proc->ppid);
     proc->pid = scheduler_state->process_count++;
     LOG_INFO("Spawning process %d", proc->pid);
     proc->priority = PRIORITY_MEDIUM;
@@ -18,12 +19,17 @@ pcb_t* k_proc_create(pcb_t *parent) {
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
+    proc->fd0 = fd0;
+    proc->fd1 = fd1;
+
     linked_list_push_tail(&scheduler_state->processes, proc);
     if (proc->pid == 1) {
-        linked_list_push_tail(&scheduler_state->priority_high, proc);
+        proc->priority = PRIORITY_HIGH;
+        LOG_INFO("Adding process %d to high priority queue", proc->pid);
     } else {
-    linked_list_push_tail(&scheduler_state->priority_medium, proc);
+        LOG_INFO("Adding process %d to medium priority queue", proc->pid);
     }
+    add_process_to_queue(proc);
     return proc;
 }
 

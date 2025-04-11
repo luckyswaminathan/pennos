@@ -145,7 +145,7 @@ void decrease_sleep() {
 
 
 // Log all processes in each queue
-static void log_queue_state() {
+void log_queue_state() {
     LOG_INFO("=== Current Queue State ===");
     
     LOG_INFO("High Priority Queue:");
@@ -189,14 +189,16 @@ static void log_queue_state() {
 // Check if there are any runnable processes
 static bool has_runnable_processes() {
     // Check high priority queue
-    if (scheduler_state->priority_high.head != NULL)
-        return true;
+    if (scheduler_state->priority_high.head != NULL) {
+        if (((pcb_t*)scheduler_state->priority_high.head)->pid != 0) {
+            return true;
+        }
+    }
 
     // Check medium priority queue, but if it only contains init process (pid 0), don't count it
     if (scheduler_state->priority_medium.head != NULL) {
-        if (scheduler_state->priority_medium.head->next != NULL || 
-            ((pcb_t*)scheduler_state->priority_medium.head)->pid != 0)
         return true;
+        
     }
     if (scheduler_state->priority_low.head != NULL)
         return true;
@@ -260,21 +262,17 @@ void run_next_process() {
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
-            if (ret != 0 && proc->pid != 0) {
-                linked_list_remove(&scheduler_state->priority_high, proc);
+            linked_list_remove(&scheduler_state->priority_high, proc);
+            if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
                 proc->prev = NULL;
                 proc->next = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                quantum++;
-                return;
+            } else {
+                // Re-add non-terminated processes and special PIDs (0 and 1)
+                linked_list_push_tail(&scheduler_state->priority_high, proc);
             }
-            
-            // Move to back of queue for next round if suspended
-            // After suspending, move to back of queue
-            linked_list_remove(&scheduler_state->priority_high, proc);
-            linked_list_push_tail(&scheduler_state->priority_high, proc);
             quantum++;
             return;
         }

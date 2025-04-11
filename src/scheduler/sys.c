@@ -1,6 +1,7 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
+#include <errno.h>
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
@@ -10,7 +11,9 @@
 
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
     LOG_INFO("s_spawn called with fd0 %d, fd1 %d", fd0, fd1);
-    pcb_t* proc = k_proc_create(scheduler_state->init);
+    log_queue_state();
+    pcb_t* proc = k_proc_create(scheduler_state->curr, fd0, fd1);
+    log_queue_state();
     proc->fd0 = fd0;
     proc->fd1 = fd1;
     proc->argv = argv;
@@ -20,6 +23,9 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
         return -1;
     }
     return proc->pid;
+    
+
+    
 }
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
@@ -42,8 +48,10 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
         if (nohang) {
             return 0;
         }
-        // If not nohang, yield and try again
-        return s_waitpid(-1, wstatus, nohang);
+        // If not nohang, we should block until a process terminates
+        // For now, just return -1 and set errno to ECHILD to indicate no children
+        errno = ECHILD;
+        return -1;
     }
     
     pcb_t* proc = scheduler_state->processes.head;

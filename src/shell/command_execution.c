@@ -101,11 +101,7 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
             exit(EXIT_FAILURE);
         }
 
-        if (pid == -1)
-        {
-            perror("Failed to fork off a command while executing a job");
-            exit(EXIT_FAILURE); // exit out of the job process // TODO: should we exit here?
-        }
+        
 
         // TODO: add the pid to the job struct
         current_pid = pid;
@@ -168,20 +164,18 @@ void execute_job(job* job)
         perror("Failed to allocate PIDs array");
         return;
     }
-    pid_t pid = fork();
-    if (pid == 0) {
-        // Child process
-        setpgid(0, 0);  // Create new process group in child
-        execute_job_lead_child(job, parsed_command);
-    }
 
-    if (pid == -1) {
-        perror("Failed to fork while executing a job");
-        free(job->pids);
-        job->pids = NULL;
-        return;
+    struct command_context* context = exiting_malloc(sizeof(struct command_context));
+    context->command = parsed_command->commands[0];
+    context->stdin_fd = STDIN_FILENO;
+    context->stdout_fd = STDOUT_FILENO;
+    context->next_input_fd = -1;
+    pid_t pid = s_spawn((void* (*)(void*))execute_command, context->command, context->stdin_fd, context->stdout_fd);
+    if (pid == -1)
+    {
+        perror("Failed to spawn command");
+        exit(EXIT_FAILURE);
     }
-
     // Store the lead process ID
     job->pids[0] = pid;
     job->num_processes = parsed_command->num_commands;

@@ -1,0 +1,411 @@
+[2025-04-10 22:25:17] [INFO] Scheduler initialized
+[2025-04-10 22:25:17] [INFO] s_spawn called with fd0 -1, fd1 -1
+[2025-04-10 22:25:17] [INFO] === Current Queue State ===
+[2025-04-10 22:25:17] [INFO] High Priority Queue:
+[2025-04-10 22:25:17] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:17] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] Parent PID 0
+[2025-04-10 22:25:18] [INFO] Spawning process 1
+[2025-04-10 22:25:18] [INFO] Adding process 1 to high priority queue
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] s_spawn called with fd0 -1, fd1 -1
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] Parent PID 0
+[2025-04-10 22:25:18] [INFO] Spawning process 2
+[2025-04-10 22:25:18] [INFO] Adding process 2 to medium priority queue
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] s_spawn called with fd0 -1, fd1 -1
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] Parent PID 0
+[2025-04-10 22:25:18] [INFO] Spawning process 3
+[2025-04-10 22:25:18] [INFO] Adding process 3 to medium priority queue
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] Spawned child process with pid 1
+[2025-04-10 22:25:18] [INFO] Spawned child process with pid 2
+[2025-04-10 22:25:18] [INFO] Spawned child process with pid 3
+[2025-04-10 22:25:18] [INFO] PROC PID 1
+[2025-04-10 22:25:18] [INFO] PROC PID 2
+[2025-04-10 22:25:18] [INFO] Setting priority of process 2 to 0
+[2025-04-10 22:25:18] [INFO] PROC PID 1
+[2025-04-10 22:25:18] [INFO] PROC PID 2
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] CURRENT: 0
+[2025-04-10 22:25:18] [INFO] Running high priority process
+[2025-04-10 22:25:18] [INFO] running init thread
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] CURRENT: 1
+[2025-04-10 22:25:18] [INFO] Running high priority process
+[2025-04-10 22:25:18] [INFO] Child process started
+[2025-04-10 22:25:18] [INFO] Child process iteration 0
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] CURRENT: 2
+[2025-04-10 22:25:18] [INFO] Running high priority process
+[2025-04-10 22:25:18] [INFO] ****Child process 2 started
+[2025-04-10 22:25:18] [INFO] *****Child process iteration 0
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] CURRENT: 3
+[2025-04-10 22:25:18] [INFO] Running high priority process
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:18] [INFO] High Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:18] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:18] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:18] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:18] [INFO] Low Priority Queue:
+[2025-04-10 22:25:18] [INFO] Sleeping Queue:
+[2025-04-10 22:25:18] [INFO] Terminated Queue:
+[2025-04-10 22:25:18] [INFO] ========================
+[2025-04-10 22:25:18] [INFO] CURRENT: 4
+[2025-04-10 22:25:18] [INFO] Running high priority process
+[2025-04-10 22:25:18] [INFO] Child process iteration 1
+[2025-04-10 22:25:18] [INFO] === Current Queue State ===
+[2025-04-10 22:25:19] [INFO] High Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:19] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:19] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:19] [INFO] Low Priority Queue:
+[2025-04-10 22:25:19] [INFO] Sleeping Queue:
+[2025-04-10 22:25:19] [INFO] Terminated Queue:
+[2025-04-10 22:25:19] [INFO] ========================
+[2025-04-10 22:25:19] [INFO] CURRENT: 5
+[2025-04-10 22:25:19] [INFO] Running high priority process
+[2025-04-10 22:25:19] [INFO] *****Child process iteration 1
+[2025-04-10 22:25:19] [INFO] === Current Queue State ===
+[2025-04-10 22:25:19] [INFO] High Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:19] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:19] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:19] [INFO] Low Priority Queue:
+[2025-04-10 22:25:19] [INFO] Sleeping Queue:
+[2025-04-10 22:25:19] [INFO] Terminated Queue:
+[2025-04-10 22:25:19] [INFO] ========================
+[2025-04-10 22:25:19] [INFO] CURRENT: 6
+[2025-04-10 22:25:19] [INFO] Running high priority process
+[2025-04-10 22:25:19] [INFO] === Current Queue State ===
+[2025-04-10 22:25:19] [INFO] High Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:19] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:19] [INFO] Low Priority Queue:
+[2025-04-10 22:25:19] [INFO] Sleeping Queue:
+[2025-04-10 22:25:19] [INFO] Terminated Queue:
+[2025-04-10 22:25:19] [INFO] ========================
+[2025-04-10 22:25:19] [INFO] CURRENT: 7
+[2025-04-10 22:25:19] [INFO] Running high priority process
+[2025-04-10 22:25:19] [INFO] Child process iteration 2
+[2025-04-10 22:25:19] [INFO] === Current Queue State ===
+[2025-04-10 22:25:19] [INFO] High Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:19] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:19] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:19] [INFO] Low Priority Queue:
+[2025-04-10 22:25:19] [INFO] Sleeping Queue:
+[2025-04-10 22:25:19] [INFO] Terminated Queue:
+[2025-04-10 22:25:19] [INFO] ========================
+[2025-04-10 22:25:19] [INFO] CURRENT: 8
+[2025-04-10 22:25:19] [INFO] Running high priority process
+[2025-04-10 22:25:19] [INFO] *****Child process iteration 2
+[2025-04-10 22:25:19] [INFO] === Current Queue State ===
+[2025-04-10 22:25:19] [INFO] High Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:19] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:19] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:19] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:19] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:19] [INFO] Low Priority Queue:
+[2025-04-10 22:25:19] [INFO] Sleeping Queue:
+[2025-04-10 22:25:19] [INFO] Terminated Queue:
+[2025-04-10 22:25:19] [INFO] ========================
+[2025-04-10 22:25:19] [INFO] CURRENT: 9
+[2025-04-10 22:25:19] [INFO] Running medium priority process
+[2025-04-10 22:25:19] [INFO] ****Child process 3 started
+[2025-04-10 22:25:19] [INFO] *****Child process 3 iteration 0
+[2025-04-10 22:25:19] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:20] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:20] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:20] [INFO] Low Priority Queue:
+[2025-04-10 22:25:20] [INFO] Sleeping Queue:
+[2025-04-10 22:25:20] [INFO] Terminated Queue:
+[2025-04-10 22:25:20] [INFO] ========================
+[2025-04-10 22:25:20] [INFO] CURRENT: 10
+[2025-04-10 22:25:20] [INFO] Running medium priority process
+[2025-04-10 22:25:20] [INFO] *****Child process 3 iteration 1
+[2025-04-10 22:25:20] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:20] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:20] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:20] [INFO] Low Priority Queue:
+[2025-04-10 22:25:20] [INFO] Sleeping Queue:
+[2025-04-10 22:25:20] [INFO] Terminated Queue:
+[2025-04-10 22:25:20] [INFO] ========================
+[2025-04-10 22:25:20] [INFO] CURRENT: 11
+[2025-04-10 22:25:20] [INFO] Running medium priority process
+[2025-04-10 22:25:20] [INFO] *****Child process 3 iteration 2
+[2025-04-10 22:25:20] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:20] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:20] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:20] [INFO] Low Priority Queue:
+[2025-04-10 22:25:20] [INFO] Sleeping Queue:
+[2025-04-10 22:25:20] [INFO] Terminated Queue:
+[2025-04-10 22:25:20] [INFO] ========================
+[2025-04-10 22:25:20] [INFO] CURRENT: 12
+[2025-04-10 22:25:20] [INFO] Running medium priority process
+[2025-04-10 22:25:20] [INFO] *****Child process 3 iteration 3
+[2025-04-10 22:25:20] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:20] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:20] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:20] [INFO] Low Priority Queue:
+[2025-04-10 22:25:20] [INFO] Sleeping Queue:
+[2025-04-10 22:25:20] [INFO] Terminated Queue:
+[2025-04-10 22:25:20] [INFO] ========================
+[2025-04-10 22:25:20] [INFO] CURRENT: 13
+[2025-04-10 22:25:20] [INFO] Running medium priority process
+[2025-04-10 22:25:20] [INFO] *****Child process 3 iteration 4
+[2025-04-10 22:25:20] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:20] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:20] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:20] [INFO] Low Priority Queue:
+[2025-04-10 22:25:20] [INFO] Sleeping Queue:
+[2025-04-10 22:25:20] [INFO] Terminated Queue:
+[2025-04-10 22:25:20] [INFO] ========================
+[2025-04-10 22:25:20] [INFO] CURRENT: 14
+[2025-04-10 22:25:20] [INFO] Running medium priority process
+[2025-04-10 22:25:20] [INFO] *****Child process 3 iteration 5
+[2025-04-10 22:25:20] [INFO] === Current Queue State ===
+[2025-04-10 22:25:20] [INFO] High Priority Queue:
+[2025-04-10 22:25:20] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:20] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 15
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 16
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 17
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 0
+[2025-04-10 22:25:21] [INFO] Running high priority process
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 1
+[2025-04-10 22:25:21] [INFO] Running high priority process
+[2025-04-10 22:25:21] [INFO] Child process finished
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 2 (State: 0)
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 2
+[2025-04-10 22:25:21] [INFO] Running high priority process
+[2025-04-10 22:25:21] [INFO] Child process 2 finished
+[2025-04-10 22:25:21] [INFO] Process 2 terminated
+[2025-04-10 22:25:21] [INFO] === Current Queue State ===
+[2025-04-10 22:25:21] [INFO] High Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:21] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:21] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:21] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:21] [INFO] Low Priority Queue:
+[2025-04-10 22:25:21] [INFO] Sleeping Queue:
+[2025-04-10 22:25:21] [INFO] Terminated Queue:
+[2025-04-10 22:25:21] [INFO]   PID 2
+[2025-04-10 22:25:21] [INFO] ========================
+[2025-04-10 22:25:21] [INFO] CURRENT: 3
+[2025-04-10 22:25:21] [INFO] Running high priority process
+[2025-04-10 22:25:21] [INFO] Processing terminated process 2
+[2025-04-10 22:25:21] [INFO] Init cleaning up terminated process 2
+[2025-04-10 22:25:21] [INFO] freeing proc 2
+[2025-04-10 22:25:22] [INFO] === Current Queue State ===
+[2025-04-10 22:25:22] [INFO] High Priority Queue:
+[2025-04-10 22:25:22] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:22] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:22] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:22] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:22] [INFO] Low Priority Queue:
+[2025-04-10 22:25:22] [INFO] Sleeping Queue:
+[2025-04-10 22:25:22] [INFO] Terminated Queue:
+[2025-04-10 22:25:22] [INFO] ========================
+[2025-04-10 22:25:22] [INFO] CURRENT: 4
+[2025-04-10 22:25:22] [INFO] Running high priority process
+[2025-04-10 22:25:22] [INFO] === Current Queue State ===
+[2025-04-10 22:25:22] [INFO] High Priority Queue:
+[2025-04-10 22:25:22] [INFO]   PID 0 (State: 1)
+[2025-04-10 22:25:22] [INFO]   PID 1 (State: 0)
+[2025-04-10 22:25:22] [INFO] Medium Priority Queue:
+[2025-04-10 22:25:22] [INFO]   PID 3 (State: 0)
+[2025-04-10 22:25:22] [INFO] Low Priority Queue:
+[2025-04-10 22:25:22] [INFO] Sleeping Queue:
+[2025-04-10 22:25:22] [INFO] Terminated Queue:
+[2025-04-10 22:25:22] [INFO] ========================
+[2025-04-10 22:25:22] [INFO] CURRENT: 5
+[2025-04-10 22:25:22] [INFO] Running high priority process

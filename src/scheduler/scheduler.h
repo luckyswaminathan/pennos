@@ -64,6 +64,7 @@ typedef struct scheduler {
 extern scheduler_t* scheduler_state;
 
 void init_scheduler();
+void log_queue_state();
 void run_scheduler();
 void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 
