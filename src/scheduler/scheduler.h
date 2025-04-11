@@ -42,6 +42,8 @@ struct process_control_block {
     double sleep_time;
 
     spthread_t* thread;
+    struct process_control_block* prev_priority;
+    struct process_control_block* next_priority;
     struct process_control_block* prev;
     struct process_control_block* next;
     linked_list(pcb_t) children;
@@ -66,6 +68,7 @@ extern scheduler_t* scheduler_state;
 void init_scheduler();
 void log_queue_state();
 void run_scheduler();
+void add_process_to_queue(pcb_t* proc);
 void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 
 // Handle orphaned processes by transferring them to init

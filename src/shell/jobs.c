@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>  // For kill() and SIGCONT
+#include "../scheduler/sys.h"
 
 typedef linked_list(job_ll_node) job_ll;
 
@@ -96,7 +97,7 @@ void handle_fg(struct parsed_command* cmd) {
   if (job->status == J_STOPPED) {
     kill(-job->pids[0], SIGCONT);
   }
-  waitpid(job->pids[0], NULL, WUNTRACED);
+  s_waitpid(job->pids[0], NULL, true);
 
   // Give terminal control back to the shell
   tcsetpgrp(STDIN_FILENO, getpid());

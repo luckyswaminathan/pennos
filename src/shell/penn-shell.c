@@ -78,7 +78,7 @@ static void* shell_loop(void* arg) {
         } else {
             // status is already J_RUNNING_FG
             add_foreground_job(job_ptr);
-            
+
             // TODO: remove
             handle_jobs();
 

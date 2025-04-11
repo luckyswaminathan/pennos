@@ -185,7 +185,7 @@ void execute_job(job* job)
     if (job->status == J_RUNNING_FG) {   
         tcsetpgrp(STDIN_FILENO, pid);
         int status;
-        waitpid(pid, &status, WUNTRACED);
+        s_waitpid(pid, &status, true);
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel

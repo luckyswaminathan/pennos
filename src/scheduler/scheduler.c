@@ -91,6 +91,8 @@ void init_scheduler() {
     init->state = PROCESS_RUNNING;
     init->prev = NULL;
     init->next = NULL;
+    init->prev_priority = NULL;
+    init->next_priority = NULL;
     init->children.head = NULL;
     init->children.tail = NULL;
     init->children.ele_dtor = NULL;
@@ -238,14 +240,19 @@ void block_process(pcb_t* proc) {
     LOG_INFO("Process %d blocked after %d quantums", proc->pid, quantum);
 }
 
-void add_process_to_queue(pcb_t* proc) {
+void add_process_to_queue(pcb_t *proc) {
+    LOG_INFO("Adding PID %d (priority %d) at address %p", proc->pid, proc->priority, proc);
     if (proc->priority == PRIORITY_HIGH) {
+        LOG_INFO("  Target queue: HIGH (list addr: %p)", &scheduler_state->priority_high);
         linked_list_push_tail(&scheduler_state->priority_high, proc);
     } else if (proc->priority == PRIORITY_MEDIUM) {
+        LOG_INFO("  Target queue: MEDIUM (list addr: %p)", &scheduler_state->priority_medium);
         linked_list_push_tail(&scheduler_state->priority_medium, proc);
     } else {
+        LOG_INFO("  Target queue: LOW (list addr: %p)", &scheduler_state->priority_low);
         linked_list_push_tail(&scheduler_state->priority_low, proc);
     }
+    // Add logging here to confirm which queue it *thinks* it's adding to
 }
 
 void run_next_process() {
@@ -255,6 +262,8 @@ void run_next_process() {
     // Try high priority first if in high priority time slot
     if (current < 9) {
         if (scheduler_state->priority_high.head != NULL) {
+            LOG_INFO("  Target queue: HIGH (list addr: %p)", &scheduler_state->priority_high);
+            LOG_INFO("  Target queue: MEDIUM (list addr: %p)", &scheduler_state->priority_medium);
             LOG_INFO("Running high priority process");
             pcb_t* proc = scheduler_state->priority_high.head;
             
@@ -265,8 +274,8 @@ void run_next_process() {
             linked_list_remove(&scheduler_state->priority_high, proc);
             if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->prev = NULL;
-                proc->next = NULL;
+                proc->prev_priority = NULL;
+                proc->next_priority = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
             } else {
@@ -286,21 +295,17 @@ void run_next_process() {
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
-            if (ret != 0 && proc->pid != 0) {
-                linked_list_remove(&scheduler_state->priority_medium, proc);
+            linked_list_remove(&scheduler_state->priority_medium, proc);
+            if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->prev = NULL;
-                proc->next = NULL;
+                proc->prev_priority = NULL;
+                proc->next_priority = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                quantum++;
-                return;
+            } else {
+                // Re-add non-terminated processes and special PIDs (0 and 1)
+                linked_list_push_tail(&scheduler_state->priority_medium, proc);
             }
-            
-            // Move to back of queue for next round if suspended
-            // After suspending, move to back of queue
-            linked_list_remove(&scheduler_state->priority_medium, proc);
-            linked_list_push_tail(&scheduler_state->priority_medium, proc);
             quantum++;
             return;
         }
@@ -315,20 +320,17 @@ void run_next_process() {
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
-            if (ret != 0 && proc->pid != 0) {
-                linked_list_remove(&scheduler_state->priority_low, proc);
+            linked_list_remove(&scheduler_state->priority_low, proc);
+            if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->prev = NULL;
-                proc->next = NULL;
+                proc->prev_priority = NULL;
+                proc->next_priority = NULL;
                 linked_list_push_tail(&scheduler_state->terminated_processes, proc);
                 LOG_INFO("Process %d terminated", proc->pid);
-                quantum++;
-                return;
+            } else {
+                // Re-add non-terminated processes and special PIDs (0 and 1)
+                linked_list_push_tail(&scheduler_state->priority_low, proc);
             }
-            
-            // Move to back of queue for next round if suspended
-            linked_list_remove(&scheduler_state->priority_low, proc);
-            linked_list_push_tail(&scheduler_state->priority_low, proc);
             quantum++;
             return;
         }

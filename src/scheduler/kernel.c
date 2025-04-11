@@ -7,30 +7,33 @@
 
 
 
-pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1) {
+pcb_t* k_proc_create(pcb_t *parent, int fd0, int fd1, char **argv) {
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
-
+    LOG_INFO("Adding PID %d (priority %d) at address %p", scheduler_state->process_count, proc->priority, proc);
+    log_queue_state();
     proc->ppid = parent->pid;
     LOG_INFO("Parent PID %d", proc->ppid);
     proc->pid = scheduler_state->process_count++;
     LOG_INFO("Spawning process %d", proc->pid);
-    proc->priority = PRIORITY_MEDIUM;
+    if (proc->pid <= 1) {
+        // PID 0 and 1 should be high priority
+        proc->priority = PRIORITY_HIGH;
+    } else {
+        proc->priority = PRIORITY_MEDIUM;
+    }
     proc->state = PROCESS_READY;
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
     proc->fd0 = fd0;
     proc->fd1 = fd1;
+    proc->argv = argv;
+    
 
     linked_list_push_tail(&scheduler_state->processes, proc);
-    if (proc->pid == 1) {
-        proc->priority = PRIORITY_HIGH;
-        LOG_INFO("Adding process %d to high priority queue", proc->pid);
-        linked_list_push_tail(&scheduler_state->priority_high, proc);
-    } else {
-        LOG_INFO("Adding process %d to medium priority queue", proc->pid);
-        linked_list_push_tail(&scheduler_state->priority_medium, proc);
-    }
+    log_queue_state();
+    LOG_INFO("AFTER CREATING");
+    add_process_to_queue(proc);
     return proc;
 }
 
