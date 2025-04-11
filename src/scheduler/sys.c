@@ -9,6 +9,7 @@
 
 
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
+    LOG_INFO("s_spawn called with fd0 %d, fd1 %d", fd0, fd1);
     pcb_t* proc = k_proc_create(scheduler_state->init);
     proc->fd0 = fd0;
     proc->fd1 = fd1;
@@ -23,7 +24,6 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
-    LOG_INFO("teset");
     if (pid == -1) {
         LOG_INFO("Waiting for any process");
         // Search through all processes
@@ -37,9 +37,10 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
             k_proc_cleanup(proc);
             return terminated_pid;
         }
+        LOG_INFO("finished search");
         // No terminated processes found
         if (nohang) {
-            return -1;
+            return 0;
         }
         // If not nohang, yield and try again
         return s_waitpid(-1, wstatus, nohang);
@@ -55,7 +56,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 return pid;
             }
             if (nohang) {
-                return -1;
+                return 0;
             } else {
                 spthread_join(*proc->thread, (void**)wstatus);
                 k_proc_cleanup(proc);
@@ -66,7 +67,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
         LOG_INFO("Process %d is not the one we're waiting for", proc->pid);
         proc = proc->next;
     }
-    return -1;
+    return 0;
 }
 
 

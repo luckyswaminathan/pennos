@@ -17,6 +17,9 @@
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
 #include "../scheduler/scheduler.h"
+#include "context.h"
+#include "../scheduler/sys.h"
+#include "../../lib/exiting_alloc.h"
 
 #define DEFAULT_FILE_PERMISSIONS 0644  // User: read/write, Group: read, Others: read
 #define FORK_SETUP_DELAY_USEC 500     // Microseconds to wait for child process setup
@@ -34,6 +37,7 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
 
     // this is the child process that is the leader of the job's process group
     {
+        // TODO: change this to do smth with the scheduler
         int ret = setpgid(0, 0);
         if (ret == -1)
         {
@@ -84,34 +88,17 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
             next_command_input_fd = pipe_fds[0]; // read end
         }
 
-        pid_t pid = fork();
-        if (pid == 0)
+        struct command_context* context = exiting_malloc(sizeof(struct command_context));
+        context->command = parsed_command->commands[i];
+        context->stdin_fd = command_input_fd;
+        context->stdout_fd = command_output_fd;
+        context->next_input_fd = next_command_input_fd;
+
+        pid_t pid = s_spawn((void* (*)(void*))execute_command, context->command, context->stdin_fd, context->stdout_fd);
+        if (pid == -1)
         {
-
-            // NOTE: if the file descriptor is already correct, than we don't call dup2
-            if (command_input_fd != STDIN_FILENO && dup2(command_input_fd, STDIN_FILENO) == -1)
-            {
-                perror("Failed to redirect stdin for command in job");
-                exit(EXIT_FAILURE); // Exit the child process
-            }
-            if (command_output_fd != STDOUT_FILENO && dup2(command_output_fd, STDOUT_FILENO) == -1)
-            {
-                perror("Failed to redirect stdout for command in job");
-                exit(EXIT_FAILURE);
-            }
-
-            // close the next_command_input_fd since it's not relevant to this command
-            if (next_command_input_fd != -1)
-            {
-                close(next_command_input_fd);
-            }
-
-            // NOTE: it's safe to fork in this loop because we always call execvp or exit in the child
-            execvp(parsed_command->commands[i][0], parsed_command->commands[i]);
-            // if we've reached this point, we have an error
-            perror("Failed to execve command.");
-            // TODO: need to close fds here?
-            exit(EXIT_FAILURE); // exits out the child for the command (doesn't exit out of the job) // TODO: is this enough? presumably if one part of the pipeline fails, the rest should fail, right? check this
+            perror("Failed to spawn command");
+            exit(EXIT_FAILURE);
         }
 
         if (pid == -1)
@@ -148,7 +135,7 @@ void execute_job_lead_child(job* job, struct parsed_command* parsed_command) {
     // poll for all children to finish or stop
     while (true) {
         int status;
-        pid_t dead_pid = waitpid(-1, &status, WUNTRACED);
+        pid_t dead_pid = s_waitpid(-1, &status, true);
 
         if (dead_pid == -1) {
             if (errno == ECHILD) {
@@ -181,7 +168,6 @@ void execute_job(job* job)
         perror("Failed to allocate PIDs array");
         return;
     }
-    
     pid_t pid = fork();
     if (pid == 0) {
         // Child process
