@@ -87,10 +87,14 @@ void init_scheduler() {
     init->fd1 = -1;
     init->is_leader = true;
     init->sleep_time = 0;
-    init->priority = PRIORITY_MEDIUM;
+    init->priority = PRIORITY_HIGH;
     init->state = PROCESS_RUNNING;
     init->prev = NULL;
     init->next = NULL;
+    init->children.head = NULL;
+    init->children.tail = NULL;
+    init->children.ele_dtor = NULL;
+    init->argv = NULL;
     
 
     init->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
@@ -102,7 +106,7 @@ void init_scheduler() {
 
     scheduler_state->curr = init;
     scheduler_state->init = init; 
-    linked_list_push_tail(&scheduler_state->priority_medium, init);
+    linked_list_push_tail(&scheduler_state->priority_high, init);
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 

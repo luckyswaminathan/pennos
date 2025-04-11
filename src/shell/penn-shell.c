@@ -36,7 +36,6 @@ static void* shell_loop(void* arg) {
             remove_job_by_pid(dead_pid);
         }
      
-        
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 

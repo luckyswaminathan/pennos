@@ -19,7 +19,11 @@ pcb_t* k_proc_create(pcb_t *parent) {
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
     linked_list_push_tail(&scheduler_state->processes, proc);
+    if (proc->pid == 1) {
+        linked_list_push_tail(&scheduler_state->priority_high, proc);
+    } else {
     linked_list_push_tail(&scheduler_state->priority_medium, proc);
+    }
     return proc;
 }
 

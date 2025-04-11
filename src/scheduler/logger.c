@@ -18,7 +18,7 @@ void init_logger(const char* file_path) {
         fclose(log_file);
     }
     if (file_path) {
-        log_file = fopen(file_path, "a");
+        log_file = fopen(file_path, "w");
         if (!log_file) {
             log_file = stderr;
         }
