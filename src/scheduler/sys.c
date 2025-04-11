@@ -12,7 +12,7 @@
 pid_t s_spawn(void* (*func)(void*), void* arg) {
     
     log_queue_state();
-    pcb_t* proc = k_proc_create(scheduler_state->curr, NULL);
+    pcb_t* proc = k_proc_create(scheduler_state->curr, arg);
     log_queue_state();
     proc->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
     if (spthread_create(proc->thread, NULL, func, arg) != 0) {
