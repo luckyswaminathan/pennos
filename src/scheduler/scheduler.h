@@ -13,11 +13,10 @@
 #include "./spthread.h" 
 
 typedef enum {   
-    PROCESS_READY,
     PROCESS_RUNNING, 
     PROCESS_BLOCKED, 
-    PROCESS_TERMINATED,
-    PROCESS_SLEEPING
+    PROCESS_STOPPED,
+    PROCESS_ZOMBIED
 } process_state;
 
 typedef enum {
@@ -74,6 +73,8 @@ extern scheduler_t* scheduler_state;
 void init_scheduler();
 void log_queue_state();
 void run_scheduler();
+void block_process(pcb_t* proc);
+void log_process_state();
 void add_process_to_queue(pcb_t* proc);
 void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 

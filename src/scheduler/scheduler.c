@@ -20,28 +20,33 @@ static void alarm_handler(int signum) {}
 // Init thread main function - continuously reaps zombie children
 static void* init_thread_func(void* arg) {
     LOG_INFO("running init thread");
+    
     while (1) {
+        
         if (scheduler_state->terminated_processes.head != NULL) {
+            log_process_state();
             // Get the process to terminate
             pcb_t* terminated = scheduler_state->terminated_processes.head;
-            LOG_INFO("Processing terminated process %d", terminated->pid);
             
-            // Remove from terminated queue first
-            scheduler_state->terminated_processes.head = terminated->process_pointers.next;
-            if (terminated->process_pointers.next != NULL) {
-                terminated->process_pointers.next->process_pointers.prev = NULL;
+            // Only clean up orphaned processes (those whose parent has terminated)
+            // or processes whose parent is init (pid 1)
+            if (terminated->ppid <= 1) {
+                // Remove from terminated queue first
+                linked_list_remove(&scheduler_state->terminated_processes, terminated, priority_pointers.prev, priority_pointers.next);
+                // Remove from main process list before cleanup
+                linked_list_remove(&scheduler_state->processes, terminated, process_pointers.prev, process_pointers.next);
+                
+                k_proc_cleanup(terminated);
             } else {
-                scheduler_state->terminated_processes.tail = NULL;
+                LOG_INFO("Moving process %d to end of terminated queue", terminated->pid);
+                // Move to end of terminated queue if parent still exists
+                linked_list_remove(&scheduler_state->terminated_processes, terminated, process_pointers.prev, process_pointers.next);
+                linked_list_push_tail(&scheduler_state->terminated_processes, terminated, process_pointers.prev, process_pointers.next);
             }
-            terminated->process_pointers.next = NULL;
-            terminated->process_pointers.prev = NULL;
-            
-            // The process should already be removed from its priority queue in run_next_process
-            // when it was detected as terminated. We just need to clean it up.
-            LOG_INFO("Init cleaning up terminated process %d", terminated->pid);
-            k_proc_cleanup(terminated);        }
+            log_process_state();
+        }
     }
-   return NULL;
+    return NULL;
 }
 
 void init_scheduler() {
@@ -143,7 +148,7 @@ void decrease_sleep() {
         proc->sleep_time -= centisecond;
         if (proc->sleep_time <= 0) {
             LOG_INFO("Process %d is no longer sleeping", proc->pid);
-            proc->state = PROCESS_READY;
+            proc->state = PROCESS_RUNNING;
             linked_list_remove(&scheduler_state->sleeping_processes, proc, process_pointers.prev, process_pointers.next);
             linked_list_push_tail(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
         }
@@ -151,6 +156,19 @@ void decrease_sleep() {
     }
 }
 
+void log_process_state() {
+    LOG_INFO("=== Current Process State ===");
+    
+    LOG_INFO("Current process: %d (State: %d)", scheduler_state->curr->pid, scheduler_state->curr->state);
+    LOG_INFO("Parent process: %d (State: %d)", scheduler_state->curr->ppid, scheduler_state->curr->state);
+    LOG_INFO("=== Current Process State ===");
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        LOG_INFO("  PID %d (State: %d)", proc->pid, proc->state);
+        proc = proc->process_pointers.next;
+    }
+    
+}
 
 // Log all processes in each queue
 void log_queue_state() {
@@ -237,7 +255,7 @@ bool should_block_process_waitpid(pcb_t* proc) {
         pcb_t* child = proc->children.head;
         while (child != NULL && child->pid != 1) {
             LOG_INFO("Checking child %d", child->pid);
-            if (child->state != PROCESS_TERMINATED) {
+            if (child->state != PROCESS_ZOMBIED) {
                 return true;  // Block if any non-terminated children exist
             }
             child = child->process_pointers.next;
@@ -247,14 +265,6 @@ bool should_block_process_waitpid(pcb_t* proc) {
 }
 
 void block_process(pcb_t* proc) {
-    if (proc->priority == PRIORITY_HIGH) {
-        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-    } else if (proc->priority == PRIORITY_MEDIUM) {
-        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-    } else {
-        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-    }
-    
     proc->state = PROCESS_BLOCKED;
     linked_list_push_tail(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
     LOG_INFO("Process %d blocked waiting for child", proc->pid);
@@ -284,6 +294,12 @@ void run_next_process() {
         if (scheduler_state->priority_high.head != NULL) {
             LOG_INFO("Running high priority process");
             pcb_t* proc = scheduler_state->priority_high.head;
+            if(proc->state == PROCESS_BLOCKED) {
+                linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
+                linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
+                quantum++;
+                return;
+            }
             
             // Check if shell/init should be blocked for waitpid
             // if (proc->pid <= 1 && should_block_process_waitpid(proc)) {
@@ -298,11 +314,9 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-                LOG_INFO("Process %d terminated", proc->pid);
+                // Process has terminated, mark as zombie and add to terminated queue
+                proc->state = PROCESS_ZOMBIED;
+                LOG_INFO("Process %d zombied", proc->pid);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
@@ -315,18 +329,21 @@ void run_next_process() {
         LOG_INFO("Running medium priority process");
         if (scheduler_state->priority_medium.head != NULL) {
             pcb_t* proc = scheduler_state->priority_medium.head;
-            
+            if(proc->state == PROCESS_BLOCKED) {
+                linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
+                linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
+                quantum++;
+                return;
+            }
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-                LOG_INFO("Process %d terminated", proc->pid);
+                // Process has terminated, mark as zombie and add to terminated queue
+                proc->state = PROCESS_ZOMBIED;
+                LOG_INFO("Process %d zombied", proc->pid);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
@@ -340,18 +357,21 @@ void run_next_process() {
          (current < 9 && scheduler_state->priority_high.head == NULL))) {
         if (scheduler_state->priority_low.head != NULL) {
             pcb_t* proc = scheduler_state->priority_low.head;
-            
+            if(proc->state == PROCESS_BLOCKED) {
+                linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
+                linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
+                quantum++;
+                return;
+            }
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-                LOG_INFO("Process %d terminated", proc->pid);
+                // Process has terminated, mark as zombie and add to terminated queue
+                proc->state = PROCESS_ZOMBIED;
+                LOG_INFO("Process %d zombied", proc->pid);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);

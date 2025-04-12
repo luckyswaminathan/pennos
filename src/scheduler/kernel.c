@@ -17,13 +17,14 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     LOG_INFO("Parent PID %d", proc->ppid);
     proc->pid = scheduler_state->process_count++;
     LOG_INFO("Spawning process %d", proc->pid);
+    proc->state = PROCESS_RUNNING;
     if (proc->pid <= 1) {
         // PID 0 and 1 should be high priority
         proc->priority = PRIORITY_HIGH;
     } else {
         proc->priority = PRIORITY_MEDIUM;
     }
-    proc->state = PROCESS_READY;
+    
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
@@ -49,6 +50,7 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
 
 void k_proc_cleanup(pcb_t *proc) {
     LOG_INFO("freeing proc %d", proc->pid);
+    log_process_state();
     if (proc->thread) {
         free(proc->thread);
     }
