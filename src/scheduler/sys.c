@@ -24,41 +24,30 @@ pid_t s_spawn(void* (*func)(void*), void* arg) {
 
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
+    log_process_state();
+    pcb_t* proc = scheduler_state->processes.head;
+    pcb_t* curr = scheduler_state->curr;
     
-    // First check terminated processes queue
-    pcb_t* proc = scheduler_state->terminated_processes.head;
     while (proc != NULL) {
-        if (pid == -1 || proc->pid == pid) {
-            // Found a terminated process we're looking for
+        if ((pid == -1 || proc->pid == pid) && (proc->state == PROCESS_ZOMBIED || proc->state == PROCESS_STOPPED)) {
+            // Found a terminated child process we're looking for
             pid_t terminated_pid = proc->pid;
-            LOG_INFO("Found terminated process %d", terminated_pid);
-            
-            // Remove from terminated queue
-            linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-            
-            // Clean up the process
-            k_proc_cleanup(proc);
+            LOG_INFO("Found zombied child process %d", terminated_pid);
+            linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+
+            // Clean up the process since parent is waiting for it
+            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
             
             return terminated_pid;
-        }
-        proc = proc->priority_pointers.next;
-    }
-    
-    // If not found in terminated queue, check running processes
-    proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        if (pid == -1 || proc->pid == pid) {
-            LOG_INFO("Found running process %d", proc->pid);
-            
-            if (proc->state == PROCESS_TERMINATED) {
-                return proc->pid;
-            }
+        } else if (pid == proc->pid) {
+            LOG_INFO("Found child process %d", proc->pid);
             
             if (nohang) {
                 return 0;
             } else {
-                // Block until process completes
-                spthread_join(*proc->thread, (void**)wstatus);
+                // Block the current process until target process completes
+                curr->state = PROCESS_BLOCKED;
+                block_process(curr);
                 return proc->pid;
             }
         }
@@ -82,8 +71,7 @@ int s_kill(pid_t pid) {
             } else if (priority == PRIORITY_LOW) {
                 linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
-            proc->state = PROCESS_TERMINATED;
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            proc->state = PROCESS_STOPPED;
             spthread_cancel(*proc->thread);
             return 0;
         }

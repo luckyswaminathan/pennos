@@ -19,7 +19,7 @@ static void print_header(int output_fd) {
 static void print_process(pcb_t* proc, int output_fd) {
     char state_char = 'R';
     if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
-    } else if (proc->state == PROCESS_TERMINATED) {
+    } else if (proc->state == PROCESS_ZOMBIED) {
         state_char = 'T';
     }
     dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);

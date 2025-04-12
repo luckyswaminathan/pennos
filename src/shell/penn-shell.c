@@ -77,6 +77,7 @@ static void* shell_loop(void* arg) {
         if (parsed_command->is_background) {
             job_ptr->status = J_RUNNING_BG;
             execute_job(job_ptr);
+            //s_waitpid(-1, NULL, true);
             enqueue_job(job_ptr);
         } else {
             // status is already J_RUNNING_FG
