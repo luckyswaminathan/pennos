@@ -209,10 +209,9 @@ int main(void)
 		}
 		else if (strcmp(tokens[0], "touch") == 0)
 		{
-			// TODO: We should support creating more than one file at a time
-			if (n_tokens != 2)
+			if (n_tokens < 2)
 			{
-				fprintf(stderr, "touch got wrong number of arguments (expected 1 argument)\n");
+				fprintf(stderr, "touch got wrong number of arguments (expected at least 1 argument)\n");
 				goto cleanup_tokens;
 			}
 			if (!is_mounted())
@@ -221,18 +220,21 @@ int main(void)
 				goto cleanup_tokens;
 			}
 
-			int fd = k_open(tokens[1], F_APPEND); // don't truncate file
-			if (fd < 0)
+			for (size_t i = 1; i < n_tokens; i++)
 			{
-				fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
-				goto cleanup_tokens;
+				int fd = k_open(tokens[i], F_APPEND);
+				if (fd < 0)
+				{
+					fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
+					goto cleanup_tokens;
+				}
+				if (k_write(fd, NULL, 0) < 0)
+				{
+					fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
+					goto cleanup_tokens;
+				}
+				k_close(fd);
 			}
-			if (k_write(fd, NULL, 0) < 0)
-			{
-				fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
-				goto cleanup_tokens;
-			}
-			k_close(fd);
 		}
 		else if (strcmp(tokens[0], "mv") == 0)
 		{
@@ -247,45 +249,10 @@ int main(void)
 				goto cleanup_tokens;
 			}
 
-			// Open the source file for reading
-			int src_fd = k_open(tokens[1], F_READ);
-			if (src_fd < 0)
+			int mv_status = k_mv(tokens[1], tokens[2]);
+			if (mv_status != 0)
 			{
-				fprintf(stderr, "mv: Error - failed to open source file with error code %d\n", src_fd);
-				goto cleanup_tokens;
-			}
-
-			// Create the destination file
-			int dest_fd = k_open(tokens[2], F_WRITE);
-			if (dest_fd < 0)
-			{
-				fprintf(stderr, "mv: Error - failed to open destination file with error code %d\n", dest_fd);
-				k_close(src_fd);
-				goto cleanup_tokens;
-			}
-
-			// Copy the contents
-			char buffer[1024];
-			int bytes_read;
-			while ((bytes_read = k_read(src_fd, sizeof(buffer), buffer)) > 0)
-			{
-				if (k_write(dest_fd, buffer, bytes_read) < 0)
-				{
-					fprintf(stderr, "mv: failed to write to destination file\n");
-					k_close(src_fd);
-					k_close(dest_fd);
-					goto cleanup_tokens;
-				}
-			}
-
-			// Close both files
-			k_close(src_fd);
-			k_close(dest_fd);
-
-			// Delete the source file
-			if (k_unlink(tokens[1]) < 0)
-			{
-				fprintf(stderr, "mv: Error - failed to remove source file\n");
+				fprintf(stderr, "mv: failed with error code %d\n", mv_status);
 				goto cleanup_tokens;
 			}
 		}
@@ -418,9 +385,10 @@ int main(void)
 					{
 						// Write to output file if specified, otherwise to stdout
 						int write_fd = (out_fd >= 0) ? out_fd : STDOUT_FD;
-						if (k_write(write_fd, buffer, bytes_read) < 0)
+						int k_write_status = k_write(write_fd, buffer, bytes_read);
+						if (k_write_status < 0)
 						{
-							fprintf(stderr, "cat: Error - write failed\n");
+							fprintf(stderr, "cat: Error - write failed with error code %d\n", k_write_status);
 							k_close(in_fd);
 							if (out_fd >= 0)
 							{

@@ -63,7 +63,7 @@ typedef struct global_fd_entry_st
     uint16_t dir_entry_block_num;
     uint8_t dir_entry_idx;
     uint8_t write_locked; // mutex for whether this file is already being written to by another file. If the value is 0 the file is not write locked, 1 it opened with F_WRITE, and 2 it opened with F_APPEND
-    uint32_t offset;     // offset can be no greater than the size, which is specified in the directory entry
+    uint32_t offset;
 } global_fd_entry;
 
 /**
@@ -86,15 +86,13 @@ int unmount(void);
 
 bool is_mounted(void);
 
-#define EK_OPEN_FILENAME_TOO_LONG -1
-#define EK_OPEN_INVALID_FILENAME_CHARSET -2
+#define EK_OPEN_INVALID_FILENAME -1
 #define EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED -3
 #define EK_OPEN_GLOBAL_FD_TABLE_FULL -4
 #define EK_OPEN_FILE_DOES_NOT_EXIST -5
 #define EK_OPEN_MALLOC_FAILED -6
 #define EK_OPEN_TIME_FAILED -7
 #define EK_OPEN_ALREADY_WRITE_LOCKED -8
-#define EK_OPEN_FILENAME_TOO_SHORT -9
 #define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
 #define EK_OPEN_NO_EMPTY_BLOCKS -11
 #define EK_OPEN_WRONG_PERMISSIONS -12
@@ -147,6 +145,7 @@ int k_write(int fd, const char *str, int n);
 #define EK_UNLINK_FILE_NOT_FOUND -1
 #define EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED -2
 #define EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED -3
+#define EK_UNLINK_INVALID_FILENAME -4
 int k_unlink(const char *fname);
 
 #define EK_LS_WRITE_FAILED -1
@@ -160,4 +159,13 @@ int k_ls(const char *filename);
 #define EK_CHMOD_FILE_NOT_FOUND -1
 #define EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED -2
 #define EK_CHMOD_WRONG_PERMISSIONS -3
+#define EK_CHMOD_INVALID_FILENAME -4
 int k_chmod(const char *fname, uint8_t perm);
+
+#define EK_MV_FILE_NOT_FOUND -1
+#define EK_MV_WRONG_PERMISSIONS -2
+#define EK_MV_UNLINK_FAILED -3
+#define EK_MV_INVALID_FILENAME -4
+#define EK_MV_OPEN_FAILED -5
+#define EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED -6
+int k_mv(const char *src, const char *dest);
