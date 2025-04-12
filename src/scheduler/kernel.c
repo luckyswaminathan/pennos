@@ -27,7 +27,11 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     proc->children.head = NULL;
     proc->children.tail = NULL;
     proc->children.ele_dtor = NULL;
+    proc->child_pointers.prev = NULL;
+    proc->child_pointers.next = NULL;
     proc->pgid = parent->pgid;
+    
+   linked_list_push_tail(&parent->children, proc, child_pointers.prev, child_pointers.next);
     if (arg != NULL) {
         struct command_context* ctx = (struct command_context*)arg;
         char**command = ctx->command;
@@ -47,6 +51,16 @@ void k_proc_cleanup(pcb_t *proc) {
     LOG_INFO("freeing proc %d", proc->pid);
     if (proc->thread) {
         free(proc->thread);
+    }
+    if (proc->children.head) {
+        pcb_t* head_child = proc->children.head;
+        while (head_child != NULL) {
+            LOG_INFO("freeing child %d", head_child->pid);
+            head_child->ppid = 0;
+            pcb_t* next_child = head_child->child_pointers.next;
+            linked_list_push_tail(&scheduler_state->init->children, head_child, child_pointers.prev, child_pointers.next);
+            head_child = next_child;
+        }
     }
     free(proc);
 }

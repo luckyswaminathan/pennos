@@ -95,6 +95,8 @@ void init_scheduler() {
     init->priority = PRIORITY_HIGH;
     init->state = PROCESS_RUNNING;
     init->command = "init";
+    init->child_pointers.prev = NULL;
+    init->child_pointers.next = NULL;
     
     init->children.head = NULL;
     init->children.tail = NULL;
@@ -233,7 +235,8 @@ bool should_block_process_waitpid(pcb_t* proc) {
     if (proc->pid <= 1) {  // Shell or Init
         // Check if process is waiting for children
         pcb_t* child = proc->children.head;
-        while (child != NULL) {
+        while (child != NULL && child->pid != 1) {
+            LOG_INFO("Checking child %d", child->pid);
             if (child->state != PROCESS_TERMINATED) {
                 return true;  // Block if any non-terminated children exist
             }
@@ -283,11 +286,11 @@ void run_next_process() {
             pcb_t* proc = scheduler_state->priority_high.head;
             
             // Check if shell/init should be blocked for waitpid
-            if (proc->pid <= 1 && should_block_process_waitpid(proc)) {
-                block_process(proc);
-                quantum++;
-                return;
-            }
+            // if (proc->pid <= 1 && should_block_process_waitpid(proc)) {
+            //     block_process(proc);
+            //     quantum++;
+            //     return;
+            // }
             
             scheduler_state->curr = proc;
             spthread_continue(*proc->thread);
@@ -360,6 +363,7 @@ void run_next_process() {
         if (!has_runnable_processes()) {
             LOG_INFO("No runnable processes, scheduler idling");
             // Use sigsuspend to idle until a signal arrives
+            quantum += 3;
             sigsuspend(&suspend_set);
             // After waking up, don't increment quantum - let the next iteration handle that
             return;

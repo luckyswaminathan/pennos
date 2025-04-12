@@ -51,6 +51,7 @@ static void* shell_loop(void* arg) {
             exit(1);
         }
 
+        LOG_INFO("Read command");
         if (parsed_command == NULL) {
             continue;  // Empty command, try again
         }
@@ -58,6 +59,7 @@ static void* shell_loop(void* arg) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
+        LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
@@ -93,12 +95,6 @@ static void* shell_loop(void* arg) {
             // Don't display prompt here - it will be displayed at the start of the next loop
         }
     }
-    return NULL;
-}
-
-// Thread function to run the scheduler
-void* scheduler_thread_fn(void* arg) {
-    run_scheduler();
     return NULL;
 }
 

@@ -51,6 +51,7 @@ struct process_control_block {
     spthread_t* thread;
     struct pointer_pair priority_pointers;
     struct pointer_pair process_pointers;
+    struct pointer_pair child_pointers;
     linked_list(pcb_t) children;
     char** argv;
 };
