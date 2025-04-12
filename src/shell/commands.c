@@ -5,6 +5,9 @@
 #include "commands.h"
 #include "../scheduler/scheduler.h"
 #include "../scheduler/logger.h"
+#include "../../lib/exiting_alloc.h"
+#include "../scheduler/spthread.h"
+#include "../scheduler/sys.h"
 
 #define BUFFER_SIZE 256
 
@@ -68,17 +71,16 @@ void* ps(void* arg) {
     
     return NULL;
 }
-
+void* zombie_child(void* arg) {
+    return NULL;
+}
 void* zombify(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    int stdout_fd = ctx->stdout_fd;
+    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+    child_ctx->command = (char**)("zombie_child");
+    child_ctx->process = NULL;
+    s_spawn(zombie_child, child_ctx);
     
-    // Iterate through terminated queue
-    pcb_t* proc = scheduler_state->terminated_processes.head;
-    while (proc != NULL) {
-        print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
-    }
+    
     return NULL;
 }
 
@@ -89,6 +91,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx->command[0], "ps") == 0) {
         return ps(ctx);
+    }
+    if (strcmp(ctx->command[0], "zombify") == 0) {
+        return zombify(ctx);
     }
     return NULL;
 }

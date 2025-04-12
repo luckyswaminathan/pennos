@@ -49,6 +49,7 @@ void execute_job(job* job)
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
     context->next_input_fd = -1;
+    context->process = scheduler_state->curr;
     pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
     if (pid == -1)
     {
