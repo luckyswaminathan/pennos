@@ -20,7 +20,7 @@ static void print_process(pcb_t* proc, int output_fd) {
     char state_char = 'R';
     if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
     } else if (proc->state == PROCESS_ZOMBIED) {
-        state_char = 'T';
+        state_char = 'Z';
     }
     dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
     LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
@@ -30,6 +30,7 @@ static void print_process(pcb_t* proc, int output_fd) {
 
 // Implementation of ps command
 void* ps(void* arg) {
+    LOG_INFO("ps command executed");
     struct command_context* ctx = (struct command_context*)arg;
     int stdout_fd = ctx->stdout_fd;
     
@@ -65,6 +66,7 @@ void* ps(void* arg) {
     // Iterate through terminated queue
     proc = scheduler_state->terminated_processes.head;
     while (proc != NULL) {
+        LOG_INFO("Terminated process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
         print_process(proc, stdout_fd);
         proc = proc->priority_pointers.next;
     }
@@ -72,15 +74,22 @@ void* ps(void* arg) {
     return NULL;
 }
 void* zombie_child(void* arg) {
+    // Child process exits normally
+    LOG_INFO("Child process running, will exit soon");
     return NULL;
 }
+
 void* zombify(void* arg) {
     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-    child_ctx->command = (char**)("zombie_child");
+    child_ctx->command = exiting_malloc(sizeof(char*));
+    child_ctx->command[0] = strdup("zombie_child");
     child_ctx->process = NULL;
-    s_spawn(zombie_child, child_ctx);
     
-    
+    // Spawn the child process
+    pid_t child = s_spawn(zombie_child, child_ctx);
+    LOG_INFO("Spawned child process with PID %d", child);
+    while(1) {  
+    };
     return NULL;
 }
 
