@@ -172,44 +172,44 @@ void log_process_state() {
 
 // Log all processes in each queue
 void log_queue_state() {
-    // LOG_INFO("=== Current Queue State ===");
+    LOG_INFO("=== Current Queue State ===");
     
-    // LOG_INFO("High Priority Queue:");
-    // pcb_t* high = scheduler_state->priority_high.head;
-    // while (high != NULL) {
-    //     LOG_INFO("  PID %d (State: %d)", high->pid, high->state);
-    //     high = high->priority_pointers.next;
-    // }
+    LOG_INFO("High Priority Queue:");
+    pcb_t* high = scheduler_state->priority_high.head;
+    while (high != NULL) {
+        LOG_INFO("  PID %d (State: %d)", high->pid, high->state);
+        high = high->priority_pointers.next;
+    }
     
-    // LOG_INFO("Medium Priority Queue:");
-    // pcb_t* med = scheduler_state->priority_medium.head;
-    // while (med != NULL) {
-    //     LOG_INFO("  PID %d (State: %d)", med->pid, med->state);
-    //     med = med->priority_pointers.next;
-    // }
+    LOG_INFO("Medium Priority Queue:");
+    pcb_t* med = scheduler_state->priority_medium.head;
+    while (med != NULL) {
+        LOG_INFO("  PID %d (State: %d)", med->pid, med->state);
+        med = med->priority_pointers.next;
+    }
     
-    // LOG_INFO("Low Priority Queue:");
-    // pcb_t* low = scheduler_state->priority_low.head;
-    // while (low != NULL) {
-    //     LOG_INFO("  PID %d (State: %d)", low->pid, low->state);
-    //     low = low->priority_pointers.next;
-    // }
+    LOG_INFO("Low Priority Queue:");
+    pcb_t* low = scheduler_state->priority_low.head;
+    while (low != NULL) {
+        LOG_INFO("  PID %d (State: %d)", low->pid, low->state);
+        low = low->priority_pointers.next;
+    }
     
-    // LOG_INFO("Sleeping Queue:");
-    // pcb_t* sleep = scheduler_state->sleeping_processes.head;
-    // while (sleep != NULL) {
-    //     LOG_INFO("  PID %d (Sleep time: %f)", sleep->pid, sleep->sleep_time);
-    //     sleep = sleep->priority_pointers.next;
-    // }
+    LOG_INFO("Sleeping Queue:");
+    pcb_t* sleep = scheduler_state->sleeping_processes.head;
+    while (sleep != NULL) {
+        LOG_INFO("  PID %d (Sleep time: %f)", sleep->pid, sleep->sleep_time);
+        sleep = sleep->priority_pointers.next;
+    }
     
-    // LOG_INFO("Terminated Queue:");
-    // pcb_t* term = scheduler_state->terminated_processes.head;
-    // while (term != NULL) {
-    //     LOG_INFO("  PID %d", term->pid);
-    //     term = term->priority_pointers.next;
-    // }
+    LOG_INFO("Terminated Queue:");
+    pcb_t* term = scheduler_state->terminated_processes.head;
+    while (term != NULL) {
+        LOG_INFO("  PID %d", term->pid);
+        term = term->priority_pointers.next;
+    }
     
-    // LOG_INFO("========================");
+    LOG_INFO("========================");
 }
 
 // Check if there are any runnable processes
