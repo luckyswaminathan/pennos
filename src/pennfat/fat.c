@@ -111,6 +111,16 @@ int unmount(void)
         return EFS_NOT_MOUNTED;
     }
 
+    // best effort to close all open files
+    for (int i = 0; i < GLOBAL_FD_TABLE_SIZE; i++)
+    {
+        if (global_fd_table[i].ref_count > 0)
+        {
+            global_fd_table[i].ref_count = 1; // set this
+            k_close(i);
+        }
+    }
+
     free(fs.block_buf);
     if (munmap(fs.fat, fs.fat_size) == -1)
     {
@@ -723,7 +733,10 @@ int k_close(int fd)
         return EK_CLOSE_SPECIAL_FD;
     }
 
-    global_fd_table[fd].ref_count -= 1;
+    if (global_fd_table[fd].ref_count > 0) // just in case, we don't want to decrement a ref count that is already 0 (though this should never happen)
+    {
+        global_fd_table[fd].ref_count -= 1;
+    }
     if (global_fd_table[fd].ref_count == 0)
     {
         // if the file was marked as deleted but still referenced
@@ -1430,9 +1443,18 @@ int k_mv(const char *src, const char *dest)
 
     global_fd_entry *src_fd_entry = &global_fd_table[src_fd];
     strcpy(src_fd_entry->ptr_to_dir_entry->name, dest); // know dest must be a valid filename because we opened it
+
+    int status = 0;
     if (write_root_dir_entry(src_fd_entry->ptr_to_dir_entry, src_fd_entry->dir_entry_block_num, src_fd_entry->dir_entry_idx) != 0)
     {
-        return EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED;
+        status = EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED;
+        goto cleanup;
     }
-    return 0;
+
+cleanup:
+    if (k_close(src_fd) != 0)
+    {
+        status = EK_MV_CLOSE_FAILED;
+    }
+    return status;
 }

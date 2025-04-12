@@ -187,7 +187,7 @@ int main(void)
 				goto cleanup_tokens;
 			}
 		}
-		else if (strcmp(tokens[0], "unmount") == 0)
+		else if (strcmp(tokens[0], "umount") == 0 || strcmp(tokens[0], "unmount") == 0)
 		{
 			if (n_tokens != 1)
 			{

@@ -168,4 +168,5 @@ int k_chmod(const char *fname, uint8_t perm);
 #define EK_MV_INVALID_FILENAME -4
 #define EK_MV_OPEN_FAILED -5
 #define EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED -6
+#define EK_MV_CLOSE_FAILED -7
 int k_mv(const char *src, const char *dest);
