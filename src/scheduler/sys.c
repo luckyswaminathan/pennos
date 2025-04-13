@@ -19,7 +19,11 @@
  */
 pid_t s_spawn(void* (*func)(void*), void* arg) {
     log_queue_state();
+    LOG_INFO("s_spawn called with parent %d", scheduler_state->curr->pid);
     pcb_t* proc = k_proc_create(scheduler_state->curr, arg);
+    linked_list_push_tail(&scheduler_state->curr->children, proc, child_pointers.prev, child_pointers.next);
+    pcb_t* child = scheduler_state->curr->children.head;
+    LOG_INFO("child %d", child->pid);
     log_queue_state();
     proc->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));
     if (spthread_create(proc->thread, NULL, func, arg) != 0) {
