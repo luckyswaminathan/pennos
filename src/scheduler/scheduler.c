@@ -24,6 +24,7 @@ static void* init_thread_func(void* arg) {
     while (1) {
         
         if (scheduler_state->terminated_processes.head != NULL) {
+            LOG_INFO("INITIALIZE");
             log_process_state();
             // Get the process to terminate
             pcb_t* terminated = scheduler_state->terminated_processes.head;
