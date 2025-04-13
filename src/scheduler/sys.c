@@ -45,6 +45,8 @@ pid_t s_spawn(void* (*func)(void*), void* arg) {
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
     log_process_state();
+    LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
+    LOG_INFO("curr %d", scheduler_state->curr->pid);
     pcb_t* proc = scheduler_state->curr->children.head;
     //pcb_t* curr = scheduler_state->curr;
     while (proc != NULL) {
@@ -79,7 +81,7 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         proc = proc->process_pointers.next;
     }
-    
+    LOG_INFO("No child process found");
     return 0;
 }
 

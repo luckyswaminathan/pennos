@@ -244,7 +244,6 @@ void run_scheduler() {
     sigdelset(&mask, SIGALRM);
     
     while (1) {
-        log_queue_state();
         
         // Only run processes and decrease sleep if we have runnable processes
         run_next_process();
@@ -328,7 +327,7 @@ void run_next_process() {
                 LOG_INFO("Process %d terminated", proc->pid);
                 pcb_t* child = proc->children.head;
                 while (child != NULL) {
-                    child->ppid = 1;
+                    child->ppid = 0;
                     child = child->process_pointers.next;
                 }
                 log_exited(proc->pid, proc->priority, proc->command);
@@ -363,7 +362,7 @@ void run_next_process() {
                 proc->state = PROCESS_ZOMBIED;
                 pcb_t* child = proc->children.head;
                 while (child != NULL) {
-                    child->ppid = 1;
+                    child->ppid = 0;
                     child = child->process_pointers.next;
                 }
                 LOG_INFO("Process %d terminated", proc->pid);
@@ -401,7 +400,7 @@ void run_next_process() {
                 LOG_INFO("Process %d terminated", proc->pid);
                 pcb_t* child = proc->children.head;
                 while (child != NULL) {
-                    child->ppid = 1;
+                    child->ppid = 0;
                     child = child->process_pointers.next;
                 }
                 log_exited(proc->pid, proc->priority, proc->command);
