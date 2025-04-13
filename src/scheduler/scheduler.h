@@ -13,10 +13,10 @@
 #include "./spthread.h" 
 
 typedef enum {   
-    PROCESS_RUNNING, 
-    PROCESS_BLOCKED, 
-    PROCESS_STOPPED,
-    PROCESS_ZOMBIED
+    PROCESS_RUNNING,     // Process is currently executing or ready to execute
+    PROCESS_BLOCKED,     // Process is waiting for some event/resource
+    PROCESS_STOPPED,     // Process execution has been suspended
+    PROCESS_ZOMBIED      // Process has terminated but parent hasn't called wait() to read exit status
 } process_state;
 
 typedef enum {

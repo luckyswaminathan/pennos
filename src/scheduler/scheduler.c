@@ -29,9 +29,15 @@ static void* init_thread_func(void* arg) {
             // Get the process to terminate
             pcb_t* terminated = scheduler_state->terminated_processes.head;
             
-            // Only clean up orphaned processes (those whose parent has terminated)
-            // or processes whose parent is init (pid 1)
-            if (terminated->ppid <= 1) {
+            // Method 1: When parent terminates, update children's ppid
+            pcb_t* child = terminated->children.head;
+            while (child != NULL) {
+                child->ppid = 1;  // Re-parent to init
+                child = child->child_pointers.next;
+            }
+
+            // Then clean up processes whose parent is init
+            if (terminated->ppid == 1) {
                 // Remove from terminated queue first
                 linked_list_remove(&scheduler_state->terminated_processes, terminated, priority_pointers.prev, priority_pointers.next);
                 // Remove from main process list before cleanup
