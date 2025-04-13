@@ -138,7 +138,9 @@ void init_scheduler() {
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval; 
     setitimer(ITIMER_REAL, &it, NULL);
-    // run_scheduler();
+    
+    quantum = 0;  // Reset quantum counter
+    update_ticks(quantum);  // Initialize logger ticks to 0
 
 }
 
@@ -151,6 +153,9 @@ void decrease_sleep() {
             proc->state = PROCESS_RUNNING;
             linked_list_remove(&scheduler_state->sleeping_processes, proc, process_pointers.prev, process_pointers.next);
             linked_list_push_tail(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+            
+            // Log that the process is unblocked/continued
+            log_unblocked(proc->pid, proc->priority, proc->command);
         }
         proc = proc->priority_pointers.next;
     }
@@ -268,6 +273,7 @@ void block_process(pcb_t* proc) {
     proc->state = PROCESS_BLOCKED;
     linked_list_push_tail(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
     LOG_INFO("Process %d blocked waiting for child", proc->pid);
+    log_blocked(proc->pid, proc->priority, proc->command);
 }
 
 void add_process_to_queue(pcb_t *proc) {
@@ -309,19 +315,24 @@ void run_next_process() {
             // }
             
             scheduler_state->curr = proc;
+            log_schedule(proc->pid, PRIORITY_HIGH, proc->command);
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Process has terminated, mark as zombie and add to terminated queue
-                proc->state = PROCESS_ZOMBIED;
-                LOG_INFO("Process %d zombied", proc->pid);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->priority_pointers.prev = NULL;
+                proc->priority_pointers.next = NULL;
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                LOG_INFO("Process %d terminated", proc->pid);
+                log_exited(proc->pid, proc->priority, proc->command);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             }
             quantum++;
+            update_ticks(quantum);  // Update ticks in logger
             return;
         }
     }
@@ -336,19 +347,24 @@ void run_next_process() {
                 return;
             }
             scheduler_state->curr = proc;
+            log_schedule(proc->pid, PRIORITY_MEDIUM, proc->command);
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Process has terminated, mark as zombie and add to terminated queue
-                proc->state = PROCESS_ZOMBIED;
-                LOG_INFO("Process %d zombied", proc->pid);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->priority_pointers.prev = NULL;
+                proc->priority_pointers.next = NULL;
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                LOG_INFO("Process %d terminated", proc->pid);
+                log_exited(proc->pid, proc->priority, proc->command);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             }
             quantum++;
+            update_ticks(quantum);  // Update ticks in logger
             return;
         }
     }
@@ -364,19 +380,24 @@ void run_next_process() {
                 return;
             }
             scheduler_state->curr = proc;
+            log_schedule(proc->pid, PRIORITY_LOW, proc->command);
             spthread_continue(*proc->thread);
             sigsuspend(&suspend_set);
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Process has terminated, mark as zombie and add to terminated queue
-                proc->state = PROCESS_ZOMBIED;
-                LOG_INFO("Process %d zombied", proc->pid);
+                // Reset prev/next pointers before adding to terminated queue
+                proc->priority_pointers.prev = NULL;
+                proc->priority_pointers.next = NULL;
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                LOG_INFO("Process %d terminated", proc->pid);
+                log_exited(proc->pid, proc->priority, proc->command);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
                 linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
             quantum++;
+            update_ticks(quantum);  // Update ticks in logger
             return;
         }
         // If we reach here, no processes in any priority queue are ready
@@ -384,14 +405,73 @@ void run_next_process() {
             LOG_INFO("No runnable processes, scheduler idling");
             // Use sigsuspend to idle until a signal arrives
             quantum += 3;
+            update_ticks(quantum);  // Update ticks in logger
             sigsuspend(&suspend_set);
             // After waking up, don't increment quantum - let the next iteration handle that
             return;
         }
     }
     quantum++;
+    update_ticks(quantum);  // Update ticks in logger
 }
 
 void log_all_processes() {
     
+}
+
+// Function to unblock a previously blocked process
+void unblock_process(pcb_t* proc) {
+    // If the process is in the blocked queue, remove it
+    linked_list_remove(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
+    
+    // Change state to ready
+    proc->state = PROCESS_READY;
+    
+    // Add the process back to the appropriate priority queue
+    add_process_to_queue(proc);
+    
+    // Log that the process has been unblocked
+    log_unblocked(proc->pid, proc->priority, proc->command);
+    
+    LOG_INFO("Process %d unblocked", proc->pid);
+}
+
+// Function to stop a process (similar to SIGSTOP in Unix)
+void stop_process(pcb_t* proc) {
+    // Remove from current priority queue
+    if (proc->priority == PRIORITY_HIGH) {
+        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
+    } else if (proc->priority == PRIORITY_MEDIUM) {
+        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
+    } else {
+        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
+    }
+    
+    // Change state to stopped
+    proc->state = PROCESS_BLOCKED; // Using BLOCKED as we don't have a STOPPED state
+    
+    // We're not adding to a special stopped queue, just using blocked for now
+    linked_list_push_tail(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
+    
+    // Log that the process has been stopped
+    log_stopped(proc->pid, proc->priority, proc->command);
+    
+    LOG_INFO("Process %d stopped", proc->pid);
+}
+
+// Function to continue a stopped process (similar to SIGCONT in Unix)
+void continue_process(pcb_t* proc) {
+    // If the process is in the blocked queue (used for stopped processes too), remove it
+    linked_list_remove(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
+    
+    // Change state to ready
+    proc->state = PROCESS_READY;
+    
+    // Add the process back to the appropriate priority queue
+    add_process_to_queue(proc);
+    
+    // Log that the process has been continued
+    log_continued(proc->pid, proc->priority, proc->command);
+    
+    LOG_INFO("Process %d continued", proc->pid);
 }

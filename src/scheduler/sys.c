@@ -4,13 +4,20 @@
 #include <errno.h>
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
-#include "spthread.h"
+#include "spthread.h" 
 
 
-
-
+/**
+ * @brief Create a child process that executes the function `func`.
+ * The child will retain some attributes of the parent.
+ *
+ * @param func Function to be executed by the child process.
+ * @param argv Null-terminated array of args, including the command name as argv[0].
+ * @param fd0 Input file descriptor.
+ * @param fd1 Output file descriptor.
+ * @return pid_t The process ID of the created child process.
+ */
 pid_t s_spawn(void* (*func)(void*), void* arg) {
-    
     log_queue_state();
     pcb_t* proc = k_proc_create(scheduler_state->curr, arg);
     log_queue_state();
@@ -22,6 +29,15 @@ pid_t s_spawn(void* (*func)(void*), void* arg) {
     return proc->pid;
 }
 
+/**
+ * @brief Wait on a child of the calling process, until it changes state.
+ * If `nohang` is true, this will not block the calling process and return immediately.
+ *
+ * @param pid Process ID of the child to wait for.
+ * @param wstatus Pointer to an integer variable where the status will be stored.
+ * @param nohang If true, return immediately if no child has exited.
+ * @return pid_t The process ID of the child which has changed state on success, -1 on error.
+ */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
     log_process_state();
@@ -32,22 +48,46 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
         if ((pid == -1 || proc->pid == pid) && (proc->state == PROCESS_ZOMBIED || proc->state == PROCESS_STOPPED)) {
             // Found a terminated child process we're looking for
             pid_t terminated_pid = proc->pid;
-            LOG_INFO("Found zombied child process %d", terminated_pid);
-            linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
-
-            // Clean up the process since parent is waiting for it
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            LOG_INFO("Found terminated process %d", terminated_pid);
+            
+            // Log the zombie process
+            log_zombie(proc->pid, proc->priority, proc->command);
+            
+            // Remove from terminated queue
+            linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            
+            // Log the process being waited on
+            log_waited(proc->pid, proc->priority, proc->command);
+            
+            // Clean up the process
+            k_proc_cleanup(proc);
             
             return terminated_pid;
-        } else if (pid == proc->pid) {
-            LOG_INFO("Found child process %d", proc->pid);
+        }
+        proc = proc->priority_pointers.next;
+    }
+    
+    // If not found in terminated queue, check running processes
+    proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        if (pid == -1 || proc->pid == pid) {
+            LOG_INFO("Found running process %d", proc->pid);
+            
+            if (proc->state == PROCESS_TERMINATED) {
+                // Log that we're waiting on this process
+                log_waited(proc->pid, proc->priority, proc->command);
+                return proc->pid;
+            }
             
             if (nohang) {
                 return 0;
             } else {
-                // Block the current process until target process completes
-                curr->state = PROCESS_BLOCKED;
-                block_process(curr);
+                // Block until process completes
+                spthread_join(*proc->thread, (void**)wstatus);
+                
+                // Log that we've waited on this process
+                log_waited(proc->pid, proc->priority, proc->command);
+                
                 return proc->pid;
             }
         }
@@ -57,7 +97,13 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     return 0;
 }
 
-
+/**
+ * @brief Send a signal to a particular process.
+ *
+ * @param pid Process ID of the target proces.
+ * @param signal Signal number to be sent.
+ * @return 0 on success, -1 on error.
+ */
 int s_kill(pid_t pid) {
     pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
@@ -71,7 +117,12 @@ int s_kill(pid_t pid) {
             } else if (priority == PRIORITY_LOW) {
                 linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
-            proc->state = PROCESS_STOPPED;
+            proc->state = PROCESS_TERMINATED;
+            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+            
+            // Log the process being signaled
+            log_signaled(proc->pid, proc->priority, proc->command);
+            
             spthread_cancel(*proc->thread);
             return 0;
         }
@@ -86,6 +137,8 @@ int s_nice(pid_t pid, int priority) {
         if (proc->pid == pid) {
             LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
             if (proc->priority != priority) {
+                int old_priority = proc->priority;
+                
                 if (priority == PRIORITY_HIGH) {
                     if (proc->priority == PRIORITY_MEDIUM) {
                         linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
@@ -111,6 +164,9 @@ int s_nice(pid_t pid, int priority) {
                     proc->priority = priority;
                     linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
                 }
+                
+                // Log the priority change
+                log_nice(proc->pid, old_priority, priority, proc->command);
             }
             return 0;
         }
@@ -118,13 +174,76 @@ int s_nice(pid_t pid, int priority) {
     }
     return -1;
 }
+
+/**
+ * @brief Send a stop signal to a process (similar to SIGSTOP).
+ *
+ * @param pid Process ID of the target process.
+ * @return 0 on success, -1 on error.
+ */
+int s_stop(pid_t pid) {
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        if (proc->pid == pid) {
+            LOG_INFO("Stopping process %d", proc->pid);
+            
+            // Call the stop_process function to handle the actual stopping
+            stop_process(proc);
+            
+            // We don't actually suspend the thread here, just change its state
+            // In a real OS, this would send a SIGSTOP signal
+            
+            return 0;
+        }
+        proc = proc->process_pointers.next;
+    }
+    return -1;
+}
+
+/**
+ * @brief Send a continue signal to a process (similar to SIGCONT).
+ *
+ * @param pid Process ID of the target process.
+ * @return 0 on success, -1 on error.
+ */
+int s_cont(pid_t pid) {
+    // First check in the standard process list
+    pcb_t* proc = scheduler_state->processes.head;
+    while (proc != NULL) {
+        if (proc->pid == pid && proc->state == PROCESS_BLOCKED) {
+            LOG_INFO("Continuing process %d", proc->pid);
+            
+            // Call the continue_process function to handle the actual continuation
+            continue_process(proc);
+            
+            return 0;
+        }
+        proc = proc->process_pointers.next;
+    }
     
-// void s_exit(void) {
-//     if (scheduler_state->curr != NULL) {
-//         terminate_process(scheduler_state->curr);
-//     }
-//     run_scheduler();
-// } 
+    // Also check in the blocked_processes list
+    proc = scheduler_state->blocked_processes.head;
+    while (proc != NULL) {
+        if (proc->pid == pid) {
+            LOG_INFO("Continuing blocked process %d", proc->pid);
+            
+            // Call the continue_process function to handle the actual continuation
+            continue_process(proc);
+            
+            return 0;
+        }
+        proc = proc->priority_pointers.next;
+    }
+    
+    return -1;
+}
+
+/**
+ * @brief Unconditionally exit the calling process.
+ */
+void s_exit(void) {
+    PANIC("s_exit not implemented");
+} 
 
 
 // void s_sleep(unsigned int ticks) {

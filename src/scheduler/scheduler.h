@@ -84,6 +84,15 @@ void handle_orphaned_processes(pcb_t* terminated_process);
 void cleanup_zombie_children(pcb_t* parent);
 
 void terminate_process(pcb_t* process);
+
+// Functions for process blocking/unblocking
+void block_process(pcb_t* proc);
+void unblock_process(pcb_t* proc);
+
+// Functions for stopping and continuing processes
+void stop_process(pcb_t* proc);
+void continue_process(pcb_t* proc);
+
 void run_next_process();
 void log_all_processes();
 
