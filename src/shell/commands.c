@@ -80,11 +80,11 @@ void* zombie_child(void* arg) {
 }
 
 void* zombify(void* arg) {
+    
     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
     child_ctx->command = exiting_malloc(sizeof(char*));
     child_ctx->command[0] = strdup("zombie_child");
     child_ctx->process = NULL;
-    
     // Spawn the child process
     pid_t child = s_spawn(zombie_child, child_ctx);
     LOG_INFO("Spawned child process with PID %d", child);
@@ -92,6 +92,25 @@ void* zombify(void* arg) {
     };
     return NULL;
 }
+
+void* orphan_child(void* arg) {
+    
+    while(1) {
+    };
+    return NULL;
+}
+
+void* orphanify(void* arg) {
+    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+    child_ctx->command = exiting_malloc(sizeof(char*));
+    child_ctx->command[0] = strdup("orphan_child");
+    child_ctx->process = NULL;
+    s_spawn(orphan_child, child_ctx);
+    return NULL;
+    
+}
+
+
 
 void* execute_command(void* arg) {
     struct command_context* ctx = (struct command_context*)arg;
@@ -103,6 +122,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx->command[0], "zombify") == 0) {
         return zombify(ctx);
+    }
+    if (strcmp(ctx->command[0], "orphanify") == 0) {
+        return orphanify(ctx);
     }
     return NULL;
 }
