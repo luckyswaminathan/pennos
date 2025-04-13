@@ -42,40 +42,16 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
     log_process_state();
     pcb_t* proc = scheduler_state->processes.head;
-    pcb_t* curr = scheduler_state->curr;
-    
-    while (proc != NULL) {
-        if ((pid == -1 || proc->pid == pid) && (proc->state == PROCESS_ZOMBIED || proc->state == PROCESS_STOPPED)) {
-            // Found a terminated child process we're looking for
-            pid_t terminated_pid = proc->pid;
-            LOG_INFO("Found terminated process %d", terminated_pid);
-            
-            // Log the zombie process
-            log_zombie(proc->pid, proc->priority, proc->command);
-            
-            // Remove from terminated queue
-            linked_list_remove(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-            
-            // Log the process being waited on
-            log_waited(proc->pid, proc->priority, proc->command);
-            
-            // Clean up the process
-            k_proc_cleanup(proc);
-            
-            return terminated_pid;
-        }
-        proc = proc->priority_pointers.next;
-    }
-    
-    // If not found in terminated queue, check running processes
-    proc = scheduler_state->processes.head;
+    //pcb_t* curr = scheduler_state->curr;
     while (proc != NULL) {
         if (pid == -1 || proc->pid == pid) {
             LOG_INFO("Found running process %d", proc->pid);
             
-            if (proc->state == PROCESS_TERMINATED) {
+            if (proc->state == PROCESS_ZOMBIED || proc->state == PROCESS_STOPPED) {
                 // Log that we're waiting on this process
                 log_waited(proc->pid, proc->priority, proc->command);
+                linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
                 return proc->pid;
             }
             
@@ -117,7 +93,7 @@ int s_kill(pid_t pid) {
             } else if (priority == PRIORITY_LOW) {
                 linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             }
-            proc->state = PROCESS_TERMINATED;
+            proc->state = PROCESS_ZOMBIED;
             linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
             
             // Log the process being signaled

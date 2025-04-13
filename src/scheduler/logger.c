@@ -7,12 +7,12 @@
 
 static FILE* log_file = NULL;
 static unsigned long current_ticks = 0;
-// static const char* level_strings[] = {
-//     "DEBUG",
-//     "INFO",
-//     "WARN",
-//     "ERROR"
-// };
+static const char* level_strings[] = {
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERROR"
+};
 
 void init_logger(const char* file_path) {
     if (log_file && log_file != stderr) {
@@ -148,21 +148,21 @@ void log_custom(const char* operation, const char* format, ...) {
 
 // Legacy log function for backward compatibility
 void log_message(log_level_t level, const char* format, ...) {
-    // if (!log_file) {
-    //     log_file = stderr;
-    // }
+    if (!log_file) {
+        log_file = stderr;
+    }
     
-    // // Use INTERNAL as the operation for legacy log messages
-    // fprintf(log_file, "[%lu]\tINTERNAL\t[%s] ", 
-    //         current_ticks, level_strings[level]);
+    // Use INTERNAL as the operation for legacy log messages
+    fprintf(log_file, "[%lu]\tINTERNAL\t[%s] ", 
+            current_ticks, level_strings[level]);
     
-    // va_list args;
-    // va_start(args, format);
-    // vfprintf(log_file, format, args);
-    // va_end(args);
+    va_list args;
+    va_start(args, format);
+    vfprintf(log_file, format, args);
+    va_end(args);
     
-    // // Add newline if not already present
-    // if (format[strlen(format) - 1] != '\n') {
-    //     fprintf(log_file, "\n");
-    // }
+    // Add newline if not already present
+    if (format[strlen(format) - 1] != '\n') {
+        fprintf(log_file, "\n");
+    }
 }

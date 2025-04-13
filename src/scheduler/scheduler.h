@@ -85,8 +85,6 @@ void cleanup_zombie_children(pcb_t* parent);
 
 void terminate_process(pcb_t* process);
 
-// Functions for process blocking/unblocking
-void block_process(pcb_t* proc);
 void unblock_process(pcb_t* proc);
 
 // Functions for stopping and continuing processes
