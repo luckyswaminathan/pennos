@@ -7,6 +7,7 @@ bin/*
 # Log files
 log/*
 src/scheduler.log
+*.log
 
 # Build directories
 build/ 
