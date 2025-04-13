@@ -16,7 +16,6 @@
 
 jid_t job_id = 0;
 
-
 static void* shell_loop(void* arg) {
     while (true) {
         LOG_INFO("Shell loop entered");
@@ -40,7 +39,8 @@ static void* shell_loop(void* arg) {
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-        if (ret == -1) {  
+
+        if (ret == -1) {
             exit(0);
         } else if (ret == -2) {  
             if (errno == EINTR) {
@@ -59,8 +59,10 @@ static void* shell_loop(void* arg) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
+        printf("command: %s\n", parsed_command->commands[0][0]);
         LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
+        printf("is_jobs_command: %d\n", is_jobs_command);
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
@@ -109,6 +111,8 @@ int main(int argc, char **argv) {
     // Initialize logger and scheduler
     init_logger("scheduler.log");
     init_scheduler();
+
+    printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers
     setup_job_control_handlers();

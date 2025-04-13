@@ -32,7 +32,7 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     proc->child_pointers.next = NULL;
     proc->pgid = parent->pgid;
     
-   linked_list_push_tail(&parent->children, proc, child_pointers.prev, child_pointers.next);
+    linked_list_push_tail(&parent->children, proc, child_pointers.prev, child_pointers.next);
     if (arg != NULL) {
         struct command_context* ctx = (struct command_context*)arg;
         char**command = ctx->command;
@@ -45,6 +45,10 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     log_queue_state();
     LOG_INFO("AFTER CREATING");
     add_process_to_queue(proc);
+    
+    // Log process creation
+    log_create(proc->pid, proc->priority, proc->command);
+    
     return proc;
 }
 
@@ -61,6 +65,10 @@ void k_proc_cleanup(pcb_t *proc) {
             head_child->ppid = 0;
             pcb_t* next_child = head_child->child_pointers.next;
             linked_list_push_tail(&scheduler_state->init->children, head_child, child_pointers.prev, child_pointers.next);
+            
+            // Log orphaned process
+            log_orphan(head_child->pid, head_child->priority, head_child->command);
+            
             head_child = next_child;
         }
     }
