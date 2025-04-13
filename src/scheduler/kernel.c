@@ -47,6 +47,7 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
     add_process_to_queue(proc);
     
     // Log process creation
+    LOG_INFO("Creating process %d (parent %d)", proc->pid, proc->ppid);
     log_create(proc->pid, proc->priority, proc->command);
     
     return proc;

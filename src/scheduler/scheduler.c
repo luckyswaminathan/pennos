@@ -322,9 +322,7 @@ void run_next_process() {
             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                proc->state = PROCESS_ZOMBIED;
                 LOG_INFO("Process %d terminated", proc->pid);
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
@@ -354,9 +352,7 @@ void run_next_process() {
             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                proc->state = PROCESS_ZOMBIED;
                 LOG_INFO("Process %d terminated", proc->pid);
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
@@ -387,9 +383,7 @@ void run_next_process() {
             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
                 // Reset prev/next pointers before adding to terminated queue
-                proc->priority_pointers.prev = NULL;
-                proc->priority_pointers.next = NULL;
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                proc->state = PROCESS_ZOMBIED;
                 LOG_INFO("Process %d terminated", proc->pid);
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
@@ -425,7 +419,7 @@ void unblock_process(pcb_t* proc) {
     linked_list_remove(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
     
     // Change state to ready
-    proc->state = PROCESS_READY;
+    proc->state = PROCESS_RUNNING;
     
     // Add the process back to the appropriate priority queue
     add_process_to_queue(proc);
@@ -465,7 +459,7 @@ void continue_process(pcb_t* proc) {
     linked_list_remove(&scheduler_state->blocked_processes, proc, priority_pointers.prev, priority_pointers.next);
     
     // Change state to ready
-    proc->state = PROCESS_READY;
+    proc->state = PROCESS_RUNNING;
     
     // Add the process back to the appropriate priority queue
     add_process_to_queue(proc);
