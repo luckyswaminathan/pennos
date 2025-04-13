@@ -328,9 +328,15 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
+                // Log before state change
+                LOG_INFO("SCHEDULER: Set PID %d state to ZOMBIED (HIGH PRIO)", proc->pid);
                 proc->state = PROCESS_ZOMBIED;
                 LOG_INFO("Process %d terminated", proc->pid);
+                pcb_t* child = proc->children.head;
+                while (child != NULL) {
+                    child->ppid = 1;
+                    child = child->process_pointers.next;
+                }
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)
@@ -358,8 +364,14 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
+                // Log before state change
+                LOG_INFO("SCHEDULER: Set PID %d state to ZOMBIED (MEDIUM PRIO)", proc->pid);
                 proc->state = PROCESS_ZOMBIED;
+                pcb_t* child = proc->children.head;
+                while (child != NULL) {
+                    child->ppid = 1;
+                    child = child->process_pointers.next;
+                }
                 LOG_INFO("Process %d terminated", proc->pid);
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
@@ -389,9 +401,15 @@ void run_next_process() {
             int ret = spthread_suspend(*proc->thread);
             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
             if (ret != 0 && proc->pid > 1) {
-                // Reset prev/next pointers before adding to terminated queue
+                // Log before state change
+                LOG_INFO("SCHEDULER: Set PID %d state to ZOMBIED (LOW PRIO)", proc->pid);
                 proc->state = PROCESS_ZOMBIED;
                 LOG_INFO("Process %d terminated", proc->pid);
+                pcb_t* child = proc->children.head;
+                while (child != NULL) {
+                    child->ppid = 1;
+                    child = child->process_pointers.next;
+                }
                 log_exited(proc->pid, proc->priority, proc->command);
             } else {
                 // Re-add non-terminated processes and special PIDs (0 and 1)

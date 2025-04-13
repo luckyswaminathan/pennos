@@ -45,7 +45,7 @@ pid_t s_spawn(void* (*func)(void*), void* arg) {
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
     LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
     log_process_state();
-    pcb_t* proc = scheduler_state->processes.head;
+    pcb_t* proc = scheduler_state->curr->children.head;
     //pcb_t* curr = scheduler_state->curr;
     while (proc != NULL) {
         if (pid == -1 || proc->pid == pid) {
@@ -63,7 +63,13 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 return 0;
             } else {
                 // Block until process completes
-                spthread_join(*proc->thread, (void**)wstatus);
+                int status = spthread_join(*proc->thread, (void**)wstatus);
+                if (status != 0) {
+                    return -1;
+                }
+                proc->state = PROCESS_ZOMBIED;
+                linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
                 
                 // Log that we've waited on this process
                 log_waited(proc->pid, proc->priority, proc->command);
