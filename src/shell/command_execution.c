@@ -66,7 +66,7 @@ void execute_job(job* job)
         tcsetpgrp(STDIN_FILENO, pid);
         int status;
         LOG_INFO("Waiting for foreground job %ld", job->id);
-        s_waitpid(pid, &status, true);
+        s_waitpid(pid, &status, false);
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel

@@ -34,41 +34,14 @@ void* ps(void* arg) {
     struct command_context* ctx = (struct command_context*)arg;
     int stdout_fd = ctx->stdout_fd;
     
-    // Iterate through high priority queue
-    pcb_t* proc = scheduler_state->priority_high.head;
     print_header(stdout_fd);
+
+    // Iterate through the global process list
+    pcb_t* proc = scheduler_state->processes.head;
     while (proc != NULL) {
+        LOG_INFO("Found process PID %d, STATE %d", proc->pid, proc->state);
         print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
-    }
-    
-    // Iterate through medium priority queue
-    proc = scheduler_state->priority_medium.head;
-    while (proc != NULL) {
-        print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
-    }
-    
-    // Iterate through low priority queue
-    proc = scheduler_state->priority_low.head;
-    while (proc != NULL) {
-        print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
-    }
-    
-    // Iterate through sleeping queue
-    proc = scheduler_state->sleeping_processes.head;
-    while (proc != NULL) {
-        print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
-    }
-    
-    // Iterate through terminated queue
-    proc = scheduler_state->terminated_processes.head;
-    while (proc != NULL) {
-        LOG_INFO("Terminated process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
-        print_process(proc, stdout_fd);
-        proc = proc->priority_pointers.next;
+        proc = proc->process_pointers.next; // Use process_pointers for the global list
     }
     
     return NULL;
