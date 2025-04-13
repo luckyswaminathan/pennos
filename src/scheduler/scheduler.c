@@ -121,26 +121,30 @@ void init_scheduler() {
         LOG_ERROR("Failed to create init thread");
         exit(1);
     }
-    
 
     scheduler_state->curr = init;
-    scheduler_state->init = init; 
+    scheduler_state->init = init;
     linked_list_push_tail(&scheduler_state->priority_high, init, priority_pointers.prev, priority_pointers.next);
     linked_list_push_tail(&scheduler_state->processes, init, process_pointers.prev, process_pointers.next);
+    
+    // Make sure SIGALRM is unblocked on the thread
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 
-    struct sigaction act = (struct sigaction){
+    struct sigaction act = (struct sigaction) {
         .sa_handler = alarm_handler,
         .sa_mask = suspend_set,
         .sa_flags = SA_RESTART,
     };
     sigaction(SIGALRM, &act, NULL);
+
+    // Make sure SIGALRM is unblocked on the thread
     sigset_t alarm_set;
     sigemptyset(&alarm_set);
     sigaddset(&alarm_set, SIGALRM);
     pthread_sigmask(SIG_UNBLOCK, &alarm_set, NULL);
 
+    // Set up timer for scheduler, send SIGALRM every 100ms
     struct itimerval it;
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval; 

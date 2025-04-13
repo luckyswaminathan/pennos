@@ -90,6 +90,12 @@ void* orphanify(void* arg) {
     
 }
 
+/**
+ * @brief Busy wait indefinitely.
+ * It can only be interrupted via signals.
+ *
+ * Example Usage: busy
+ */
 void* busy(void* arg) {
     LOG_INFO("Starting busy process");
     struct command_context* ctx = (struct command_context*)arg;
