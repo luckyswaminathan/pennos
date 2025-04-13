@@ -328,6 +328,7 @@ void run_next_process() {
                 pcb_t* child = proc->children.head;
                 while (child != NULL) {
                     child->ppid = 0;
+                    linked_list_push_tail(&scheduler_state->init->children, child, child_pointers.prev, child_pointers.next);
                     child = child->process_pointers.next;
                 }
                 log_exited(proc->pid, proc->priority, proc->command);
@@ -363,6 +364,7 @@ void run_next_process() {
                 pcb_t* child = proc->children.head;
                 while (child != NULL) {
                     child->ppid = 0;
+                    linked_list_push_tail(&scheduler_state->init->children, child, child_pointers.prev, child_pointers.next);
                     child = child->process_pointers.next;
                 }
                 LOG_INFO("Process %d terminated", proc->pid);
