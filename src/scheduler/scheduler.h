@@ -6,12 +6,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include <sys/types.h> // For pid_t
+#include <sys/types.h>
 
 #include "../../lib/linked_list.h" 
 
 #include "./spthread.h" 
 
+// Will have 3 queues for RUNNING (based on priority), and one for every other state
 typedef enum {   
     PROCESS_RUNNING, 
     PROCESS_BLOCKED, 
@@ -26,50 +27,67 @@ typedef enum {
 } priority_t;
 
 // Forward declaration
-typedef struct process_control_block pcb_t;
+typedef struct pcb_st pcb_t;
 
-// --- Process Control Block ---
-// Must have 'prev' and 'next' pointers for linked_list.h
-
-struct pointer_pair {
-    struct process_control_block* prev;
-    struct process_control_block* next;
-};
-struct process_control_block {
+/*
+    Process Control Block
+    - Process identification
+    - File descriptors
+    - Process state
+    - Process priority
+    - Sleep time
+    - Thread
+*/
+struct pcb_st {
+    // Process identification
     pid_t pid;        
     pid_t ppid;        
     pid_t pgid;          
-    bool is_leader; 
-    int fd0;
-    int fd1;
-    process_state state;        
-    priority_t priority;   
-    double sleep_time;
-    char* command;
-
-    spthread_t* thread;
-    struct pointer_pair priority_pointers;
-    struct pointer_pair process_pointers;
-    struct pointer_pair child_pointers;
     linked_list(pcb_t) children;
+
+    // File descriptors (may add moree)
+        int fd0;
+        int fd1;
+
+    // Process state
+    process_state state;
+
+    // Process priority
+    priority_t priority;
+    double sleep_time;
+
+    // Thread
+    spthread_t* thread;
+    void* (*func)(void*);
+    char* command;
     char** argv;
+    
+    // Linked list pointers (for scheduler queues)
+    pcb_t* prev;
+    pcb_t* next;
 };
 
 typedef struct scheduler {
-    linked_list(pcb_t) processes;
-    linked_list(pcb_t) priority_high;
-    linked_list(pcb_t) priority_medium;
-    linked_list(pcb_t) priority_low;
-    linked_list(pcb_t) blocked_processes;
-    linked_list(pcb_t) terminated_processes;
-    linked_list(pcb_t) sleeping_processes;
-    int process_count;
-    pcb_t* init;
-    pcb_t* curr;
+    // Priority queues (0 = highest priority, 2 = lowest)
+    linked_list(pcb_t) ready_queues[3];  // Ready processes by priority
+
+    // Other queues
+    linked_list(pcb_t) blocked_queue;
+    linked_list(pcb_t) zombie_queue;
+    linked_list(pcb_t) stopped_queue;
+
+    // Process count
+    unsigned int ticks;
+
+    // Initial and current process
+    pcb_t* init_process;
+    pcb_t* current_process;
 } scheduler_t;
 
 extern scheduler_t* scheduler_state;
 
+
+// LEGACY, will change
 void init_scheduler();
 void log_queue_state();
 void run_scheduler();
@@ -78,7 +96,6 @@ void log_process_state();
 void add_process_to_queue(pcb_t* proc);
 void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
 
-// Handle orphaned processes by transferring them to init
 void handle_orphaned_processes(pcb_t* terminated_process);
 
 void cleanup_zombie_children(pcb_t* parent);
