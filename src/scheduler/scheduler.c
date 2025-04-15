@@ -29,9 +29,15 @@ static void* init_thread_func(void* arg) {
             // Get the process to terminate
             pcb_t* terminated = scheduler_state->terminated_processes.head;
             
-            // Only clean up orphaned processes (those whose parent has terminated)
-            // or processes whose parent is init (pid 1)
-            if (terminated->ppid <= 1) {
+            // Method 1: When parent terminates, update children's ppid
+            pcb_t* child = terminated->children.head;
+            while (child != NULL) {
+                child->ppid = 1;  // Re-parent to init
+                child = child->child_pointers.next;
+            }
+
+            // Then clean up processes whose parent is init
+            if (terminated->ppid == 1) {
                 // Remove from terminated queue first
                 linked_list_remove(&scheduler_state->terminated_processes, terminated, priority_pointers.prev, priority_pointers.next);
                 // Remove from main process list before cleanup
@@ -115,26 +121,30 @@ void init_scheduler() {
         LOG_ERROR("Failed to create init thread");
         exit(1);
     }
-    
 
     scheduler_state->curr = init;
-    scheduler_state->init = init; 
+    scheduler_state->init = init;
     linked_list_push_tail(&scheduler_state->priority_high, init, priority_pointers.prev, priority_pointers.next);
     linked_list_push_tail(&scheduler_state->processes, init, process_pointers.prev, process_pointers.next);
+    
+    // Make sure SIGALRM is unblocked on the thread
     sigfillset(&suspend_set);
     sigdelset(&suspend_set, SIGALRM);
 
-    struct sigaction act = (struct sigaction){
+    struct sigaction act = (struct sigaction) {
         .sa_handler = alarm_handler,
         .sa_mask = suspend_set,
         .sa_flags = SA_RESTART,
     };
     sigaction(SIGALRM, &act, NULL);
+
+    // Make sure SIGALRM is unblocked on the thread
     sigset_t alarm_set;
     sigemptyset(&alarm_set);
     sigaddset(&alarm_set, SIGALRM);
     pthread_sigmask(SIG_UNBLOCK, &alarm_set, NULL);
 
+    // Set up timer for scheduler, send SIGALRM every 100ms
     struct itimerval it;
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval; 

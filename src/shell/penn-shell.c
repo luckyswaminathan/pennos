@@ -44,7 +44,6 @@ static void* shell_loop(void* arg) {
             exit(0);
         } else if (ret == -2) {  
             if (errno == EINTR) {
-    
                 continue;
             }
             perror("Error reading command");

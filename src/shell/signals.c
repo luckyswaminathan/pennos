@@ -5,10 +5,12 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <stdbool.h>
+#include <signal.h>
 #include "./Job.h"
 #include "./jobs.h"
 #include "../../lib/linked_list.h"
 #include "./command_execution.h"
+#include "../scheduler/sys.h"
 
 // Define the global variable here
 pid_t shell_pgid;
@@ -32,9 +34,8 @@ void job_control_handler(int sig) {
         if (sig == SIGTSTP) {
             printf("SIGTSTP: getpid(): %d\n", getpid());
             
-            
-            // Stop the process group
-            kill(-fg_pgid, SIGTSTP);
+            // Use PennOS s_stop instead of real kill system call
+            s_stop(fg_pgid);
             
             // Don't wait here - let the parent's waitpid handle it
             job->status = J_STOPPED;
@@ -51,7 +52,12 @@ void job_control_handler(int sig) {
             
             exit(CHILD_STOPPED_EXIT_STATUS); // TODO: this is just a POC. Not sure if there's a smarter way of doing this. Maybe we don't need a signal handler at all and can just catch WIFSTOPPED
         } else if (sig == SIGINT) {
-            kill(-fg_pgid, SIGINT);
+            fprintf(stderr, "SIGINT received, killing foreground job PID: %d\n", fg_pgid);
+            
+            // Use only PennOS s_kill to properly terminate PennOS processes
+            s_kill(fg_pgid);
+            
+            // Make sure the terminal control is returned to the shell
             tcsetpgrp(STDIN_FILENO, shell_pgid);
         }
     }
