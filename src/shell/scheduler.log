@@ -7,7 +7,7 @@
 [0]	INTERNAL	[INFO] Terminated Queue:
 [0]	INTERNAL	[INFO] ========================
 [0]	INTERNAL	[INFO] s_spawn called with parent 0
-[0]	INTERNAL	[INFO] Adding PID 1 (priority 0) at address 0xaaaafa0b46c0
+[0]	INTERNAL	[INFO] Adding PID 1 (priority 0) at address 0xaaab18c246c0
 [0]	INTERNAL	[INFO] === Current Queue State ===
 [0]	INTERNAL	[INFO] High Priority Queue:
 [0]	INTERNAL	[INFO]   PID 0 (State: 0)
@@ -27,21 +27,12 @@
 [0]	INTERNAL	[INFO] Terminated Queue:
 [0]	INTERNAL	[INFO] ========================
 [0]	INTERNAL	[INFO] AFTER CREATING
-[0]	INTERNAL	[INFO] Adding PID 1 (priority 0) at address 0xaaaafa0b46c0
-[0]	INTERNAL	[INFO]   Target queue: HIGH (list addr: 0xaaaafa0b4498)
-[0]	INTERNAL	[INFO]   After add - proc prev: 0xaaaafa0b4550, next: (nil)
+[0]	INTERNAL	[INFO] Adding PID 1 (priority 0) at address 0xaaab18c246c0
+[0]	INTERNAL	[INFO]   Target queue: HIGH (list addr: 0xaaab18c24498)
+[0]	INTERNAL	[INFO]   After add - proc prev: 0xaaab18c24550, next: (nil)
 [0]	INTERNAL	[INFO] Creating process 1 (parent 0)
 [0]	CREATE	1	0	shell
 [0]	INTERNAL	[INFO] child 1
-[0]	INTERNAL	[INFO] === Current Queue State ===
-[0]	INTERNAL	[INFO] High Priority Queue:
-[0]	INTERNAL	[INFO]   PID 0 (State: 0)
-[0]	INTERNAL	[INFO]   PID 1 (State: 0)
-[0]	INTERNAL	[INFO] Medium Priority Queue:
-[0]	INTERNAL	[INFO] Low Priority Queue:
-[0]	INTERNAL	[INFO] Sleeping Queue:
-[0]	INTERNAL	[INFO] Terminated Queue:
-[0]	INTERNAL	[INFO] ========================
 [0]	INTERNAL	[INFO] === Current Queue State ===
 [0]	INTERNAL	[INFO] High Priority Queue:
 [0]	INTERNAL	[INFO]   PID 0 (State: 0)
@@ -55,15 +46,6 @@
 [0]	INTERNAL	[INFO] Running high priority process
 [0]	SCHEDULE	0	0	init
 [0]	INTERNAL	[INFO] running init thread
-[1]	INTERNAL	[INFO] === Current Queue State ===
-[1]	INTERNAL	[INFO] High Priority Queue:
-[1]	INTERNAL	[INFO]   PID 1 (State: 0)
-[1]	INTERNAL	[INFO]   PID 0 (State: 0)
-[1]	INTERNAL	[INFO] Medium Priority Queue:
-[1]	INTERNAL	[INFO] Low Priority Queue:
-[1]	INTERNAL	[INFO] Sleeping Queue:
-[1]	INTERNAL	[INFO] Terminated Queue:
-[1]	INTERNAL	[INFO] ========================
 [1]	INTERNAL	[INFO] CURRENT: 1
 [1]	INTERNAL	[INFO] Running high priority process
 [1]	SCHEDULE	1	0	shell
@@ -75,603 +57,163 @@
 [1]	INTERNAL	[INFO] === Current Process State ===
 [1]	INTERNAL	[INFO]   PID 0 (State: 0)
 [1]	INTERNAL	[INFO]   PID 1 (State: 0)
-[2]	INTERNAL	[INFO] === Current Queue State ===
-[2]	INTERNAL	[INFO] High Priority Queue:
-[2]	INTERNAL	[INFO]   PID 0 (State: 0)
-[2]	INTERNAL	[INFO]   PID 1 (State: 0)
-[2]	INTERNAL	[INFO] Medium Priority Queue:
-[2]	INTERNAL	[INFO] Low Priority Queue:
-[2]	INTERNAL	[INFO] Sleeping Queue:
-[2]	INTERNAL	[INFO] Terminated Queue:
-[2]	INTERNAL	[INFO] ========================
+[1]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
+[1]	INTERNAL	[INFO] curr 1
+[1]	INTERNAL	[INFO] No child process found
 [2]	INTERNAL	[INFO] CURRENT: 2
 [2]	INTERNAL	[INFO] Running high priority process
 [2]	SCHEDULE	0	0	init
-[3]	INTERNAL	[INFO] === Current Queue State ===
-[3]	INTERNAL	[INFO] High Priority Queue:
-[3]	INTERNAL	[INFO]   PID 1 (State: 0)
-[3]	INTERNAL	[INFO]   PID 0 (State: 0)
-[3]	INTERNAL	[INFO] Medium Priority Queue:
-[3]	INTERNAL	[INFO] Low Priority Queue:
-[3]	INTERNAL	[INFO] Sleeping Queue:
-[3]	INTERNAL	[INFO] Terminated Queue:
-[3]	INTERNAL	[INFO] ========================
 [3]	INTERNAL	[INFO] CURRENT: 3
 [3]	INTERNAL	[INFO] Running high priority process
 [3]	SCHEDULE	1	0	shell
-[4]	INTERNAL	[INFO] === Current Queue State ===
-[4]	INTERNAL	[INFO] High Priority Queue:
-[4]	INTERNAL	[INFO]   PID 0 (State: 0)
-[4]	INTERNAL	[INFO]   PID 1 (State: 0)
-[4]	INTERNAL	[INFO] Medium Priority Queue:
-[4]	INTERNAL	[INFO] Low Priority Queue:
-[4]	INTERNAL	[INFO] Sleeping Queue:
-[4]	INTERNAL	[INFO] Terminated Queue:
-[4]	INTERNAL	[INFO] ========================
 [4]	INTERNAL	[INFO] CURRENT: 4
 [4]	INTERNAL	[INFO] Running high priority process
 [4]	SCHEDULE	0	0	init
-[5]	INTERNAL	[INFO] === Current Queue State ===
-[5]	INTERNAL	[INFO] High Priority Queue:
-[5]	INTERNAL	[INFO]   PID 1 (State: 0)
-[5]	INTERNAL	[INFO]   PID 0 (State: 0)
-[5]	INTERNAL	[INFO] Medium Priority Queue:
-[5]	INTERNAL	[INFO] Low Priority Queue:
-[5]	INTERNAL	[INFO] Sleeping Queue:
-[5]	INTERNAL	[INFO] Terminated Queue:
-[5]	INTERNAL	[INFO] ========================
 [5]	INTERNAL	[INFO] CURRENT: 5
 [5]	INTERNAL	[INFO] Running high priority process
 [5]	SCHEDULE	1	0	shell
-[6]	INTERNAL	[INFO] === Current Queue State ===
-[6]	INTERNAL	[INFO] High Priority Queue:
-[6]	INTERNAL	[INFO]   PID 0 (State: 0)
-[6]	INTERNAL	[INFO]   PID 1 (State: 0)
-[6]	INTERNAL	[INFO] Medium Priority Queue:
-[6]	INTERNAL	[INFO] Low Priority Queue:
-[6]	INTERNAL	[INFO] Sleeping Queue:
-[6]	INTERNAL	[INFO] Terminated Queue:
-[6]	INTERNAL	[INFO] ========================
 [6]	INTERNAL	[INFO] CURRENT: 6
 [6]	INTERNAL	[INFO] Running high priority process
 [6]	SCHEDULE	0	0	init
-[7]	INTERNAL	[INFO] === Current Queue State ===
-[7]	INTERNAL	[INFO] High Priority Queue:
-[7]	INTERNAL	[INFO]   PID 1 (State: 0)
-[7]	INTERNAL	[INFO]   PID 0 (State: 0)
-[7]	INTERNAL	[INFO] Medium Priority Queue:
-[7]	INTERNAL	[INFO] Low Priority Queue:
-[7]	INTERNAL	[INFO] Sleeping Queue:
-[7]	INTERNAL	[INFO] Terminated Queue:
-[7]	INTERNAL	[INFO] ========================
 [7]	INTERNAL	[INFO] CURRENT: 7
 [7]	INTERNAL	[INFO] Running high priority process
 [7]	SCHEDULE	1	0	shell
-[8]	INTERNAL	[INFO] === Current Queue State ===
-[8]	INTERNAL	[INFO] High Priority Queue:
-[8]	INTERNAL	[INFO]   PID 0 (State: 0)
-[8]	INTERNAL	[INFO]   PID 1 (State: 0)
-[8]	INTERNAL	[INFO] Medium Priority Queue:
-[8]	INTERNAL	[INFO] Low Priority Queue:
-[8]	INTERNAL	[INFO] Sleeping Queue:
-[8]	INTERNAL	[INFO] Terminated Queue:
-[8]	INTERNAL	[INFO] ========================
 [8]	INTERNAL	[INFO] CURRENT: 8
 [8]	INTERNAL	[INFO] Running high priority process
 [8]	SCHEDULE	0	0	init
-[9]	INTERNAL	[INFO] === Current Queue State ===
-[9]	INTERNAL	[INFO] High Priority Queue:
-[9]	INTERNAL	[INFO]   PID 1 (State: 0)
-[9]	INTERNAL	[INFO]   PID 0 (State: 0)
-[9]	INTERNAL	[INFO] Medium Priority Queue:
-[9]	INTERNAL	[INFO] Low Priority Queue:
-[9]	INTERNAL	[INFO] Sleeping Queue:
-[9]	INTERNAL	[INFO] Terminated Queue:
-[9]	INTERNAL	[INFO] ========================
 [9]	INTERNAL	[INFO] CURRENT: 9
 [9]	INTERNAL	[INFO] Running medium priority process
-[10]	INTERNAL	[INFO] === Current Queue State ===
-[10]	INTERNAL	[INFO] High Priority Queue:
-[10]	INTERNAL	[INFO]   PID 1 (State: 0)
-[10]	INTERNAL	[INFO]   PID 0 (State: 0)
-[10]	INTERNAL	[INFO] Medium Priority Queue:
-[10]	INTERNAL	[INFO] Low Priority Queue:
-[10]	INTERNAL	[INFO] Sleeping Queue:
-[10]	INTERNAL	[INFO] Terminated Queue:
-[10]	INTERNAL	[INFO] ========================
 [10]	INTERNAL	[INFO] CURRENT: 10
 [10]	INTERNAL	[INFO] Running medium priority process
-[11]	INTERNAL	[INFO] === Current Queue State ===
-[11]	INTERNAL	[INFO] High Priority Queue:
-[11]	INTERNAL	[INFO]   PID 1 (State: 0)
-[11]	INTERNAL	[INFO]   PID 0 (State: 0)
-[11]	INTERNAL	[INFO] Medium Priority Queue:
-[11]	INTERNAL	[INFO] Low Priority Queue:
-[11]	INTERNAL	[INFO] Sleeping Queue:
-[11]	INTERNAL	[INFO] Terminated Queue:
-[11]	INTERNAL	[INFO] ========================
 [11]	INTERNAL	[INFO] CURRENT: 11
 [11]	INTERNAL	[INFO] Running medium priority process
-[12]	INTERNAL	[INFO] === Current Queue State ===
-[12]	INTERNAL	[INFO] High Priority Queue:
-[12]	INTERNAL	[INFO]   PID 1 (State: 0)
-[12]	INTERNAL	[INFO]   PID 0 (State: 0)
-[12]	INTERNAL	[INFO] Medium Priority Queue:
-[12]	INTERNAL	[INFO] Low Priority Queue:
-[12]	INTERNAL	[INFO] Sleeping Queue:
-[12]	INTERNAL	[INFO] Terminated Queue:
-[12]	INTERNAL	[INFO] ========================
 [12]	INTERNAL	[INFO] CURRENT: 12
 [12]	INTERNAL	[INFO] Running medium priority process
-[13]	INTERNAL	[INFO] === Current Queue State ===
-[13]	INTERNAL	[INFO] High Priority Queue:
-[13]	INTERNAL	[INFO]   PID 1 (State: 0)
-[13]	INTERNAL	[INFO]   PID 0 (State: 0)
-[13]	INTERNAL	[INFO] Medium Priority Queue:
-[13]	INTERNAL	[INFO] Low Priority Queue:
-[13]	INTERNAL	[INFO] Sleeping Queue:
-[13]	INTERNAL	[INFO] Terminated Queue:
-[13]	INTERNAL	[INFO] ========================
 [13]	INTERNAL	[INFO] CURRENT: 13
 [13]	INTERNAL	[INFO] Running medium priority process
-[14]	INTERNAL	[INFO] === Current Queue State ===
-[14]	INTERNAL	[INFO] High Priority Queue:
-[14]	INTERNAL	[INFO]   PID 1 (State: 0)
-[14]	INTERNAL	[INFO]   PID 0 (State: 0)
-[14]	INTERNAL	[INFO] Medium Priority Queue:
-[14]	INTERNAL	[INFO] Low Priority Queue:
-[14]	INTERNAL	[INFO] Sleeping Queue:
-[14]	INTERNAL	[INFO] Terminated Queue:
-[14]	INTERNAL	[INFO] ========================
 [14]	INTERNAL	[INFO] CURRENT: 14
 [14]	INTERNAL	[INFO] Running medium priority process
-[15]	INTERNAL	[INFO] === Current Queue State ===
-[15]	INTERNAL	[INFO] High Priority Queue:
-[15]	INTERNAL	[INFO]   PID 1 (State: 0)
-[15]	INTERNAL	[INFO]   PID 0 (State: 0)
-[15]	INTERNAL	[INFO] Medium Priority Queue:
-[15]	INTERNAL	[INFO] Low Priority Queue:
-[15]	INTERNAL	[INFO] Sleeping Queue:
-[15]	INTERNAL	[INFO] Terminated Queue:
-[15]	INTERNAL	[INFO] ========================
 [15]	INTERNAL	[INFO] CURRENT: 15
-[16]	INTERNAL	[INFO] === Current Queue State ===
-[16]	INTERNAL	[INFO] High Priority Queue:
-[16]	INTERNAL	[INFO]   PID 1 (State: 0)
-[16]	INTERNAL	[INFO]   PID 0 (State: 0)
-[16]	INTERNAL	[INFO] Medium Priority Queue:
-[16]	INTERNAL	[INFO] Low Priority Queue:
-[16]	INTERNAL	[INFO] Sleeping Queue:
-[16]	INTERNAL	[INFO] Terminated Queue:
-[16]	INTERNAL	[INFO] ========================
 [16]	INTERNAL	[INFO] CURRENT: 16
-[17]	INTERNAL	[INFO] === Current Queue State ===
-[17]	INTERNAL	[INFO] High Priority Queue:
-[17]	INTERNAL	[INFO]   PID 1 (State: 0)
-[17]	INTERNAL	[INFO]   PID 0 (State: 0)
-[17]	INTERNAL	[INFO] Medium Priority Queue:
-[17]	INTERNAL	[INFO] Low Priority Queue:
-[17]	INTERNAL	[INFO] Sleeping Queue:
-[17]	INTERNAL	[INFO] Terminated Queue:
-[17]	INTERNAL	[INFO] ========================
 [17]	INTERNAL	[INFO] CURRENT: 17
-[18]	INTERNAL	[INFO] === Current Queue State ===
-[18]	INTERNAL	[INFO] High Priority Queue:
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO] Medium Priority Queue:
-[18]	INTERNAL	[INFO] Low Priority Queue:
-[18]	INTERNAL	[INFO] Sleeping Queue:
-[18]	INTERNAL	[INFO] Terminated Queue:
-[18]	INTERNAL	[INFO] ========================
 [18]	INTERNAL	[INFO] CURRENT: 0
 [18]	INTERNAL	[INFO] Running high priority process
 [18]	SCHEDULE	1	0	shell
-[18]	INTERNAL	[INFO] Read command
-[18]	INTERNAL	[INFO] handling jobs
-[18]	INTERNAL	[INFO] === Current Queue State ===
-[18]	INTERNAL	[INFO] High Priority Queue:
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO] Medium Priority Queue:
-[18]	INTERNAL	[INFO] Low Priority Queue:
-[18]	INTERNAL	[INFO] Sleeping Queue:
-[18]	INTERNAL	[INFO] Terminated Queue:
-[18]	INTERNAL	[INFO] ========================
-[18]	INTERNAL	[INFO] s_spawn called with parent 1
-[18]	INTERNAL	[INFO] Adding PID 2 (priority 0) at address 0xffff7c000c40
-[18]	INTERNAL	[INFO] === Current Queue State ===
-[18]	INTERNAL	[INFO] High Priority Queue:
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO] Medium Priority Queue:
-[18]	INTERNAL	[INFO] Low Priority Queue:
-[18]	INTERNAL	[INFO] Sleeping Queue:
-[18]	INTERNAL	[INFO] Terminated Queue:
-[18]	INTERNAL	[INFO] ========================
-[18]	INTERNAL	[INFO] Parent PID 1
-[18]	INTERNAL	[INFO] Spawning process 2
-[18]	INTERNAL	[INFO] === Current Queue State ===
-[18]	INTERNAL	[INFO] High Priority Queue:
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO] Medium Priority Queue:
-[18]	INTERNAL	[INFO] Low Priority Queue:
-[18]	INTERNAL	[INFO] Sleeping Queue:
-[18]	INTERNAL	[INFO] Terminated Queue:
-[18]	INTERNAL	[INFO] ========================
-[18]	INTERNAL	[INFO] AFTER CREATING
-[18]	INTERNAL	[INFO] Adding PID 2 (priority 1) at address 0xffff7c000c40
-[18]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaaafa0b44b0)
-[18]	INTERNAL	[INFO]   After add - proc prev: (nil), next: (nil)
-[18]	INTERNAL	[INFO] Creating process 2 (parent 1)
-[18]	CREATE	2	1	orphanify
-[18]	INTERNAL	[INFO] child 2
-[18]	INTERNAL	[INFO] === Current Queue State ===
-[18]	INTERNAL	[INFO] High Priority Queue:
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO] Medium Priority Queue:
-[18]	INTERNAL	[INFO]   PID 2 (State: 0)
-[18]	INTERNAL	[INFO] Low Priority Queue:
-[18]	INTERNAL	[INFO] Sleeping Queue:
-[18]	INTERNAL	[INFO] Terminated Queue:
-[18]	INTERNAL	[INFO] ========================
-[18]	INTERNAL	[INFO] Shell loop entered
-[18]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[18]	INTERNAL	[INFO] === Current Process State ===
-[18]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[18]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[18]	INTERNAL	[INFO] === Current Process State ===
-[18]	INTERNAL	[INFO]   PID 0 (State: 0)
-[18]	INTERNAL	[INFO]   PID 1 (State: 0)
-[18]	INTERNAL	[INFO]   PID 2 (State: 0)
-[18]	INTERNAL	[INFO] Found running process 2
-[19]	INTERNAL	[INFO] === Current Queue State ===
-[19]	INTERNAL	[INFO] High Priority Queue:
-[19]	INTERNAL	[INFO]   PID 0 (State: 0)
-[19]	INTERNAL	[INFO]   PID 1 (State: 0)
-[19]	INTERNAL	[INFO] Medium Priority Queue:
-[19]	INTERNAL	[INFO]   PID 2 (State: 0)
-[19]	INTERNAL	[INFO] Low Priority Queue:
-[19]	INTERNAL	[INFO] Sleeping Queue:
-[19]	INTERNAL	[INFO] Terminated Queue:
-[19]	INTERNAL	[INFO] ========================
 [19]	INTERNAL	[INFO] CURRENT: 1
 [19]	INTERNAL	[INFO] Running high priority process
 [19]	SCHEDULE	0	0	init
-[20]	INTERNAL	[INFO] === Current Queue State ===
-[20]	INTERNAL	[INFO] High Priority Queue:
-[20]	INTERNAL	[INFO]   PID 1 (State: 0)
-[20]	INTERNAL	[INFO]   PID 0 (State: 0)
-[20]	INTERNAL	[INFO] Medium Priority Queue:
-[20]	INTERNAL	[INFO]   PID 2 (State: 0)
-[20]	INTERNAL	[INFO] Low Priority Queue:
-[20]	INTERNAL	[INFO] Sleeping Queue:
-[20]	INTERNAL	[INFO] Terminated Queue:
-[20]	INTERNAL	[INFO] ========================
 [20]	INTERNAL	[INFO] CURRENT: 2
 [20]	INTERNAL	[INFO] Running high priority process
 [20]	SCHEDULE	1	0	shell
-[21]	INTERNAL	[INFO] === Current Queue State ===
-[21]	INTERNAL	[INFO] High Priority Queue:
-[21]	INTERNAL	[INFO]   PID 0 (State: 0)
-[21]	INTERNAL	[INFO]   PID 1 (State: 0)
-[21]	INTERNAL	[INFO] Medium Priority Queue:
-[21]	INTERNAL	[INFO]   PID 2 (State: 0)
-[21]	INTERNAL	[INFO] Low Priority Queue:
-[21]	INTERNAL	[INFO] Sleeping Queue:
-[21]	INTERNAL	[INFO] Terminated Queue:
-[21]	INTERNAL	[INFO] ========================
 [21]	INTERNAL	[INFO] CURRENT: 3
 [21]	INTERNAL	[INFO] Running high priority process
 [21]	SCHEDULE	0	0	init
-[22]	INTERNAL	[INFO] === Current Queue State ===
-[22]	INTERNAL	[INFO] High Priority Queue:
-[22]	INTERNAL	[INFO]   PID 1 (State: 0)
-[22]	INTERNAL	[INFO]   PID 0 (State: 0)
-[22]	INTERNAL	[INFO] Medium Priority Queue:
-[22]	INTERNAL	[INFO]   PID 2 (State: 0)
-[22]	INTERNAL	[INFO] Low Priority Queue:
-[22]	INTERNAL	[INFO] Sleeping Queue:
-[22]	INTERNAL	[INFO] Terminated Queue:
-[22]	INTERNAL	[INFO] ========================
 [22]	INTERNAL	[INFO] CURRENT: 4
 [22]	INTERNAL	[INFO] Running high priority process
 [22]	SCHEDULE	1	0	shell
-[23]	INTERNAL	[INFO] === Current Queue State ===
-[23]	INTERNAL	[INFO] High Priority Queue:
-[23]	INTERNAL	[INFO]   PID 0 (State: 0)
-[23]	INTERNAL	[INFO]   PID 1 (State: 0)
-[23]	INTERNAL	[INFO] Medium Priority Queue:
-[23]	INTERNAL	[INFO]   PID 2 (State: 0)
-[23]	INTERNAL	[INFO] Low Priority Queue:
-[23]	INTERNAL	[INFO] Sleeping Queue:
-[23]	INTERNAL	[INFO] Terminated Queue:
-[23]	INTERNAL	[INFO] ========================
 [23]	INTERNAL	[INFO] CURRENT: 5
 [23]	INTERNAL	[INFO] Running high priority process
 [23]	SCHEDULE	0	0	init
-[24]	INTERNAL	[INFO] === Current Queue State ===
-[24]	INTERNAL	[INFO] High Priority Queue:
-[24]	INTERNAL	[INFO]   PID 1 (State: 0)
-[24]	INTERNAL	[INFO]   PID 0 (State: 0)
-[24]	INTERNAL	[INFO] Medium Priority Queue:
-[24]	INTERNAL	[INFO]   PID 2 (State: 0)
-[24]	INTERNAL	[INFO] Low Priority Queue:
-[24]	INTERNAL	[INFO] Sleeping Queue:
-[24]	INTERNAL	[INFO] Terminated Queue:
-[24]	INTERNAL	[INFO] ========================
 [24]	INTERNAL	[INFO] CURRENT: 6
 [24]	INTERNAL	[INFO] Running high priority process
 [24]	SCHEDULE	1	0	shell
-[25]	INTERNAL	[INFO] === Current Queue State ===
-[25]	INTERNAL	[INFO] High Priority Queue:
-[25]	INTERNAL	[INFO]   PID 0 (State: 0)
-[25]	INTERNAL	[INFO]   PID 1 (State: 0)
-[25]	INTERNAL	[INFO] Medium Priority Queue:
-[25]	INTERNAL	[INFO]   PID 2 (State: 0)
-[25]	INTERNAL	[INFO] Low Priority Queue:
-[25]	INTERNAL	[INFO] Sleeping Queue:
-[25]	INTERNAL	[INFO] Terminated Queue:
-[25]	INTERNAL	[INFO] ========================
 [25]	INTERNAL	[INFO] CURRENT: 7
 [25]	INTERNAL	[INFO] Running high priority process
 [25]	SCHEDULE	0	0	init
-[26]	INTERNAL	[INFO] === Current Queue State ===
-[26]	INTERNAL	[INFO] High Priority Queue:
-[26]	INTERNAL	[INFO]   PID 1 (State: 0)
-[26]	INTERNAL	[INFO]   PID 0 (State: 0)
-[26]	INTERNAL	[INFO] Medium Priority Queue:
-[26]	INTERNAL	[INFO]   PID 2 (State: 0)
-[26]	INTERNAL	[INFO] Low Priority Queue:
-[26]	INTERNAL	[INFO] Sleeping Queue:
-[26]	INTERNAL	[INFO] Terminated Queue:
-[26]	INTERNAL	[INFO] ========================
 [26]	INTERNAL	[INFO] CURRENT: 8
 [26]	INTERNAL	[INFO] Running high priority process
 [26]	SCHEDULE	1	0	shell
-[27]	INTERNAL	[INFO] === Current Queue State ===
-[27]	INTERNAL	[INFO] High Priority Queue:
-[27]	INTERNAL	[INFO]   PID 0 (State: 0)
-[27]	INTERNAL	[INFO]   PID 1 (State: 0)
-[27]	INTERNAL	[INFO] Medium Priority Queue:
-[27]	INTERNAL	[INFO]   PID 2 (State: 0)
-[27]	INTERNAL	[INFO] Low Priority Queue:
-[27]	INTERNAL	[INFO] Sleeping Queue:
-[27]	INTERNAL	[INFO] Terminated Queue:
-[27]	INTERNAL	[INFO] ========================
 [27]	INTERNAL	[INFO] CURRENT: 9
 [27]	INTERNAL	[INFO] Running medium priority process
-[27]	SCHEDULE	2	1	orphanify
-[27]	INTERNAL	[INFO] === Current Queue State ===
-[27]	INTERNAL	[INFO] High Priority Queue:
-[27]	INTERNAL	[INFO]   PID 0 (State: 0)
-[27]	INTERNAL	[INFO]   PID 1 (State: 0)
-[27]	INTERNAL	[INFO] Medium Priority Queue:
-[27]	INTERNAL	[INFO]   PID 2 (State: 0)
-[27]	INTERNAL	[INFO] Low Priority Queue:
-[27]	INTERNAL	[INFO] Sleeping Queue:
-[27]	INTERNAL	[INFO] Terminated Queue:
-[27]	INTERNAL	[INFO] ========================
-[27]	INTERNAL	[INFO] s_spawn called with parent 2
-[27]	INTERNAL	[INFO] Adding PID 3 (priority 0) at address 0xffff74000be0
-[27]	INTERNAL	[INFO] === Current Queue State ===
-[27]	INTERNAL	[INFO] High Priority Queue:
-[27]	INTERNAL	[INFO]   PID 0 (State: 0)
-[27]	INTERNAL	[INFO]   PID 1 (State: 0)
-[27]	INTERNAL	[INFO] Medium Priority Queue:
-[27]	INTERNAL	[INFO]   PID 2 (State: 0)
-[27]	INTERNAL	[INFO] Low Priority Queue:
-[27]	INTERNAL	[INFO] Sleeping Queue:
-[27]	INTERNAL	[INFO] Terminated Queue:
-[27]	INTERNAL	[INFO] ========================
-[27]	INTERNAL	[INFO] Parent PID 2
-[27]	INTERNAL	[INFO] Spawning process 3
-[27]	INTERNAL	[INFO] === Current Queue State ===
-[27]	INTERNAL	[INFO] High Priority Queue:
-[27]	INTERNAL	[INFO]   PID 0 (State: 0)
-[27]	INTERNAL	[INFO]   PID 1 (State: 0)
-[27]	INTERNAL	[INFO] Medium Priority Queue:
-[27]	INTERNAL	[INFO]   PID 2 (State: 0)
-[27]	INTERNAL	[INFO] Low Priority Queue:
-[27]	INTERNAL	[INFO] Sleeping Queue:
-[27]	INTERNAL	[INFO] Terminated Queue:
-[27]	INTERNAL	[INFO] ========================
-[27]	INTERNAL	[INFO] AFTER CREATING
-[27]	INTERNAL	[INFO] Adding PID 3 (priority 1) at address 0xffff74000be0
-[27]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaaafa0b44b0)
-[27]	INTERNAL	[INFO]   After add - proc prev: 0xffff7c000c40, next: (nil)
-[27]	INTERNAL	[INFO] Creating process 3 (parent 2)
-[27]	CREATE	3	1	orphan_child
-[27]	INTERNAL	[INFO] child 3
-[27]	INTERNAL	[INFO] === Current Queue State ===
-[27]	INTERNAL	[INFO] High Priority Queue:
-[27]	INTERNAL	[INFO]   PID 0 (State: 0)
-[27]	INTERNAL	[INFO]   PID 1 (State: 0)
-[27]	INTERNAL	[INFO] Medium Priority Queue:
-[27]	INTERNAL	[INFO]   PID 2 (State: 0)
-[27]	INTERNAL	[INFO]   PID 3 (State: 0)
-[27]	INTERNAL	[INFO] Low Priority Queue:
-[27]	INTERNAL	[INFO] Sleeping Queue:
-[27]	INTERNAL	[INFO] Terminated Queue:
-[27]	INTERNAL	[INFO] ========================
-[27]	INTERNAL	[INFO] SCHEDULER: Set PID 2 state to ZOMBIED (MEDIUM PRIO)
-[27]	INTERNAL	[INFO] Process 2 terminated
-[27]	EXITED	2	1	orphanify
-[28]	INTERNAL	[INFO] === Current Queue State ===
-[28]	INTERNAL	[INFO] High Priority Queue:
-[28]	INTERNAL	[INFO]   PID 0 (State: 0)
-[28]	INTERNAL	[INFO]   PID 1 (State: 0)
-[28]	INTERNAL	[INFO] Medium Priority Queue:
-[28]	INTERNAL	[INFO]   PID 3 (State: 0)
-[28]	INTERNAL	[INFO] Low Priority Queue:
-[28]	INTERNAL	[INFO] Sleeping Queue:
-[28]	INTERNAL	[INFO] Terminated Queue:
-[28]	INTERNAL	[INFO] ========================
 [28]	INTERNAL	[INFO] CURRENT: 10
 [28]	INTERNAL	[INFO] Running medium priority process
-[28]	SCHEDULE	3	1	orphan_child
-[29]	INTERNAL	[INFO] === Current Queue State ===
-[29]	INTERNAL	[INFO] High Priority Queue:
-[29]	INTERNAL	[INFO]   PID 0 (State: 0)
-[29]	INTERNAL	[INFO]   PID 1 (State: 0)
-[29]	INTERNAL	[INFO] Medium Priority Queue:
-[29]	INTERNAL	[INFO]   PID 3 (State: 0)
-[29]	INTERNAL	[INFO] Low Priority Queue:
-[29]	INTERNAL	[INFO] Sleeping Queue:
-[29]	INTERNAL	[INFO] Terminated Queue:
-[29]	INTERNAL	[INFO] ========================
 [29]	INTERNAL	[INFO] CURRENT: 11
 [29]	INTERNAL	[INFO] Running medium priority process
-[29]	SCHEDULE	3	1	orphan_child
-[30]	INTERNAL	[INFO] === Current Queue State ===
-[30]	INTERNAL	[INFO] High Priority Queue:
-[30]	INTERNAL	[INFO]   PID 0 (State: 0)
-[30]	INTERNAL	[INFO]   PID 1 (State: 0)
-[30]	INTERNAL	[INFO] Medium Priority Queue:
-[30]	INTERNAL	[INFO]   PID 3 (State: 0)
-[30]	INTERNAL	[INFO] Low Priority Queue:
-[30]	INTERNAL	[INFO] Sleeping Queue:
-[30]	INTERNAL	[INFO] Terminated Queue:
-[30]	INTERNAL	[INFO] ========================
 [30]	INTERNAL	[INFO] CURRENT: 12
 [30]	INTERNAL	[INFO] Running medium priority process
-[30]	SCHEDULE	3	1	orphan_child
-[31]	INTERNAL	[INFO] === Current Queue State ===
-[31]	INTERNAL	[INFO] High Priority Queue:
-[31]	INTERNAL	[INFO]   PID 0 (State: 0)
-[31]	INTERNAL	[INFO]   PID 1 (State: 0)
-[31]	INTERNAL	[INFO] Medium Priority Queue:
-[31]	INTERNAL	[INFO]   PID 3 (State: 0)
-[31]	INTERNAL	[INFO] Low Priority Queue:
-[31]	INTERNAL	[INFO] Sleeping Queue:
-[31]	INTERNAL	[INFO] Terminated Queue:
-[31]	INTERNAL	[INFO] ========================
 [31]	INTERNAL	[INFO] CURRENT: 13
 [31]	INTERNAL	[INFO] Running medium priority process
-[31]	SCHEDULE	3	1	orphan_child
-[32]	INTERNAL	[INFO] === Current Queue State ===
-[32]	INTERNAL	[INFO] High Priority Queue:
-[32]	INTERNAL	[INFO]   PID 0 (State: 0)
-[32]	INTERNAL	[INFO]   PID 1 (State: 0)
-[32]	INTERNAL	[INFO] Medium Priority Queue:
-[32]	INTERNAL	[INFO]   PID 3 (State: 0)
-[32]	INTERNAL	[INFO] Low Priority Queue:
-[32]	INTERNAL	[INFO] Sleeping Queue:
-[32]	INTERNAL	[INFO] Terminated Queue:
-[32]	INTERNAL	[INFO] ========================
 [32]	INTERNAL	[INFO] CURRENT: 14
 [32]	INTERNAL	[INFO] Running medium priority process
-[32]	SCHEDULE	3	1	orphan_child
-[33]	INTERNAL	[INFO] === Current Queue State ===
-[33]	INTERNAL	[INFO] High Priority Queue:
-[33]	INTERNAL	[INFO]   PID 0 (State: 0)
-[33]	INTERNAL	[INFO]   PID 1 (State: 0)
-[33]	INTERNAL	[INFO] Medium Priority Queue:
-[33]	INTERNAL	[INFO]   PID 3 (State: 0)
-[33]	INTERNAL	[INFO] Low Priority Queue:
-[33]	INTERNAL	[INFO] Sleeping Queue:
-[33]	INTERNAL	[INFO] Terminated Queue:
-[33]	INTERNAL	[INFO] ========================
 [33]	INTERNAL	[INFO] CURRENT: 15
-[34]	INTERNAL	[INFO] === Current Queue State ===
-[34]	INTERNAL	[INFO] High Priority Queue:
-[34]	INTERNAL	[INFO]   PID 0 (State: 0)
-[34]	INTERNAL	[INFO]   PID 1 (State: 0)
-[34]	INTERNAL	[INFO] Medium Priority Queue:
-[34]	INTERNAL	[INFO]   PID 3 (State: 0)
-[34]	INTERNAL	[INFO] Low Priority Queue:
-[34]	INTERNAL	[INFO] Sleeping Queue:
-[34]	INTERNAL	[INFO] Terminated Queue:
-[34]	INTERNAL	[INFO] ========================
-[34]	INTERNAL	[INFO] CURRENT: 16
-[35]	INTERNAL	[INFO] === Current Queue State ===
-[35]	INTERNAL	[INFO] High Priority Queue:
-[35]	INTERNAL	[INFO]   PID 0 (State: 0)
-[35]	INTERNAL	[INFO]   PID 1 (State: 0)
-[35]	INTERNAL	[INFO] Medium Priority Queue:
-[35]	INTERNAL	[INFO]   PID 3 (State: 0)
-[35]	INTERNAL	[INFO] Low Priority Queue:
-[35]	INTERNAL	[INFO] Sleeping Queue:
-[35]	INTERNAL	[INFO] Terminated Queue:
-[35]	INTERNAL	[INFO] ========================
-[35]	INTERNAL	[INFO] CURRENT: 17
-[36]	INTERNAL	[INFO] === Current Queue State ===
-[36]	INTERNAL	[INFO] High Priority Queue:
-[36]	INTERNAL	[INFO]   PID 0 (State: 0)
-[36]	INTERNAL	[INFO]   PID 1 (State: 0)
-[36]	INTERNAL	[INFO] Medium Priority Queue:
-[36]	INTERNAL	[INFO]   PID 3 (State: 0)
-[36]	INTERNAL	[INFO] Low Priority Queue:
-[36]	INTERNAL	[INFO] Sleeping Queue:
-[36]	INTERNAL	[INFO] Terminated Queue:
-[36]	INTERNAL	[INFO] ========================
+[33]	INTERNAL	[INFO] No runnable processes, scheduler idling
 [36]	INTERNAL	[INFO] CURRENT: 0
 [36]	INTERNAL	[INFO] Running high priority process
 [36]	SCHEDULE	0	0	init
+[37]	INTERNAL	[INFO] CURRENT: 1
+[37]	INTERNAL	[INFO] Running high priority process
+[37]	SCHEDULE	1	0	shell
+[37]	INTERNAL	[INFO] Read command
+[37]	INTERNAL	[INFO] handling jobs
 [37]	INTERNAL	[INFO] === Current Queue State ===
 [37]	INTERNAL	[INFO] High Priority Queue:
 [37]	INTERNAL	[INFO]   PID 1 (State: 0)
 [37]	INTERNAL	[INFO]   PID 0 (State: 0)
 [37]	INTERNAL	[INFO] Medium Priority Queue:
-[37]	INTERNAL	[INFO]   PID 3 (State: 0)
 [37]	INTERNAL	[INFO] Low Priority Queue:
 [37]	INTERNAL	[INFO] Sleeping Queue:
 [37]	INTERNAL	[INFO] Terminated Queue:
 [37]	INTERNAL	[INFO] ========================
-[37]	INTERNAL	[INFO] CURRENT: 1
-[37]	INTERNAL	[INFO] Running high priority process
-[37]	SCHEDULE	1	0	shell
-[38]	INTERNAL	[INFO] === Current Queue State ===
-[38]	INTERNAL	[INFO] High Priority Queue:
-[38]	INTERNAL	[INFO]   PID 0 (State: 0)
-[38]	INTERNAL	[INFO]   PID 1 (State: 0)
-[38]	INTERNAL	[INFO] Medium Priority Queue:
-[38]	INTERNAL	[INFO]   PID 3 (State: 0)
-[38]	INTERNAL	[INFO] Low Priority Queue:
-[38]	INTERNAL	[INFO] Sleeping Queue:
-[38]	INTERNAL	[INFO] Terminated Queue:
-[38]	INTERNAL	[INFO] ========================
+[37]	INTERNAL	[INFO] s_spawn called with parent 1
+[37]	INTERNAL	[INFO] Adding PID 2 (priority 0) at address 0xffff80000c40
+[37]	INTERNAL	[INFO] === Current Queue State ===
+[37]	INTERNAL	[INFO] High Priority Queue:
+[37]	INTERNAL	[INFO]   PID 1 (State: 0)
+[37]	INTERNAL	[INFO]   PID 0 (State: 0)
+[37]	INTERNAL	[INFO] Medium Priority Queue:
+[37]	INTERNAL	[INFO] Low Priority Queue:
+[37]	INTERNAL	[INFO] Sleeping Queue:
+[37]	INTERNAL	[INFO] Terminated Queue:
+[37]	INTERNAL	[INFO] ========================
+[37]	INTERNAL	[INFO] Parent PID 1
+[37]	INTERNAL	[INFO] Spawning process 2
+[37]	INTERNAL	[INFO] === Current Queue State ===
+[37]	INTERNAL	[INFO] High Priority Queue:
+[37]	INTERNAL	[INFO]   PID 1 (State: 0)
+[37]	INTERNAL	[INFO]   PID 0 (State: 0)
+[37]	INTERNAL	[INFO] Medium Priority Queue:
+[37]	INTERNAL	[INFO] Low Priority Queue:
+[37]	INTERNAL	[INFO] Sleeping Queue:
+[37]	INTERNAL	[INFO] Terminated Queue:
+[37]	INTERNAL	[INFO] ========================
+[37]	INTERNAL	[INFO] AFTER CREATING
+[37]	INTERNAL	[INFO] Adding PID 2 (priority 1) at address 0xffff80000c40
+[37]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaab18c244b0)
+[37]	INTERNAL	[INFO]   After add - proc prev: (nil), next: (nil)
+[37]	INTERNAL	[INFO] Creating process 2 (parent 1)
+[37]	CREATE	2	1	zombify
+[37]	INTERNAL	[INFO] child 2
+[37]	INTERNAL	[INFO] === Current Queue State ===
+[37]	INTERNAL	[INFO] High Priority Queue:
+[37]	INTERNAL	[INFO]   PID 1 (State: 0)
+[37]	INTERNAL	[INFO]   PID 0 (State: 0)
+[37]	INTERNAL	[INFO] Medium Priority Queue:
+[37]	INTERNAL	[INFO]   PID 2 (State: 0)
+[37]	INTERNAL	[INFO] Low Priority Queue:
+[37]	INTERNAL	[INFO] Sleeping Queue:
+[37]	INTERNAL	[INFO] Terminated Queue:
+[37]	INTERNAL	[INFO] ========================
+[37]	INTERNAL	[INFO] Shell loop entered
+[37]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
+[37]	INTERNAL	[INFO] === Current Process State ===
+[37]	INTERNAL	[INFO] Current process: 1 (State: 0)
+[37]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[37]	INTERNAL	[INFO] === Current Process State ===
+[37]	INTERNAL	[INFO]   PID 0 (State: 0)
+[37]	INTERNAL	[INFO]   PID 1 (State: 0)
+[37]	INTERNAL	[INFO]   PID 2 (State: 0)
+[37]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
+[37]	INTERNAL	[INFO] curr 1
+[37]	INTERNAL	[INFO] Found running process 2
 [38]	INTERNAL	[INFO] CURRENT: 2
 [38]	INTERNAL	[INFO] Running high priority process
 [38]	SCHEDULE	0	0	init
-[39]	INTERNAL	[INFO] === Current Queue State ===
-[39]	INTERNAL	[INFO] High Priority Queue:
-[39]	INTERNAL	[INFO]   PID 1 (State: 0)
-[39]	INTERNAL	[INFO]   PID 0 (State: 0)
-[39]	INTERNAL	[INFO] Medium Priority Queue:
-[39]	INTERNAL	[INFO]   PID 3 (State: 0)
-[39]	INTERNAL	[INFO] Low Priority Queue:
-[39]	INTERNAL	[INFO] Sleeping Queue:
-[39]	INTERNAL	[INFO] Terminated Queue:
-[39]	INTERNAL	[INFO] ========================
 [39]	INTERNAL	[INFO] CURRENT: 3
 [39]	INTERNAL	[INFO] Running high priority process
 [39]	SCHEDULE	1	0	shell
-[40]	INTERNAL	[INFO] === Current Queue State ===
-[40]	INTERNAL	[INFO] High Priority Queue:
-[40]	INTERNAL	[INFO]   PID 0 (State: 0)
-[40]	INTERNAL	[INFO]   PID 1 (State: 0)
-[40]	INTERNAL	[INFO] Medium Priority Queue:
-[40]	INTERNAL	[INFO]   PID 3 (State: 0)
-[40]	INTERNAL	[INFO] Low Priority Queue:
-[40]	INTERNAL	[INFO] Sleeping Queue:
-[40]	INTERNAL	[INFO] Terminated Queue:
-[40]	INTERNAL	[INFO] ========================
 [40]	INTERNAL	[INFO] CURRENT: 4
 [40]	INTERNAL	[INFO] Running high priority process
 [40]	SCHEDULE	0	0	init
-[41]	INTERNAL	[INFO] === Current Queue State ===
-[41]	INTERNAL	[INFO] High Priority Queue:
-[41]	INTERNAL	[INFO]   PID 1 (State: 0)
-[41]	INTERNAL	[INFO]   PID 0 (State: 0)
-[41]	INTERNAL	[INFO] Medium Priority Queue:
-[41]	INTERNAL	[INFO]   PID 3 (State: 0)
-[41]	INTERNAL	[INFO] Low Priority Queue:
-[41]	INTERNAL	[INFO] Sleeping Queue:
-[41]	INTERNAL	[INFO] Terminated Queue:
-[41]	INTERNAL	[INFO] ========================
 [41]	INTERNAL	[INFO] CURRENT: 5
 [41]	INTERNAL	[INFO] Running high priority process
 [41]	SCHEDULE	1	0	shell
@@ -682,135 +224,138 @@
 [41]	INTERNAL	[INFO]   PID 1 (State: 0)
 [41]	INTERNAL	[INFO]   PID 0 (State: 0)
 [41]	INTERNAL	[INFO] Medium Priority Queue:
-[41]	INTERNAL	[INFO]   PID 3 (State: 0)
+[41]	INTERNAL	[INFO]   PID 2 (State: 0)
 [41]	INTERNAL	[INFO] Low Priority Queue:
 [41]	INTERNAL	[INFO] Sleeping Queue:
 [41]	INTERNAL	[INFO] Terminated Queue:
 [41]	INTERNAL	[INFO] ========================
 [41]	INTERNAL	[INFO] s_spawn called with parent 1
-[41]	INTERNAL	[INFO] Adding PID 4 (priority 0) at address 0xffff7c000dd0
+[41]	INTERNAL	[INFO] Adding PID 3 (priority 0) at address 0xffff80000dd0
 [41]	INTERNAL	[INFO] === Current Queue State ===
 [41]	INTERNAL	[INFO] High Priority Queue:
 [41]	INTERNAL	[INFO]   PID 1 (State: 0)
 [41]	INTERNAL	[INFO]   PID 0 (State: 0)
 [41]	INTERNAL	[INFO] Medium Priority Queue:
-[41]	INTERNAL	[INFO]   PID 3 (State: 0)
+[41]	INTERNAL	[INFO]   PID 2 (State: 0)
 [41]	INTERNAL	[INFO] Low Priority Queue:
 [41]	INTERNAL	[INFO] Sleeping Queue:
 [41]	INTERNAL	[INFO] Terminated Queue:
 [41]	INTERNAL	[INFO] ========================
 [41]	INTERNAL	[INFO] Parent PID 1
-[41]	INTERNAL	[INFO] Spawning process 4
+[41]	INTERNAL	[INFO] Spawning process 3
 [41]	INTERNAL	[INFO] === Current Queue State ===
 [41]	INTERNAL	[INFO] High Priority Queue:
 [41]	INTERNAL	[INFO]   PID 1 (State: 0)
 [41]	INTERNAL	[INFO]   PID 0 (State: 0)
 [41]	INTERNAL	[INFO] Medium Priority Queue:
-[41]	INTERNAL	[INFO]   PID 3 (State: 0)
+[41]	INTERNAL	[INFO]   PID 2 (State: 0)
 [41]	INTERNAL	[INFO] Low Priority Queue:
 [41]	INTERNAL	[INFO] Sleeping Queue:
 [41]	INTERNAL	[INFO] Terminated Queue:
 [41]	INTERNAL	[INFO] ========================
 [41]	INTERNAL	[INFO] AFTER CREATING
-[41]	INTERNAL	[INFO] Adding PID 4 (priority 1) at address 0xffff7c000dd0
-[41]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaaafa0b44b0)
-[41]	INTERNAL	[INFO]   After add - proc prev: 0xffff74000be0, next: (nil)
-[41]	INTERNAL	[INFO] Creating process 4 (parent 1)
-[41]	CREATE	4	1	ps
+[41]	INTERNAL	[INFO] Adding PID 3 (priority 1) at address 0xffff80000dd0
+[41]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaab18c244b0)
+[41]	INTERNAL	[INFO]   After add - proc prev: 0xffff80000c40, next: (nil)
+[41]	INTERNAL	[INFO] Creating process 3 (parent 1)
+[41]	CREATE	3	1	ps
 [41]	INTERNAL	[INFO] child 2
 [41]	INTERNAL	[INFO] === Current Queue State ===
 [41]	INTERNAL	[INFO] High Priority Queue:
 [41]	INTERNAL	[INFO]   PID 1 (State: 0)
 [41]	INTERNAL	[INFO]   PID 0 (State: 0)
 [41]	INTERNAL	[INFO] Medium Priority Queue:
+[41]	INTERNAL	[INFO]   PID 2 (State: 0)
 [41]	INTERNAL	[INFO]   PID 3 (State: 0)
-[41]	INTERNAL	[INFO]   PID 4 (State: 0)
 [41]	INTERNAL	[INFO] Low Priority Queue:
 [41]	INTERNAL	[INFO] Sleeping Queue:
 [41]	INTERNAL	[INFO] Terminated Queue:
 [41]	INTERNAL	[INFO] ========================
 [41]	INTERNAL	[INFO] Waiting for foreground job 2
-[41]	INTERNAL	[INFO] s_waitpid called with pid 4, nohang 0
+[41]	INTERNAL	[INFO] s_waitpid called with pid 3, nohang 0
 [41]	INTERNAL	[INFO] === Current Process State ===
 [41]	INTERNAL	[INFO] Current process: 1 (State: 0)
 [41]	INTERNAL	[INFO] Parent process: 0 (State: 0)
 [41]	INTERNAL	[INFO] === Current Process State ===
 [41]	INTERNAL	[INFO]   PID 0 (State: 0)
 [41]	INTERNAL	[INFO]   PID 1 (State: 0)
-[41]	INTERNAL	[INFO]   PID 2 (State: 3)
+[41]	INTERNAL	[INFO]   PID 2 (State: 0)
 [41]	INTERNAL	[INFO]   PID 3 (State: 0)
-[41]	INTERNAL	[INFO]   PID 4 (State: 0)
-[41]	INTERNAL	[INFO] Found running process 4
-[42]	INTERNAL	[INFO] === Current Queue State ===
-[42]	INTERNAL	[INFO] High Priority Queue:
-[42]	INTERNAL	[INFO]   PID 0 (State: 0)
-[42]	INTERNAL	[INFO]   PID 1 (State: 0)
-[42]	INTERNAL	[INFO] Medium Priority Queue:
-[42]	INTERNAL	[INFO]   PID 3 (State: 0)
-[42]	INTERNAL	[INFO]   PID 4 (State: 0)
-[42]	INTERNAL	[INFO] Low Priority Queue:
-[42]	INTERNAL	[INFO] Sleeping Queue:
-[42]	INTERNAL	[INFO] Terminated Queue:
-[42]	INTERNAL	[INFO] ========================
+[41]	INTERNAL	[INFO] s_waitpid called with pid 3, nohang 0
+[41]	INTERNAL	[INFO] curr 1
+[41]	INTERNAL	[INFO] Found running process 3
 [42]	INTERNAL	[INFO] CURRENT: 6
 [42]	INTERNAL	[INFO] Running high priority process
 [42]	SCHEDULE	0	0	init
-[43]	INTERNAL	[INFO] === Current Queue State ===
-[43]	INTERNAL	[INFO] High Priority Queue:
-[43]	INTERNAL	[INFO]   PID 1 (State: 0)
-[43]	INTERNAL	[INFO]   PID 0 (State: 0)
-[43]	INTERNAL	[INFO] Medium Priority Queue:
-[43]	INTERNAL	[INFO]   PID 3 (State: 0)
-[43]	INTERNAL	[INFO]   PID 4 (State: 0)
-[43]	INTERNAL	[INFO] Low Priority Queue:
-[43]	INTERNAL	[INFO] Sleeping Queue:
-[43]	INTERNAL	[INFO] Terminated Queue:
-[43]	INTERNAL	[INFO] ========================
 [43]	INTERNAL	[INFO] CURRENT: 7
 [43]	INTERNAL	[INFO] Running high priority process
 [43]	SCHEDULE	1	0	shell
-[44]	INTERNAL	[INFO] === Current Queue State ===
-[44]	INTERNAL	[INFO] High Priority Queue:
-[44]	INTERNAL	[INFO]   PID 0 (State: 0)
-[44]	INTERNAL	[INFO]   PID 1 (State: 0)
-[44]	INTERNAL	[INFO] Medium Priority Queue:
-[44]	INTERNAL	[INFO]   PID 3 (State: 0)
-[44]	INTERNAL	[INFO]   PID 4 (State: 0)
-[44]	INTERNAL	[INFO] Low Priority Queue:
-[44]	INTERNAL	[INFO] Sleeping Queue:
-[44]	INTERNAL	[INFO] Terminated Queue:
-[44]	INTERNAL	[INFO] ========================
 [44]	INTERNAL	[INFO] CURRENT: 8
 [44]	INTERNAL	[INFO] Running high priority process
 [44]	SCHEDULE	0	0	init
+[45]	INTERNAL	[INFO] CURRENT: 9
+[45]	INTERNAL	[INFO] Running medium priority process
+[45]	SCHEDULE	2	1	zombify
 [45]	INTERNAL	[INFO] === Current Queue State ===
 [45]	INTERNAL	[INFO] High Priority Queue:
 [45]	INTERNAL	[INFO]   PID 1 (State: 0)
 [45]	INTERNAL	[INFO]   PID 0 (State: 0)
 [45]	INTERNAL	[INFO] Medium Priority Queue:
+[45]	INTERNAL	[INFO]   PID 2 (State: 0)
+[45]	INTERNAL	[INFO]   PID 3 (State: 0)
+[45]	INTERNAL	[INFO] Low Priority Queue:
+[45]	INTERNAL	[INFO] Sleeping Queue:
+[45]	INTERNAL	[INFO] Terminated Queue:
+[45]	INTERNAL	[INFO] ========================
+[45]	INTERNAL	[INFO] s_spawn called with parent 2
+[45]	INTERNAL	[INFO] Adding PID 4 (priority 0) at address 0xffff78000be0
+[45]	INTERNAL	[INFO] === Current Queue State ===
+[45]	INTERNAL	[INFO] High Priority Queue:
+[45]	INTERNAL	[INFO]   PID 1 (State: 0)
+[45]	INTERNAL	[INFO]   PID 0 (State: 0)
+[45]	INTERNAL	[INFO] Medium Priority Queue:
+[45]	INTERNAL	[INFO]   PID 2 (State: 0)
+[45]	INTERNAL	[INFO]   PID 3 (State: 0)
+[45]	INTERNAL	[INFO] Low Priority Queue:
+[45]	INTERNAL	[INFO] Sleeping Queue:
+[45]	INTERNAL	[INFO] Terminated Queue:
+[45]	INTERNAL	[INFO] ========================
+[45]	INTERNAL	[INFO] Parent PID 2
+[45]	INTERNAL	[INFO] Spawning process 4
+[45]	INTERNAL	[INFO] === Current Queue State ===
+[45]	INTERNAL	[INFO] High Priority Queue:
+[45]	INTERNAL	[INFO]   PID 1 (State: 0)
+[45]	INTERNAL	[INFO]   PID 0 (State: 0)
+[45]	INTERNAL	[INFO] Medium Priority Queue:
+[45]	INTERNAL	[INFO]   PID 2 (State: 0)
+[45]	INTERNAL	[INFO]   PID 3 (State: 0)
+[45]	INTERNAL	[INFO] Low Priority Queue:
+[45]	INTERNAL	[INFO] Sleeping Queue:
+[45]	INTERNAL	[INFO] Terminated Queue:
+[45]	INTERNAL	[INFO] ========================
+[45]	INTERNAL	[INFO] AFTER CREATING
+[45]	INTERNAL	[INFO] Adding PID 4 (priority 1) at address 0xffff78000be0
+[45]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaab18c244b0)
+[45]	INTERNAL	[INFO]   After add - proc prev: 0xffff80000dd0, next: (nil)
+[45]	INTERNAL	[INFO] Creating process 4 (parent 2)
+[45]	CREATE	4	1	zombie_child
+[45]	INTERNAL	[INFO] child 4
+[45]	INTERNAL	[INFO] === Current Queue State ===
+[45]	INTERNAL	[INFO] High Priority Queue:
+[45]	INTERNAL	[INFO]   PID 1 (State: 0)
+[45]	INTERNAL	[INFO]   PID 0 (State: 0)
+[45]	INTERNAL	[INFO] Medium Priority Queue:
+[45]	INTERNAL	[INFO]   PID 2 (State: 0)
 [45]	INTERNAL	[INFO]   PID 3 (State: 0)
 [45]	INTERNAL	[INFO]   PID 4 (State: 0)
 [45]	INTERNAL	[INFO] Low Priority Queue:
 [45]	INTERNAL	[INFO] Sleeping Queue:
 [45]	INTERNAL	[INFO] Terminated Queue:
 [45]	INTERNAL	[INFO] ========================
-[45]	INTERNAL	[INFO] CURRENT: 9
-[45]	INTERNAL	[INFO] Running medium priority process
-[45]	SCHEDULE	3	1	orphan_child
-[46]	INTERNAL	[INFO] === Current Queue State ===
-[46]	INTERNAL	[INFO] High Priority Queue:
-[46]	INTERNAL	[INFO]   PID 1 (State: 0)
-[46]	INTERNAL	[INFO]   PID 0 (State: 0)
-[46]	INTERNAL	[INFO] Medium Priority Queue:
-[46]	INTERNAL	[INFO]   PID 4 (State: 0)
-[46]	INTERNAL	[INFO]   PID 3 (State: 0)
-[46]	INTERNAL	[INFO] Low Priority Queue:
-[46]	INTERNAL	[INFO] Sleeping Queue:
-[46]	INTERNAL	[INFO] Terminated Queue:
-[46]	INTERNAL	[INFO] ========================
+[45]	INTERNAL	[INFO] Spawned child process with PID 4
 [46]	INTERNAL	[INFO] CURRENT: 10
 [46]	INTERNAL	[INFO] Running medium priority process
-[46]	SCHEDULE	4	1	ps
+[46]	SCHEDULE	3	1	ps
 [46]	INTERNAL	[INFO] ps command executed
 [46]	INTERNAL	[INFO] PID PPID PRI STAT CMD
 
@@ -818,114 +363,38 @@
 [46]	INTERNAL	[INFO] Process info - PID: 0, PPID: 0, STATE: 0, COMMAND: init
 [46]	INTERNAL	[INFO] Found process PID 1, STATE 0
 [46]	INTERNAL	[INFO] Process info - PID: 1, PPID: 0, STATE: 0, COMMAND: shell
-[46]	INTERNAL	[INFO] Found process PID 2, STATE 3
-[46]	INTERNAL	[INFO] Process info - PID: 2, PPID: 1, STATE: 3, COMMAND: orphanify
+[46]	INTERNAL	[INFO] Found process PID 2, STATE 0
+[46]	INTERNAL	[INFO] Process info - PID: 2, PPID: 1, STATE: 0, COMMAND: zombify
 [46]	INTERNAL	[INFO] Found process PID 3, STATE 0
-[46]	INTERNAL	[INFO] Process info - PID: 3, PPID: 1, STATE: 0, COMMAND: orphan_child
+[46]	INTERNAL	[INFO] Process info - PID: 3, PPID: 1, STATE: 0, COMMAND: ps
 [46]	INTERNAL	[INFO] Found process PID 4, STATE 0
-[46]	INTERNAL	[INFO] Process info - PID: 4, PPID: 1, STATE: 0, COMMAND: ps
-[46]	INTERNAL	[INFO] SCHEDULER: Set PID 4 state to ZOMBIED (MEDIUM PRIO)
-[46]	INTERNAL	[INFO] Process 4 terminated
-[46]	EXITED	4	1	ps
-[47]	INTERNAL	[INFO] === Current Queue State ===
-[47]	INTERNAL	[INFO] High Priority Queue:
-[47]	INTERNAL	[INFO]   PID 1 (State: 0)
-[47]	INTERNAL	[INFO]   PID 0 (State: 0)
-[47]	INTERNAL	[INFO] Medium Priority Queue:
-[47]	INTERNAL	[INFO]   PID 3 (State: 0)
-[47]	INTERNAL	[INFO] Low Priority Queue:
-[47]	INTERNAL	[INFO] Sleeping Queue:
-[47]	INTERNAL	[INFO] Terminated Queue:
-[47]	INTERNAL	[INFO] ========================
+[46]	INTERNAL	[INFO] Process info - PID: 4, PPID: 2, STATE: 0, COMMAND: zombie_child
+[46]	INTERNAL	[INFO] SCHEDULER: Set PID 3 state to ZOMBIED (MEDIUM PRIO)
+[46]	INTERNAL	[INFO] Process 3 terminated
+[46]	EXITED	3	1	ps
 [47]	INTERNAL	[INFO] CURRENT: 11
 [47]	INTERNAL	[INFO] Running medium priority process
-[47]	SCHEDULE	3	1	orphan_child
-[48]	INTERNAL	[INFO] === Current Queue State ===
-[48]	INTERNAL	[INFO] High Priority Queue:
-[48]	INTERNAL	[INFO]   PID 1 (State: 0)
-[48]	INTERNAL	[INFO]   PID 0 (State: 0)
-[48]	INTERNAL	[INFO] Medium Priority Queue:
-[48]	INTERNAL	[INFO]   PID 3 (State: 0)
-[48]	INTERNAL	[INFO] Low Priority Queue:
-[48]	INTERNAL	[INFO] Sleeping Queue:
-[48]	INTERNAL	[INFO] Terminated Queue:
-[48]	INTERNAL	[INFO] ========================
+[47]	SCHEDULE	4	1	zombie_child
+[47]	INTERNAL	[INFO] Child process running, will exit soon
+[47]	INTERNAL	[INFO] SCHEDULER: Set PID 4 state to ZOMBIED (MEDIUM PRIO)
+[47]	INTERNAL	[INFO] Process 4 terminated
+[47]	EXITED	4	1	zombie_child
 [48]	INTERNAL	[INFO] CURRENT: 12
 [48]	INTERNAL	[INFO] Running medium priority process
-[48]	SCHEDULE	3	1	orphan_child
-[49]	INTERNAL	[INFO] === Current Queue State ===
-[49]	INTERNAL	[INFO] High Priority Queue:
-[49]	INTERNAL	[INFO]   PID 1 (State: 0)
-[49]	INTERNAL	[INFO]   PID 0 (State: 0)
-[49]	INTERNAL	[INFO] Medium Priority Queue:
-[49]	INTERNAL	[INFO]   PID 3 (State: 0)
-[49]	INTERNAL	[INFO] Low Priority Queue:
-[49]	INTERNAL	[INFO] Sleeping Queue:
-[49]	INTERNAL	[INFO] Terminated Queue:
-[49]	INTERNAL	[INFO] ========================
+[48]	SCHEDULE	2	1	zombify
 [49]	INTERNAL	[INFO] CURRENT: 13
 [49]	INTERNAL	[INFO] Running medium priority process
-[49]	SCHEDULE	3	1	orphan_child
-[50]	INTERNAL	[INFO] === Current Queue State ===
-[50]	INTERNAL	[INFO] High Priority Queue:
-[50]	INTERNAL	[INFO]   PID 1 (State: 0)
-[50]	INTERNAL	[INFO]   PID 0 (State: 0)
-[50]	INTERNAL	[INFO] Medium Priority Queue:
-[50]	INTERNAL	[INFO]   PID 3 (State: 0)
-[50]	INTERNAL	[INFO] Low Priority Queue:
-[50]	INTERNAL	[INFO] Sleeping Queue:
-[50]	INTERNAL	[INFO] Terminated Queue:
-[50]	INTERNAL	[INFO] ========================
+[49]	SCHEDULE	2	1	zombify
 [50]	INTERNAL	[INFO] CURRENT: 14
 [50]	INTERNAL	[INFO] Running medium priority process
-[50]	SCHEDULE	3	1	orphan_child
-[51]	INTERNAL	[INFO] === Current Queue State ===
-[51]	INTERNAL	[INFO] High Priority Queue:
-[51]	INTERNAL	[INFO]   PID 1 (State: 0)
-[51]	INTERNAL	[INFO]   PID 0 (State: 0)
-[51]	INTERNAL	[INFO] Medium Priority Queue:
-[51]	INTERNAL	[INFO]   PID 3 (State: 0)
-[51]	INTERNAL	[INFO] Low Priority Queue:
-[51]	INTERNAL	[INFO] Sleeping Queue:
-[51]	INTERNAL	[INFO] Terminated Queue:
-[51]	INTERNAL	[INFO] ========================
+[50]	SCHEDULE	2	1	zombify
 [51]	INTERNAL	[INFO] CURRENT: 15
-[52]	INTERNAL	[INFO] === Current Queue State ===
-[52]	INTERNAL	[INFO] High Priority Queue:
-[52]	INTERNAL	[INFO]   PID 1 (State: 0)
-[52]	INTERNAL	[INFO]   PID 0 (State: 0)
-[52]	INTERNAL	[INFO] Medium Priority Queue:
-[52]	INTERNAL	[INFO]   PID 3 (State: 0)
-[52]	INTERNAL	[INFO] Low Priority Queue:
-[52]	INTERNAL	[INFO] Sleeping Queue:
-[52]	INTERNAL	[INFO] Terminated Queue:
-[52]	INTERNAL	[INFO] ========================
 [52]	INTERNAL	[INFO] CURRENT: 16
-[53]	INTERNAL	[INFO] === Current Queue State ===
-[53]	INTERNAL	[INFO] High Priority Queue:
-[53]	INTERNAL	[INFO]   PID 1 (State: 0)
-[53]	INTERNAL	[INFO]   PID 0 (State: 0)
-[53]	INTERNAL	[INFO] Medium Priority Queue:
-[53]	INTERNAL	[INFO]   PID 3 (State: 0)
-[53]	INTERNAL	[INFO] Low Priority Queue:
-[53]	INTERNAL	[INFO] Sleeping Queue:
-[53]	INTERNAL	[INFO] Terminated Queue:
-[53]	INTERNAL	[INFO] ========================
 [53]	INTERNAL	[INFO] CURRENT: 17
-[54]	INTERNAL	[INFO] === Current Queue State ===
-[54]	INTERNAL	[INFO] High Priority Queue:
-[54]	INTERNAL	[INFO]   PID 1 (State: 0)
-[54]	INTERNAL	[INFO]   PID 0 (State: 0)
-[54]	INTERNAL	[INFO] Medium Priority Queue:
-[54]	INTERNAL	[INFO]   PID 3 (State: 0)
-[54]	INTERNAL	[INFO] Low Priority Queue:
-[54]	INTERNAL	[INFO] Sleeping Queue:
-[54]	INTERNAL	[INFO] Terminated Queue:
-[54]	INTERNAL	[INFO] ========================
 [54]	INTERNAL	[INFO] CURRENT: 0
 [54]	INTERNAL	[INFO] Running high priority process
 [54]	SCHEDULE	1	0	shell
-[54]	WAITED	4	1	ps
+[54]	WAITED	3	1	ps
 [54]	INTERNAL	[INFO] execute_job returned
 [54]	INTERNAL	[INFO] Shell loop entered
 [54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
@@ -935,259 +404,246 @@
 [54]	INTERNAL	[INFO] === Current Process State ===
 [54]	INTERNAL	[INFO]   PID 0 (State: 0)
 [54]	INTERNAL	[INFO]   PID 1 (State: 0)
-[54]	INTERNAL	[INFO]   PID 2 (State: 3)
-[54]	INTERNAL	[INFO]   PID 3 (State: 0)
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
+[54]	INTERNAL	[INFO]   PID 2 (State: 0)
+[54]	INTERNAL	[INFO]   PID 4 (State: 3)
 [54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO]   PID 0 (State: 0)
-[54]	INTERNAL	[INFO]   PID 1 (State: 0)
-[54]	INTERNAL	[INFO]   PID 3 (State: 0)
+[54]	INTERNAL	[INFO] curr 1
 [54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Found running process 2
-[54]	WAITED	2	1	orphanify
-[54]	INTERNAL	[INFO] Removing job with PID 2
-[54]	INTERNAL	[INFO] No job found for PID 2 - may have been already removed
-[54]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
-[54]	INTERNAL	[INFO] === Current Process State ===
-[54]	INTERNAL	[INFO] Current process: 1 (State: 0)
-[54]	INTERNAL	[INFO] Parent process: 0 (State: 0)
-[54]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO] CURRENT: 1
+[55]	INTERNAL	[INFO] Running high priority process
+[55]	SCHEDULE	0	0	init
+[55]	INTERNAL	[INFO] INITIALIZE
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[55]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO]   PID 0 (State: 0)
+[55]	INTERNAL	[INFO]   PID 1 (State: 0)
+[55]	INTERNAL	[INFO]   PID 2 (State: 0)
+[55]	INTERNAL	[INFO]   PID 4 (State: 3)
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[55]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO]   PID 0 (State: 0)
+[55]	INTERNAL	[INFO]   PID 1 (State: 0)
+[55]	INTERNAL	[INFO]   PID 2 (State: 0)
+[55]	INTERNAL	[INFO]   PID 4 (State: 3)
+[55]	INTERNAL	[INFO] freeing proc 3
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[55]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO]   PID 0 (State: 0)
+[55]	INTERNAL	[INFO]   PID 1 (State: 0)
+[55]	INTERNAL	[INFO]   PID 2 (State: 0)
+[55]	INTERNAL	[INFO]   PID 4 (State: 3)
+[55]	INTERNAL	[INFO] freeing children
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[55]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[55]	INTERNAL	[INFO] === Current Process State ===
+[55]	INTERNAL	[INFO]   PID 0 (State: 0)
+[55]	INTERNAL	[INFO]   PID 1 (State: 0)
+[55]	INTERNAL	[INFO]   PID 2 (State: 0)
+[55]	INTERNAL	[INFO]   PID 4 (State: 3)
+[56]	INTERNAL	[INFO] CURRENT: 2
+[56]	INTERNAL	[INFO] Running high priority process
+[56]	SCHEDULE	1	0	shell
+[57]	INTERNAL	[INFO] CURRENT: 3
+[57]	INTERNAL	[INFO] Running high priority process
+[57]	SCHEDULE	0	0	init
+[58]	INTERNAL	[INFO] CURRENT: 4
+[58]	INTERNAL	[INFO] Running high priority process
+[58]	SCHEDULE	1	0	shell
+[58]	INTERNAL	[INFO] Read command
+[58]	INTERNAL	[INFO] handling jobs
+[58]	INTERNAL	[INFO] === Current Queue State ===
+[58]	INTERNAL	[INFO] High Priority Queue:
+[58]	INTERNAL	[INFO]   PID 1 (State: 0)
+[58]	INTERNAL	[INFO]   PID 0 (State: 0)
+[58]	INTERNAL	[INFO] Medium Priority Queue:
+[58]	INTERNAL	[INFO]   PID 2 (State: 0)
+[58]	INTERNAL	[INFO] Low Priority Queue:
+[58]	INTERNAL	[INFO] Sleeping Queue:
+[58]	INTERNAL	[INFO] Terminated Queue:
+[58]	INTERNAL	[INFO] ========================
+[58]	INTERNAL	[INFO] s_spawn called with parent 1
+[58]	INTERNAL	[INFO] Adding PID 5 (priority 0) at address 0xffff800011a0
+[58]	INTERNAL	[INFO] === Current Queue State ===
+[58]	INTERNAL	[INFO] High Priority Queue:
+[58]	INTERNAL	[INFO]   PID 1 (State: 0)
+[58]	INTERNAL	[INFO]   PID 0 (State: 0)
+[58]	INTERNAL	[INFO] Medium Priority Queue:
+[58]	INTERNAL	[INFO]   PID 2 (State: 0)
+[58]	INTERNAL	[INFO] Low Priority Queue:
+[58]	INTERNAL	[INFO] Sleeping Queue:
+[58]	INTERNAL	[INFO] Terminated Queue:
+[58]	INTERNAL	[INFO] ========================
+[58]	INTERNAL	[INFO] Parent PID 1
+[58]	INTERNAL	[INFO] Spawning process 5
+[58]	INTERNAL	[INFO] === Current Queue State ===
+[58]	INTERNAL	[INFO] High Priority Queue:
+[58]	INTERNAL	[INFO]   PID 1 (State: 0)
+[58]	INTERNAL	[INFO]   PID 0 (State: 0)
+[58]	INTERNAL	[INFO] Medium Priority Queue:
+[58]	INTERNAL	[INFO]   PID 2 (State: 0)
+[58]	INTERNAL	[INFO] Low Priority Queue:
+[58]	INTERNAL	[INFO] Sleeping Queue:
+[58]	INTERNAL	[INFO] Terminated Queue:
+[58]	INTERNAL	[INFO] ========================
+[58]	INTERNAL	[INFO] AFTER CREATING
+[58]	INTERNAL	[INFO] Adding PID 5 (priority 1) at address 0xffff800011a0
+[58]	INTERNAL	[INFO]   Target queue: MEDIUM (list addr: 0xaaab18c244b0)
+[58]	INTERNAL	[INFO]   After add - proc prev: 0xffff80000c40, next: (nil)
+[58]	INTERNAL	[INFO] Creating process 5 (parent 1)
+[58]	CREATE	5	1	ps
+[58]	INTERNAL	[INFO] child 2
+[58]	INTERNAL	[INFO] === Current Queue State ===
+[58]	INTERNAL	[INFO] High Priority Queue:
+[58]	INTERNAL	[INFO]   PID 1 (State: 0)
+[58]	INTERNAL	[INFO]   PID 0 (State: 0)
+[58]	INTERNAL	[INFO] Medium Priority Queue:
+[58]	INTERNAL	[INFO]   PID 2 (State: 0)
+[58]	INTERNAL	[INFO]   PID 5 (State: 0)
+[58]	INTERNAL	[INFO] Low Priority Queue:
+[58]	INTERNAL	[INFO] Sleeping Queue:
+[58]	INTERNAL	[INFO] Terminated Queue:
+[58]	INTERNAL	[INFO] ========================
+[58]	INTERNAL	[INFO] Waiting for foreground job 3
+[58]	INTERNAL	[INFO] s_waitpid called with pid 5, nohang 0
+[58]	INTERNAL	[INFO] === Current Process State ===
+[58]	INTERNAL	[INFO] Current process: 1 (State: 0)
+[58]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[58]	INTERNAL	[INFO] === Current Process State ===
+[58]	INTERNAL	[INFO]   PID 0 (State: 0)
+[58]	INTERNAL	[INFO]   PID 1 (State: 0)
+[58]	INTERNAL	[INFO]   PID 2 (State: 0)
+[58]	INTERNAL	[INFO]   PID 4 (State: 3)
+[58]	INTERNAL	[INFO]   PID 5 (State: 0)
+[58]	INTERNAL	[INFO] s_waitpid called with pid 5, nohang 0
+[58]	INTERNAL	[INFO] curr 1
+[58]	INTERNAL	[INFO] Found running process 5
+[59]	INTERNAL	[INFO] CURRENT: 5
+[59]	INTERNAL	[INFO] Running high priority process
+[59]	SCHEDULE	0	0	init
+[60]	INTERNAL	[INFO] CURRENT: 6
+[60]	INTERNAL	[INFO] Running high priority process
+[60]	SCHEDULE	1	0	shell
+[61]	INTERNAL	[INFO] CURRENT: 7
+[61]	INTERNAL	[INFO] Running high priority process
+[61]	SCHEDULE	0	0	init
+[62]	INTERNAL	[INFO] CURRENT: 8
+[62]	INTERNAL	[INFO] Running high priority process
+[62]	SCHEDULE	1	0	shell
+[63]	INTERNAL	[INFO] CURRENT: 9
+[63]	INTERNAL	[INFO] Running medium priority process
+[63]	SCHEDULE	2	1	zombify
+[64]	INTERNAL	[INFO] CURRENT: 10
+[64]	INTERNAL	[INFO] Running medium priority process
+[64]	SCHEDULE	5	1	ps
+[64]	INTERNAL	[INFO] ps command executed
+[64]	INTERNAL	[INFO] PID PPID PRI STAT CMD
+
+[64]	INTERNAL	[INFO] Found process PID 0, STATE 0
+[64]	INTERNAL	[INFO] Process info - PID: 0, PPID: 0, STATE: 0, COMMAND: init
+[64]	INTERNAL	[INFO] Found process PID 1, STATE 0
+[64]	INTERNAL	[INFO] Process info - PID: 1, PPID: 0, STATE: 0, COMMAND: shell
+[64]	INTERNAL	[INFO] Found process PID 2, STATE 0
+[64]	INTERNAL	[INFO] Process info - PID: 2, PPID: 1, STATE: 0, COMMAND: zombify
+[64]	INTERNAL	[INFO] Found process PID 4, STATE 3
+[64]	INTERNAL	[INFO] Process info - PID: 4, PPID: 2, STATE: 3, COMMAND: zombie_child
+[64]	INTERNAL	[INFO] Found process PID 5, STATE 0
+[64]	INTERNAL	[INFO] Process info - PID: 5, PPID: 1, STATE: 0, COMMAND: ps
+[64]	INTERNAL	[INFO] SCHEDULER: Set PID 5 state to ZOMBIED (MEDIUM PRIO)
+[64]	INTERNAL	[INFO] Process 5 terminated
+[64]	EXITED	5	1	ps
+[65]	INTERNAL	[INFO] CURRENT: 11
+[65]	INTERNAL	[INFO] Running medium priority process
+[65]	SCHEDULE	2	1	zombify
+[66]	INTERNAL	[INFO] CURRENT: 12
+[66]	INTERNAL	[INFO] Running medium priority process
+[66]	SCHEDULE	2	1	zombify
+[67]	INTERNAL	[INFO] CURRENT: 13
+[67]	INTERNAL	[INFO] Running medium priority process
+[67]	SCHEDULE	2	1	zombify
+[68]	INTERNAL	[INFO] CURRENT: 14
+[68]	INTERNAL	[INFO] Running medium priority process
+[68]	SCHEDULE	2	1	zombify
+[69]	INTERNAL	[INFO] CURRENT: 15
+[70]	INTERNAL	[INFO] CURRENT: 16
+[71]	INTERNAL	[INFO] CURRENT: 17
+[72]	INTERNAL	[INFO] CURRENT: 0
+[72]	INTERNAL	[INFO] Running high priority process
+[72]	SCHEDULE	0	0	init
+[73]	INTERNAL	[INFO] CURRENT: 1
+[73]	INTERNAL	[INFO] Running high priority process
+[73]	SCHEDULE	1	0	shell
+[73]	WAITED	5	1	ps
+[73]	INTERNAL	[INFO] execute_job returned
+[73]	INTERNAL	[INFO] Shell loop entered
+[73]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
+[73]	INTERNAL	[INFO] === Current Process State ===
+[73]	INTERNAL	[INFO] Current process: 1 (State: 0)
+[73]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[73]	INTERNAL	[INFO] === Current Process State ===
+[73]	INTERNAL	[INFO]   PID 0 (State: 0)
+[73]	INTERNAL	[INFO]   PID 1 (State: 0)
+[73]	INTERNAL	[INFO]   PID 2 (State: 0)
+[73]	INTERNAL	[INFO]   PID 4 (State: 3)
+[73]	INTERNAL	[INFO] s_waitpid called with pid -1, nohang 1
+[73]	INTERNAL	[INFO] curr 1
+[73]	INTERNAL	[INFO] Found running process 2
+[74]	INTERNAL	[INFO] CURRENT: 2
+[74]	INTERNAL	[INFO] Running high priority process
+[74]	SCHEDULE	0	0	init
+[74]	INTERNAL	[INFO] INITIALIZE
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[74]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO]   PID 0 (State: 0)
+[74]	INTERNAL	[INFO]   PID 1 (State: 0)
+[74]	INTERNAL	[INFO]   PID 2 (State: 0)
+[74]	INTERNAL	[INFO]   PID 4 (State: 3)
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[74]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO]   PID 0 (State: 0)
+[74]	INTERNAL	[INFO]   PID 1 (State: 0)
+[74]	INTERNAL	[INFO]   PID 2 (State: 0)
+[74]	INTERNAL	[INFO]   PID 4 (State: 3)
+[74]	INTERNAL	[INFO] freeing proc 5
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[74]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO]   PID 0 (State: 0)
+[74]	INTERNAL	[INFO]   PID 1 (State: 0)
+[74]	INTERNAL	[INFO]   PID 2 (State: 0)
+[74]	INTERNAL	[INFO]   PID 4 (State: 3)
+[74]	INTERNAL	[INFO] freeing children
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO] Current process: 0 (State: 0)
+[74]	INTERNAL	[INFO] Parent process: 0 (State: 0)
+[74]	INTERNAL	[INFO] === Current Process State ===
+[74]	INTERNAL	[INFO]   PID 0 (State: 0)
+[74]	INTERNAL	[INFO]   PID 1 (State: 0)
+[74]	INTERNAL	[INFO]   PID 2 (State: 0)
+[74]	INTERNAL	[INFO]   PID 4 (State: 3)
+[75]	INTERNAL	[INFO] CURRENT: 3
+[75]	INTERNAL	[INFO] Running high priority process
+[75]	SCHEDULE	1	0	shell
+[76]	INTERNAL	[INFO] CURRENT: 4
+[76]	INTERNAL	[INFO] Running high priority process
+[76]	SCHEDULE	0	0	init
+[77]	INTERNAL	[INFO] CURRENT: 5
+[77]	INTERNAL	[INFO] Running high priority process
+[77]	SCHEDULE	1	0	shell
+[78]	INTERNAL	[INFO] CURRENT: 6
+[78]	INTERNAL	[INFO] Running high priority process
+[78]	SCHEDULE	0	0	init
+[79]	INTERNAL	[INFO] CURRENT: 7
+[79]	INTERNAL	[INFO] Running high priority process
+[79]	SCHEDULE	1	0	shell

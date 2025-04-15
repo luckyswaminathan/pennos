@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 char **whitespace_tokenize(char *string, size_t *n_tokens)
 {
@@ -79,9 +80,16 @@ long int safe_strtol(char *string, char *prefix, bool *ok)
 	return val;
 }
 
-// TODO: add all the signal handling stuff
 int main(void)
 {
+	struct sigaction sa = {0};
+	sa.sa_handler = SIG_IGN;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+	sigaction(SIGTSTP, &sa, NULL);
+
 	while (true)
 	{
 		fprintf(stderr, "PENNFAT> ");
