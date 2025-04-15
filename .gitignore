@@ -11,6 +11,7 @@ penn-shell
 pennfat
 test_pennfat
 test_runner
+ll_test
 
 # Log files
 log/*
@@ -24,3 +25,6 @@ build/
 
 # test filesystems
 testfs*
+
+# extras
+.vscode/
