@@ -38,6 +38,7 @@ pcb_t* k_proc_create(pcb_t *parent, void* arg) {
         LOG_INFO("Child pointer: %p", child);
         child = child->child_pointers.next;
     }
+
     if (arg != NULL) {
         struct command_context* ctx = (struct command_context*)arg;
         char**command = ctx->command;

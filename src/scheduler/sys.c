@@ -95,21 +95,33 @@ int s_kill(pid_t pid) {
     while (proc != NULL) {
         if (proc->pid == pid) {
             LOG_INFO("Killing process %d", proc->pid);
-            int priority = proc->priority;
-            if (priority == PRIORITY_HIGH) {
-                linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-            } else if (priority == PRIORITY_MEDIUM) {
-                linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-            } else if (priority == PRIORITY_LOW) {
-                linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
+            
+            // First try to send a signal to the thread
+            // This ensures any signal handlers in the thread will run
+            pthread_kill(proc->thread->thread, SIGINT);
+            
+            // Give the process a chance to handle the signal
+            // If it doesn't terminate on its own, we'll force it
+            spthread_suspend(*proc->thread);
+            
+            // Check if the process is still alive
+            if (proc->state != PROCESS_ZOMBIED) {
+                int priority = proc->priority;
+                if (priority == PRIORITY_HIGH) {
+                    linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
+                } else if (priority == PRIORITY_MEDIUM) {
+                    linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
+                } else if (priority == PRIORITY_LOW) {
+                    linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
+                }
+                proc->state = PROCESS_ZOMBIED;
+                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
+                
+                // Log the process being signaled
+                log_signaled(proc->pid, proc->priority, proc->command);
+                
+                spthread_cancel(*proc->thread);
             }
-            proc->state = PROCESS_ZOMBIED;
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-            
-            // Log the process being signaled
-            log_signaled(proc->pid, proc->priority, proc->command);
-            
-            spthread_cancel(*proc->thread);
             return 0;
         }
         proc = proc->process_pointers.next;
