@@ -3,6 +3,14 @@
 
 # Executables
 bin/*
+**/bin/*
+**/*-demo
+**/*-test
+**/*-runner
+penn-shell
+pennfat
+test_pennfat
+test_runner
 
 # Log files
 log/*
