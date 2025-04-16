@@ -12,7 +12,6 @@
 
 scheduler_t* scheduler_state = NULL;
 static const int centisecond = 10000;
-static int quantum = 0;
 
 /**
  * @brief PCB destructor function for linked lists
@@ -33,7 +32,8 @@ void pcb_destructor(void* pcb) {
         
         // Free the thread if it exists
         if (pcb_ptr->thread != NULL) {
-            spthread_destroy(pcb_ptr->thread);
+            // Properly join the thread to clean up its resources
+            spthread_join(*pcb_ptr->thread, NULL);
             free(pcb_ptr->thread);
         }
         
@@ -62,23 +62,18 @@ static void _init_init_process() {
     scheduler_state->init_process->pid = 0;
     scheduler_state->init_process->ppid = 0;
     scheduler_state->init_process->pgid = 0;
-    scheduler_state->init_process->children = (linked_list(pcb_t)*)malloc(sizeof(linked_list(pcb_t)));
+    
+    // Initialize children list directly
+    scheduler_state->init_process->children = exiting_malloc(sizeof(linked_list(pcb_t)));
+    scheduler_state->init_process->children->head = NULL;
+    scheduler_state->init_process->children->tail = NULL;
+    scheduler_state->init_process->children->ele_dtor = pcb_destructor;
+    
     scheduler_state->init_process->state = PROCESS_RUNNING;
     scheduler_state->init_process->priority = PRIORITY_HIGH;
     scheduler_state->init_process->sleep_time = 0;
     scheduler_state->init_process->thread = NULL;
     scheduler_state->init_process->func = NULL;
-}
-
-/**
- * @brief Initialize a PCB queue
- * 
- * @param queue The PCB queue to initialize
- */
-static void _init_queues(linked_list(pcb_t)* queue) {
-    queue->head = NULL;
-    queue->tail = NULL;
-    queue->ele_dtor = pcb_destructor;
 }
 
 /**
@@ -92,7 +87,6 @@ static void alarm_handler(int signum) {}
 /**
  * @brief Set up the signal handler for SIGALRM
  * 
- * This function is used to set up the signal handler for SIGALRM.
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
 static void _setup_sigalarm() {
@@ -119,17 +113,28 @@ static void _setup_sigalarm() {
 /**
  * @brief Initialize the scheduler
  */
-static void init_scheduler() {
+void init_scheduler() {
     scheduler_state = (scheduler_t*)exiting_malloc(sizeof(scheduler_t));
 
     // Initialize priority queues
     for (int i = 0; i < 3; i++) {
-        _init_queues(&scheduler_state->ready_queues[i]);
+        scheduler_state->ready_queues[i].head = NULL;
+        scheduler_state->ready_queues[i].tail = NULL;
+        scheduler_state->ready_queues[i].ele_dtor = pcb_destructor;
     }
+    
     // Initialize other queues
-    _init_queues(&scheduler_state->blocked_queue);
-    _init_queues(&scheduler_state->zombie_queue);
-    _init_queues(&scheduler_state->stopped_queue);
+    scheduler_state->blocked_queue.head = NULL;
+    scheduler_state->blocked_queue.tail = NULL;
+    scheduler_state->blocked_queue.ele_dtor = pcb_destructor;
+    
+    scheduler_state->zombie_queue.head = NULL;
+    scheduler_state->zombie_queue.tail = NULL;
+    scheduler_state->zombie_queue.ele_dtor = pcb_destructor;
+    
+    scheduler_state->stopped_queue.head = NULL;
+    scheduler_state->stopped_queue.tail = NULL;
+    scheduler_state->stopped_queue.ele_dtor = pcb_destructor;
 
     // Initialize init process and put it on the highest priority queue
     _init_init_process();
@@ -149,5 +154,4 @@ static void init_scheduler() {
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval;
     setitimer(ITIMER_REAL, &it, NULL);
-    
 }
