@@ -43,11 +43,11 @@ struct pcb_st {
     pid_t pid;        
     pid_t ppid;        
     pid_t pgid;          
-    linked_list(pcb_t) children;
+    linked_list(pcb_t)* children;
 
     // File descriptors (may add moree)
-        int fd0;
-        int fd1;
+    int fd0;
+    int fd1;
 
     // Process state
     process_state state;
@@ -66,6 +66,7 @@ struct pcb_st {
     pcb_t* prev;
     pcb_t* next;
 };
+
 
 typedef struct scheduler {
     // Priority queues (0 = highest priority, 2 = lowest)
@@ -86,29 +87,45 @@ typedef struct scheduler {
 
 extern scheduler_t* scheduler_state;
 
+/**
+ * @brief PCB destructor function for linked lists
+ * 
+ * This function is used as a destructor for PCBs in linked lists.
+ * It frees the memory allocated for the PCB and its associated resources.
+ * 
+ * @param pcb Pointer to the PCB to destroy
+ */
+#define PCB_DESTRUCTOR(pcb) do { \
+  pcb_t* pcb_ptr = (pcb_t*)(pcb); \
+  if ((pcb_ptr) != NULL) { \
+    /* Free the children list if it exists */ \
+    if ((pcb_ptr)->children != NULL) { \
+      linked_list_clear((pcb_ptr)->children); \
+      free((pcb_ptr)->children); \
+    } \
+    \
+    /* Free the thread if it exists */ \
+    if ((pcb_ptr)->thread != NULL) { \
+      spthread_destroy((pcb_ptr)->thread); \
+    } \
+    \
+    /* Free command and argv if they exist */ \
+    if ((pcb_ptr)->command != NULL) { \
+      free((pcb_ptr)->command); \
+    } \
+    \
+    if ((pcb_ptr)->argv != NULL) { \
+      for (int i = 0; (pcb_ptr)->argv[i] != NULL; i++) { \
+        free((pcb_ptr)->argv[i]); \
+      } \
+      free((pcb_ptr)->argv); \
+    } \
+    \
+    /* Free the PCB itself */ \
+    free((pcb_ptr)); \
+  } \
+} while (0)
 
-// LEGACY, will change
 void init_scheduler();
-void log_queue_state();
-void run_scheduler();
-void block_process(pcb_t* proc);
-void log_process_state();
-void add_process_to_queue(pcb_t* proc);
-void put_process_to_sleep(pcb_t* proc, unsigned int ticks);
-
-void handle_orphaned_processes(pcb_t* terminated_process);
-
-void cleanup_zombie_children(pcb_t* parent);
-
-void terminate_process(pcb_t* process);
-
-void unblock_process(pcb_t* proc);
-
-// Functions for stopping and continuing processes
-void stop_process(pcb_t* proc);
-void continue_process(pcb_t* proc);
-
-void run_next_process();
-void log_all_processes();
 
 #endif

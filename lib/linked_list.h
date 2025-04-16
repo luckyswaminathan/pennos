@@ -50,7 +50,7 @@ typedef void (*destroy_fn)(void*);
 }
 
 /**
- * @brief Initialize a new linked list
+ * @brief Initialize a new linked list with a destructor function
  */
 #define linked_list_new(T, dtor) {NULL, NULL, (destroy_fn)(dtor)}
 
