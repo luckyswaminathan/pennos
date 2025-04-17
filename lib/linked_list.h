@@ -133,6 +133,9 @@ typedef void (*destroy_fn)(void*);
       } \
       (ele)->prev = NULL; \
       (ele)->next = NULL; \
+      if ((self)->ele_dtor != NULL) { \
+        (self)->ele_dtor(ele); \
+      } \
     } \
   } while (0)
 
