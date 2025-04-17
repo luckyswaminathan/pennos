@@ -12,3 +12,4 @@ int s_kill(pid_t pid);
 int s_nice(pid_t pid, int priority);
 int s_stop(pid_t pid);
 int s_cont(pid_t pid);
+void s_exit(int status);
