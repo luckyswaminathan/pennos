@@ -12,6 +12,8 @@
 
 scheduler_t* scheduler_state = NULL;
 static const int centisecond = 10000;
+static int quantum = 0;
+static sigset_t suspend_set;
 
 /**
  * @brief PCB destructor function for linked lists
@@ -89,11 +91,10 @@ static void alarm_handler(int signum) {}
  * 
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
-static void _setup_sigalarm() {
+static void _setup_sigalarm(sigset_t* suspend_set) {
     // Set up signal handler for SIGALRM
-    sigset_t suspend_set;
-    sigfillset(&suspend_set);
-    sigdelset(&suspend_set, SIGALRM);
+    sigfillset(suspend_set);
+    sigdelset(suspend_set, SIGALRM);
 
     // To make sure that SIGALRM doesn't terminate the process
     struct sigaction act = (struct sigaction){
@@ -147,11 +148,96 @@ void init_scheduler() {
     scheduler_state->ticks = 0;
 
     // Set up signal handler for SIGALRM to handle the alarm responsible for triggering the scheduler
-    _setup_sigalarm();
+    _setup_sigalarm(&suspend_set);
 
     // Initialize alarm. Will be used to trigger the scheduler by sending SIGALRM every 100ms
     struct itimerval it;
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval;
     setitimer(ITIMER_REAL, &it, NULL);
+}
+
+/**
+ * @brief Add a process to the appropriate queue based on its priority
+ * 
+ * This function adds a process to the queue that corresponds to its priority.
+ * 
+ * @param process The process to add to the queue
+ */
+void add_process_to_queue(pcb_t* process) {
+    linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
+}
+
+/**
+ * @brief Select the next queue to run a process from
+ * 
+ * This function selects the next queue to run a process from.
+ * 
+ * @param scheduler_state The scheduler state
+ */
+int _select_next_queue(scheduler_t* scheduler_state) {
+    // Generate a random number between 0 and 18
+    int random_num = quantum % 19;
+    if (random_num < 10 && scheduler_state->ready_queues[PRIORITY_HIGH].head != NULL) {
+        // Run 2.25x more often than the lowest priority queue
+        return PRIORITY_HIGH;
+    } else if (random_num < 16 && scheduler_state->ready_queues[PRIORITY_MEDIUM].head != NULL) {
+        // Run 1.5x more often than the lowest priority queue
+        return PRIORITY_MEDIUM;
+    } else if (scheduler_state->ready_queues[PRIORITY_LOW].head != NULL) {
+        return PRIORITY_LOW;
+    } else {
+        return -1;
+    }
+}
+
+/**
+ * @brief Run the next process
+ * 
+ * This function runs the next process from the queue that was selected.
+ * 
+ * @param scheduler_state The scheduler state
+ */
+void _run_next_process() {
+    // Select the next queue to run a process from
+    int next_queue = _select_next_queue(scheduler_state);
+
+    if (next_queue == -1) {
+        // No process to run, so we don't consume a quantum
+        return;
+    }
+
+    // Get the process to run from the queue
+    pcb_t* process = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+    if (process->thread == NULL) {
+        // TODO: Add logging here and check if you should consume a quantum
+        return;
+    }
+
+    // Set the current process to the process that was just run
+    scheduler_state->current_process = process;
+
+    // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
+    spthread_continue(*process->thread);
+    sigsuspend(&suspend_set);
+    spthread_suspend(*process->thread);
+    
+    // Consume a quantum
+    quantum++;
+
+    // Add the process back to the queue
+    linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
+}
+
+/**
+ * @brief Run the scheduler
+ * 
+ * This function runs the scheduler.
+ * 
+ * @param scheduler_state The scheduler state
+ */
+void run_scheduler() {
+    while (1) {
+        _run_next_process();
+    }
 }
