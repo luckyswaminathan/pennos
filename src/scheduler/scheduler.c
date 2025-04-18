@@ -99,7 +99,7 @@ static void _setup_sigalarm(sigset_t* suspend_set) {
     // To make sure that SIGALRM doesn't terminate the process
     struct sigaction act = (struct sigaction){
         .sa_handler = alarm_handler,
-        .sa_mask = suspend_set,
+        .sa_mask = *suspend_set,
         .sa_flags = SA_RESTART,
     };
     sigaction(SIGALRM, &act, NULL);
@@ -393,4 +393,16 @@ void cleanup_zombie_children(pcb_t* parent) {
         }
         child = next;
     }
+}
+
+/**
+ * @brief Main scheduler function
+ * 
+ * This function is the main scheduler function that runs in a loop and schedules processes based on their priority.
+ * It uses a multi-level feedback queue scheduling algorithm.
+ */
+int main() {
+    init_scheduler();
+    run_scheduler();
+    return 0;
 }

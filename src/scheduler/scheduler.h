@@ -89,4 +89,14 @@ extern scheduler_t* scheduler_state;
 
 void init_scheduler();
 
+// ================================ Process Management API ================================
+
+void unblock_process(pcb_t* process);
+void block_process(pcb_t* process);
+void kill_process(pcb_t* process);
+void continue_process(pcb_t* process);
+void put_process_to_sleep(pcb_t* process, unsigned int ticks);
+void cleanup_zombie_children(pcb_t* parent);
+
+
 #endif
