@@ -57,28 +57,6 @@ void pcb_destructor(void* pcb) {
 }
 
 /**
- * @brief Initialize the init process
- */
-static void _init_init_process() {
-    scheduler_state->init_process = (pcb_t*)malloc(sizeof(pcb_t));
-    scheduler_state->init_process->pid = 0;
-    scheduler_state->init_process->ppid = 0;
-    scheduler_state->init_process->pgid = 0;
-    
-    // Initialize children list directly
-    scheduler_state->init_process->children = exiting_malloc(sizeof(linked_list(pcb_t)));
-    scheduler_state->init_process->children->head = NULL;
-    scheduler_state->init_process->children->tail = NULL;
-    scheduler_state->init_process->children->ele_dtor = pcb_destructor;
-    
-    scheduler_state->init_process->state = PROCESS_RUNNING;
-    scheduler_state->init_process->priority = PRIORITY_HIGH;
-    scheduler_state->init_process->sleep_time = 0;
-    scheduler_state->init_process->thread = NULL;
-    scheduler_state->init_process->func = NULL;
-}
-
-/**
  * @brief Signal handler for SIGALRM
  * 
  * This function is used to handle the SIGALRM signal.
@@ -136,13 +114,6 @@ void init_scheduler() {
     scheduler_state->stopped_queue.head = NULL;
     scheduler_state->stopped_queue.tail = NULL;
     scheduler_state->stopped_queue.ele_dtor = pcb_destructor;
-
-    // Initialize init process and put it on the highest priority queue
-    _init_init_process();
-    linked_list_push_tail(&scheduler_state->ready_queues[PRIORITY_HIGH], scheduler_state->init_process);
-
-    // Initialize current process
-    scheduler_state->current_process = scheduler_state->init_process;
 
     // Initialize ticks
     scheduler_state->ticks = 0;

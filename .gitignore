@@ -12,6 +12,7 @@ pennfat
 test_pennfat
 test_runner
 ll_test
+test_scheduler
 
 # Log files
 log/*
