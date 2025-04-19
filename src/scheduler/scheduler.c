@@ -16,6 +16,15 @@ static int quantum = 0;
 static sigset_t suspend_set;
 
 /**
+ * @brief The process to run at each quantum. Randomly disperesed array of 0s, 1s, and 2s (priority levels).
+ * 
+ * This array is used to test the scheduler by running a specific process at each quantum.
+ * We have nine 0s, six 1s, and four 2s.
+ * 
+ */
+static int process_to_run[19] = {0, 0, 1, 0, 0, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 2, 1, 0, 2};
+
+/**
  * @brief PCB destructor function for linked lists
  * 
  * This function is used as a destructor for PCBs in linked lists.
@@ -147,19 +156,20 @@ void add_process_to_queue(pcb_t* process) {
  * @param scheduler_state The scheduler state
  */
 int _select_next_queue(scheduler_t* scheduler_state) {
-    // Generate a random number between 0 and 18
-    int priority_num = quantum % 19;
-    if (priority_num < 10 && scheduler_state->ready_queues[PRIORITY_HIGH].head != NULL) {
-        // Run 2.25x more often than the lowest priority queue
-        return PRIORITY_HIGH;
-    } else if (priority_num < 16 && scheduler_state->ready_queues[PRIORITY_MEDIUM].head != NULL) {
-        // Run 1.5x more often than the lowest priority queue
-        return PRIORITY_MEDIUM;
-    } else if (scheduler_state->ready_queues[PRIORITY_LOW].head != NULL) {
-        return PRIORITY_LOW;
+    int index = quantum % 19;
+    // Uses the process_to_run array to select the next queue to run a process from
+    if (scheduler_state->ready_queues[process_to_run[index]].head != NULL) {
+        return process_to_run[index];
     } else {
-        return -1;
+        // If the queue selected is empty, then we select the next queue to run a process from
+        // in order of priority
+        for (int i = 0; i < 3; i++) {
+            if (scheduler_state->ready_queues[i].head != NULL) {
+                return i;
+            }
+        }
     }
+    return -1;
 }
 
 /**
