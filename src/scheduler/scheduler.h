@@ -87,45 +87,16 @@ typedef struct scheduler {
 
 extern scheduler_t* scheduler_state;
 
-/**
- * @brief PCB destructor function for linked lists
- * 
- * This function is used as a destructor for PCBs in linked lists.
- * It frees the memory allocated for the PCB and its associated resources.
- * 
- * @param pcb Pointer to the PCB to destroy
- */
-#define PCB_DESTRUCTOR(pcb) do { \
-  pcb_t* pcb_ptr = (pcb_t*)(pcb); \
-  if ((pcb_ptr) != NULL) { \
-    /* Free the children list if it exists */ \
-    if ((pcb_ptr)->children != NULL) { \
-      linked_list_clear((pcb_ptr)->children); \
-      free((pcb_ptr)->children); \
-    } \
-    \
-    /* Free the thread if it exists */ \
-    if ((pcb_ptr)->thread != NULL) { \
-      spthread_destroy((pcb_ptr)->thread); \
-    } \
-    \
-    /* Free command and argv if they exist */ \
-    if ((pcb_ptr)->command != NULL) { \
-      free((pcb_ptr)->command); \
-    } \
-    \
-    if ((pcb_ptr)->argv != NULL) { \
-      for (int i = 0; (pcb_ptr)->argv[i] != NULL; i++) { \
-        free((pcb_ptr)->argv[i]); \
-      } \
-      free((pcb_ptr)->argv); \
-    } \
-    \
-    /* Free the PCB itself */ \
-    free((pcb_ptr)); \
-  } \
-} while (0)
-
 void init_scheduler();
+
+// ================================ Process Management API ================================
+
+void unblock_process(pcb_t* process);
+void block_process(pcb_t* process);
+void kill_process(pcb_t* process);
+void continue_process(pcb_t* process);
+void put_process_to_sleep(pcb_t* process, unsigned int ticks);
+void cleanup_zombie_children(pcb_t* parent);
+
 
 #endif
