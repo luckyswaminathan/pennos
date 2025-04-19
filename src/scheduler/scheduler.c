@@ -394,15 +394,3 @@ void cleanup_zombie_children(pcb_t* parent) {
         child = next;
     }
 }
-
-/**
- * @brief Main scheduler function
- * 
- * This function is the main scheduler function that runs in a loop and schedules processes based on their priority.
- * It uses a multi-level feedback queue scheduling algorithm.
- */
-int main() {
-    init_scheduler();
-    run_scheduler();
-    return 0;
-}
