@@ -147,31 +147,21 @@ static bool remove_process_from_ready_queues(pcb_t* proc) {
  * @return pid_t The process ID of the created child process, or -1 on error.
  */
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
-    // Create a new process
-    pcb_t* proc = k_proc_create(scheduler_state->init_process);
+    // Get the parent process PCB using the kernel helper function.
+    // This avoids direct access to scheduler_state from the system call layer.
+    pcb_t* parent = k_get_current_process();
 
-    // Create a new thread
-    proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
-    if (spthread_create(proc->thread, NULL, func, argv) != 0) {
-        // Add logging here
-        return -1;
+    // Directly call the kernel function to create the process.
+    // k_proc_create now handles PCB setup, thread creation, and scheduling.
+    pid_t new_pid = k_proc_create(parent, func, argv, fd0, fd1);
+
+    // k_proc_create returns -1 on error, so we can return that directly.
+    if (new_pid < 0) {
+        // Optionally log the error at the syscall level if desired
+        fprintf(stderr, "s_spawn: Failed to create process.\n");
     }
 
-    // Set the process's function, arguments, and file descriptors
-    proc->pid = scheduler_state->process_count++;
-    proc->ppid = scheduler_state->init_process->pid;
-    proc->pgid = proc->pid;
-    proc->children = linked_list_create();
-    proc->func = func;
-    proc->argv = argv;
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
-    proc->priority = PRIORITY_MEDIUM;
-
-    // Add the process to the medium priority queue
-    linked_list_push_head(&scheduler_state->ready_queues[proc->priority], proc);
-
-    return proc->pid;
+    return new_pid;
 }
 
 
@@ -284,7 +274,9 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
  * @param signal Signal number to be sent.
  * @return 0 on success, -1 on error.
  */
-int s_kill(pid_t pid, int signal);
+int s_kill(pid_t pid, int signal) {
+    
+}
 
 /**
  * @brief Unconditionally exit the calling process.

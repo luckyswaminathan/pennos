@@ -148,15 +148,25 @@ void init_scheduler()
 }
 
 /**
- * @brief Add a process to the appropriate queue based on its priority
+ * @brief Adds a process to the appropriate ready queue based on its priority.
+ * This is a kernel-level function.
  *
- * This function adds a process to the queue that corresponds to its priority.
- *
- * @param process The process to add to the queue
+ * @param process The process PCB to add.
  */
-void add_process_to_queue(pcb_t *process)
+void k_add_to_ready_queue(pcb_t *process)
 {
+    if (!process || !scheduler_state) return; // Basic safety check
+
+    // Ensure priority is within valid range (optional, but good practice)
+    if (process->priority < PRIORITY_HIGH || process->priority > PRIORITY_LOW) {
+        // Handle error - log? Default to medium? For now, just return.
+        fprintf(stderr, "Kernel Error: Process PID %d has invalid priority %d\n", process->pid, process->priority);
+        return;
+    }
+    
+    // Use the linked list macro to add to the tail of the correct priority queue
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
+    process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
 }
 
 /**
@@ -501,4 +511,17 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
 
     // Unblock the parent process
     unblock_process(scheduler_state->current_process);
+}
+
+/**
+ * @brief Retrieves the Process Control Block (PCB) of the currently running process.
+ *
+ * @return pcb_t* Pointer to the current process's PCB, or NULL if the scheduler
+ *         state is not initialized or no process is currently assigned.
+ */
+pcb_t* k_get_current_process(void) {
+    if (!scheduler_state) {
+        return NULL; // Scheduler not initialized
+    }
+    return scheduler_state->current_process;
 }
