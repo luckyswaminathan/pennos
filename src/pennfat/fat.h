@@ -170,3 +170,12 @@ int k_chmod(const char *fname, uint8_t perm);
 #define EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED -6
 #define EK_MV_CLOSE_FAILED -7
 int k_mv(const char *src, const char *dest);
+
+#define EK_SETMODE_FD_OUT_OF_RANGE -1
+#define EK_SETMODE_BAD_MODE -2
+#define EK_SETMODE_FD_NOT_IN_USE -3
+int k_setmode(int fd, int mode);
+
+#define EK_GETMODE_FD_OUT_OF_RANGE -1
+#define EK_GETMODE_FD_NOT_IN_USE -2
+int k_getmode(int fd);

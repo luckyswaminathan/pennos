@@ -590,6 +590,7 @@ int k_open(const char *fname, int mode)
     if (find_file_in_global_fd_table_status == 0)
     {
         global_fd_entry *fd_entry = &global_fd_table[fd_idx];
+        fd_entry->ref_count += 1; // increment the ref count
 
         // we already have an entry in the global file table
         if (fd_entry->write_locked && (mode == F_WRITE || mode == F_APPEND))
@@ -1457,4 +1458,39 @@ cleanup:
         status = EK_MV_CLOSE_FAILED;
     }
     return status;
+}
+
+int k_setmode(int fd, int mode)
+{
+    if (fd >= GLOBAL_FD_TABLE_SIZE)
+    {
+        return EK_SETMODE_FD_OUT_OF_RANGE;
+    }
+
+    if (global_fd_table[fd].ref_count <= 0)
+    {
+        return EK_SETMODE_FD_NOT_IN_USE;
+    }
+
+    if (mode != F_READ && mode != F_WRITE && mode != F_APPEND)
+    {
+        return EK_SETMODE_BAD_MODE;
+    }
+
+    global_fd_entry *fd_entry = &global_fd_table[fd];
+    fd_entry->write_locked = mode;
+
+    return 0;
+}
+
+int k_getmode(int fd) {
+    if (fd >= GLOBAL_FD_TABLE_SIZE) {
+        return EK_GETMODE_FD_OUT_OF_RANGE;
+    }
+    
+    if (global_fd_table[fd].ref_count <= 0) {
+        return EK_GETMODE_FD_NOT_IN_USE;
+    }
+
+    return global_fd_table[fd].write_locked;
 }
