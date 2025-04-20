@@ -61,6 +61,7 @@ struct pcb_st {
     void* (*func)(void*);
     char* command;
     char** argv;
+    int exit_status;
     
     // Linked list pointers (for scheduler queues)
     pcb_t* prev;
@@ -83,6 +84,9 @@ typedef struct scheduler {
     // Initial and current process
     pcb_t* init_process;
     pcb_t* current_process;
+
+    // Process count
+    unsigned int process_count;
 } scheduler_t;
 
 extern scheduler_t* scheduler_state;
