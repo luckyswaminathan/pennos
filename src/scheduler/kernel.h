@@ -74,3 +74,45 @@ pid_t k_waitpid(pcb_t *parent, pid_t pid, int *wstatus, bool nohang);
  * @param exit_status The exit status code.
  */
 void k_proc_exit(pcb_t *process, int exit_status);
+
+/**
+ * @brief Voluntarily yields the CPU to the scheduler.
+ *
+ * Allows the scheduler to run other processes. The calling process will be 
+ * paused and resumed later according to the scheduling policy.
+ * This is a placeholder implementation relying on signal suspension.
+ */
+void k_yield(void);
+
+/**
+ * @brief Stops a process, moving it to the stopped queue.
+ * @param process The process to stop.
+ * @return true on success, false if process not found or already stopped.
+ */
+bool k_stop_process(pcb_t *process);
+
+/**
+ * @brief Continues a stopped process, moving it back to the ready queue.
+ * @param process The process to continue.
+ * @return true on success, false if process not found or not stopped.
+ */
+bool k_continue_process(pcb_t *process);
+
+/**
+ * @brief Sets the priority of a process.
+ * If the process is currently ready, it will be moved to the correct ready queue.
+ * If blocked or stopped, only the priority field is updated.
+ * @param process The process to modify.
+ * @param priority The new priority (PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW).
+ * @return true on success, false if process not found or invalid priority.
+ */
+bool k_set_priority(pcb_t* process, int priority);
+
+/**
+ * @brief Puts the calling process to sleep for a specified number of ticks.
+ * The process is blocked, and sleep_time is set.
+ * @param process The process to put to sleep.
+ * @param ticks The number of ticks to sleep (must be > 0).
+ * @return true on success, false if process is NULL or ticks is 0.
+ */
+bool k_sleep(pcb_t* process, unsigned int ticks);

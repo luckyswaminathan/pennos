@@ -267,10 +267,22 @@ void _run_next_process()
     }
 
     // Get the process to run from the queue
-    pcb_t *process = (pcb_t *)exiting_malloc(sizeof(pcb_t));
+    pcb_t *process = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+    
+    if (!process) {
+        // This should ideally not happen if _select_next_queue returned a valid index
+        fprintf(stderr, "Scheduler Error: No process found in selected ready queue %d\n", next_queue);
+        return; // Don't consume quantum
+    }
+
     if (process->thread == NULL)
     {
-        // TODO: Add logging here and check if you should consume a quantum
+        // This process has no thread associated? Major error.
+        fprintf(stderr, "Scheduler Error: Process PID %d dequeued but has NULL thread! Discarding.\n", process->pid);
+        // Clean up this invalid PCB? If we just free it, internal pointers might be bad.
+        // Add it to zombie queue? For now, just discard and don't consume quantum.
+        // TODO: Decide on proper cleanup for invalid PCB state here.
+        free(process); // Simplistic cleanup, might leak argv etc.
         return;
     }
 
@@ -814,4 +826,151 @@ pcb_t* k_get_current_process(void) {
         return NULL; // Scheduler not initialized
     }
     return scheduler_state->current_process;
+}
+
+/**
+ * @brief Voluntarily yields the CPU to the scheduler.
+ *
+ * Allows the scheduler to run other processes. The calling process will be
+ * paused and resumed later according to the scheduling policy.
+ * Placeholder implementation: Suspends the calling thread until the next
+ * scheduler timer interrupt (SIGALRM).
+ */
+void k_yield(void) {
+    // In a real kernel, this would directly invoke the scheduler's context
+    // switching logic.
+    // Here, we mimic yielding by suspending until the next SIGALRM, 
+    // which triggers the scheduler loop externally.
+    extern sigset_t suspend_set; // Defined static in scheduler.c
+    sigsuspend(&suspend_set);
+    // Execution resumes here after SIGALRM is handled
+}
+
+/**
+ * @brief Stops a process, moving it to the stopped queue.
+ * Removes the process from active queues and sets its state.
+ * @param process The process to stop.
+ * @return true on success, false if process not found or already stopped.
+ */
+bool k_stop_process(pcb_t *process) {
+    if (!process || process->state == PROCESS_STOPPED) {
+        return false;
+    }
+    // Remove from active queue (or current)
+    bool removed = false;
+    if (scheduler_state->current_process == process) {
+        removed = true; // Conceptually removed, scheduler handles switch
+    } else {
+        removed = k_remove_from_active_queue(process); 
+    }
+
+    if (removed) {
+        process->state = PROCESS_STOPPED;
+        linked_list_push_tail(&scheduler_state->stopped_queue, process);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @brief Continues a stopped process, moving it back to the ready queue.
+ * Removes the process from the stopped queue and sets its state.
+ * @param process The process to continue.
+ * @return true on success, false if process not found or not stopped.
+ */
+bool k_continue_process(pcb_t *process) {
+    if (!process || process->state != PROCESS_STOPPED) {
+        return false;
+    }
+
+    // Manual removal from stopped queue
+    bool removed = false;
+    pcb_t* current = scheduler_state->stopped_queue.head;
+    while (current != NULL) {
+         if (current == process) {
+            if (current->prev) current->prev->next = current->next;
+            else scheduler_state->stopped_queue.head = current->next;
+            if (current->next) current->next->prev = current->prev;
+            else scheduler_state->stopped_queue.tail = current->prev;
+            process->prev = process->next = NULL;
+            removed = true;
+            break; 
+        }
+        current = current->next;
+    }
+
+    if (removed) {
+        process->state = PROCESS_RUNNING;
+        k_add_to_ready_queue(process); // Add to appropriate ready queue
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @brief Sets the priority of a process.
+ * If the process is currently ready, it will be moved to the correct ready queue.
+ * If blocked or stopped, only the priority field is updated.
+ * @param process The process to modify.
+ * @param priority The new priority (PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW).
+ * @return true on success, false if process not found or invalid priority.
+ */
+bool k_set_priority(pcb_t* process, int priority) {
+    if (!process || priority < PRIORITY_HIGH || priority > PRIORITY_LOW) {
+        return false;
+    }
+
+    int old_priority = process->priority;
+    process->priority = (priority_t)priority;
+
+    // Only move queues if the process is currently in a ready queue
+    if (process->state == PROCESS_RUNNING && old_priority != priority) {
+        // Need to find and remove from the *old* ready queue first
+        bool removed = false;
+        pcb_t* current = scheduler_state->ready_queues[old_priority].head;
+        while (current != NULL) {
+            if (current == process) {
+                if (current->prev) current->prev->next = current->next;
+                else scheduler_state->ready_queues[old_priority].head = current->next;
+                if (current->next) current->next->prev = current->prev;
+                else scheduler_state->ready_queues[old_priority].tail = current->prev;
+                process->prev = process->next = NULL;
+                removed = true;
+                break;
+            }
+            current = current->next;
+        }
+
+        if (removed) {
+            // Add to the new ready queue
+            k_add_to_ready_queue(process); 
+        } else {
+            // Process was RUNNING but not found in its expected ready queue? Log error.
+            fprintf(stderr, "k_set_priority Warning: Process PID %d state is RUNNING but not found in ready queue %d.\n", process->pid, old_priority);
+            // Still update priority field, but return false as queue move failed.
+            return false;
+        }
+    }
+    // If process was blocked, stopped, or priority didn't change, 
+    // just updating the field is sufficient.
+    return true; 
+}
+
+/**
+ * @brief Puts the calling process to sleep for a specified number of ticks.
+ * The process is blocked, and sleep_time is set.
+ * Caller should likely call k_yield() after this.
+ * @param process The process to put to sleep.
+ * @param ticks The number of ticks to sleep (must be > 0).
+ * @return true on success, false if process is NULL or ticks is 0.
+ */
+bool k_sleep(pcb_t* process, unsigned int ticks) {
+    if (!process || ticks == 0) {
+        return false;
+    }
+
+    process->sleep_time = ticks; 
+    // k_block_process handles removing from active queue and adding to blocked queue,
+    // and sets state to PROCESS_BLOCKED.
+    return k_block_process(process); 
 }

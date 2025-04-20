@@ -38,9 +38,11 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang);
 int s_kill(pid_t pid, int signal);
 
 /**
- * @brief Unconditionally exit the calling process.
+ * @brief Unconditionally exit the calling process with the given status.
+ * This function does not return.
+ * @param status The exit status code.
  */
-void s_exit(void);
+void s_exit(int status);
 
 /**
  * @brief Set the priority of the specified thread.

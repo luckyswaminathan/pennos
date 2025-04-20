@@ -111,7 +111,10 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         free(proc);
         return -1;
     }
-    *proc->children = linked_list_new(pcb_t, NULL); // No destructor for children list itself
+    // Initialize the allocated struct's members directly
+    proc->children->head = NULL;
+    proc->children->tail = NULL;
+    proc->children->ele_dtor = NULL; 
 
     // Set execution context and I/O
     proc->func = func;
@@ -215,45 +218,36 @@ void k_proc_cleanup(pcb_t *proc) {
     if (scheduler_state && scheduler_state->init_process && proc->children) {
         pcb_t *child;
         // Pop children one by one, reparent, and add to init's list
-        while ((child = linked_list_pop_head(proc->children)) != NULL) {
-            if (scheduler_state->init_process->children) {
+        while ((child = linked_list_pop_head(proc->children)) != NULL) { 
+            // Check if init process exists and has a children list before reparenting
+            if (scheduler_state->init_process && scheduler_state->init_process->children) {
                 child->ppid = scheduler_state->init_process->pid;
                 linked_list_push_tail(scheduler_state->init_process->children, child);
+            } else {
+                // Orphaned child and no init process to adopt it? 
+                // This is an error condition or requires a different orphan handling strategy.
+                // For now, just log and free the child (leaking resources if it had children itself?)
+                fprintf(stderr, "k_proc_cleanup Warning: Cannot reparent child PID %d (from parent PID %d) to init process.\n", child->pid, proc->pid);
+                // We should ideally have a robust cleanup for such orphans too.
+                // Maybe call k_proc_cleanup recursively? Risk of stack overflow?
+                // Simplest for now might be to free its basic resources.
+                if (child->command) free(child->command);
+                if (child->argv) { 
+                    for(int i=0; child->argv[i]; ++i) free(child->argv[i]);
+                    free(child->argv);
+                }
+                if (child->thread) free(child->thread); // Thread struct, not joining here.
+                if (child->children) free(child->children); // List struct itself
+                free(child); // Free the child PCB
             }
-            // TODO: What if init process children list is NULL? Handle error/log?
         }
         // Free the (now empty) children list structure of the cleaned-up process
         free(proc->children);
         proc->children = NULL;
     }
 
-    // 2. Remove process from its parent's children list (manually unlink)
-    // We need get_process_by_pid which is now non-static in scheduler.c
-    pcb_t* parent = get_process_by_pid(proc->ppid);
-    if (parent && parent->children) {
-        linked_list(pcb_t)* children_list = parent->children;
-        
-        // Manually unlink 'proc' from the 'children_list' without calling destructor
-        if (proc->prev) {
-            proc->prev->next = proc->next;
-        } else {
-            // Proc is the head
-            children_list->head = proc->next;
-        }
-        
-        if (proc->next) {
-            proc->next->prev = proc->prev;
-        } else {
-            // Proc is the tail
-            children_list->tail = proc->prev;
-        }
-
-        // Reset proc's pointers after unlinking
-        proc->prev = NULL;
-        proc->next = NULL;
-    }
-
-    // 3. Free process resources (similar to pcb_destructor but without list interactions)
+    // 3. Free process resources (thread struct, command, argv)
+    // Note: Joining the thread happens in k_reap_child.
     if (proc->thread) {
         // Note: Joining the thread should happen before cleanup, e.g., in waitpid.
         // Here we just free the spthread_t structure.
