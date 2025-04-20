@@ -1,7 +1,6 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include <errno.h>
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
@@ -147,54 +146,31 @@ static bool remove_process_from_ready_queues(pcb_t* proc) {
  * @param arg Argument to be passed to the function.
  * @return pid_t The process ID of the created child process, or -1 on error.
  */
-pid_t s_spawn(void *(*func)(void *), void *arg)
-{
-    log_queue_state(); // Log state before spawn
-    if (!scheduler_state || !scheduler_state->current_process) {
-         LOG_ERROR("Scheduler or current process not initialized during s_spawn.");
-         errno = EAGAIN; // Or another suitable error
-         return -1;
-    }
-    
-    pcb_t *parent = scheduler_state->current_process;
-    LOG_INFO("s_spawn called by parent %d", parent->pid);
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
+    // Create a new process
+    pcb_t* proc = k_proc_create(scheduler_state->init_process);
 
-    // k_proc_create handles adding to parent's children list and ready queue
-    pcb_t *proc = k_proc_create(parent, arg);
-    if (!proc) {
-        LOG_ERROR("k_proc_create failed in s_spawn.");
-        errno = EAGAIN;
+    // Create a new thread
+    proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
+    if (spthread_create(proc->thread, NULL, func, argv) != 0) {
+        // Add logging here
         return -1;
     }
 
-    // Store the function pointer
+    // Set the process's function, arguments, and file descriptors
+    proc->pid = scheduler_state->process_count++;
+    proc->ppid = scheduler_state->init_process->pid;
+    proc->pgid = proc->pid;
+    proc->children = linked_list_create();
     proc->func = func;
+    proc->argv = argv;
+    proc->fd0 = fd0;
+    proc->fd1 = fd1;
+    proc->priority = PRIORITY_MEDIUM;
 
-    // Create the underlying thread using spthread
-    proc->thread = (spthread_t *)exiting_malloc(sizeof(spthread_t));
-    if (spthread_create(proc->thread, NULL, func, arg) != 0)
-    {
-        LOG_ERROR("Failed to create spthread for process %d", proc->pid);
-        // Cleanup: Need to remove the process we just added
-        remove_process_from_ready_queues(proc); 
-        // Remove from parent's children list (requires a list find/remove function)
-        // linked_list_remove(parent->children, proc); // Assuming this function exists
-        // For now, just log the error, memory will leak without list removal.
-        // TODO: Implement proper cleanup on thread creation failure
-        
-        free(proc->thread); 
-        proc->thread = NULL;
-        // The PCB itself might be freed if parent->children had the destructor set,
-        // or it might leak. This depends on linked_list_remove implementation.
-        // Let's assume we need to free it manually if not removed from list.
-        // free(proc); // Risky without proper list removal first.
+    // Add the process to the medium priority queue
+    linked_list_push_head(&scheduler_state->ready_queues[proc->priority], proc);
 
-        errno = EAGAIN;
-        return -1;
-    }
-
-    LOG_INFO("s_spawn successful for PID %d", proc->pid);
-    log_queue_state(); // Log state after spawn
     return proc->pid;
 }
 
@@ -202,418 +178,136 @@ pid_t s_spawn(void *(*func)(void *), void *arg)
 /**
  * @brief Wait on a child of the calling process, until it changes state (zombies).
  * If `nohang` is true, this will not block the calling process and return immediately.
+ * 
+ * First clean up zombies, then check nohang status, then block and wait if required.
  *
  * @param pid Process ID of the child to wait for (-1 for any child).
  * @param wstatus Pointer to an integer variable where the exit status will be stored.
  * @param nohang If true, return immediately if no child has zombied.
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
-pid_t s_waitpid(pid_t pid, int *wstatus, bool nohang)
-{
-    pcb_t *current_process = scheduler_state->current_process;
-    LOG_INFO("s_waitpid called by PID %d for target PID %d (nohang=%d)", current_process->pid, pid, nohang);
-    log_process_state();
-
-    if (!current_process->children || !current_process->children->head) {
-        LOG_INFO("PID %d has no children.", current_process->pid);
-        errno = ECHILD;
-        return -1; // No children
-    }
-
-    pcb_t* child_to_wait_on = NULL;
-    bool found_zombie = false;
-
-    // First pass: Check for already zombied children matching criteria
-    pcb_t* current_child = current_process->children->head;
-    pcb_t* zombie_child = NULL;
-    while (current_child != NULL) {
-        if (pid == -1 || current_child->pid == pid) {
-            // Check if this child is in the zombie queue
-            zombie_child = find_process_in_queue(&scheduler_state->zombie_queue, current_child->pid);
-            if (zombie_child) { // Found a matching zombied child
-                 child_to_wait_on = zombie_child;
-                 found_zombie = true;
-                 break;
+pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    if (pid == -1) {
+        // Wait for any child process
+        pcb_t* child = scheduler_state->current_process->children->head;
+        pcb_t* zombie_child = NULL;
+        
+        // First pass: look for zombies
+        while (child != NULL) {
+            pcb_t* next = child->next; // Save next pointer as we might remove child
+            
+            if (child->state == PROCESS_ZOMBIED) {
+                // Found a zombie, collect its status
+                zombie_child = child;
+                if (wstatus != NULL) {
+                    *wstatus = zombie_child->exit_status;
+                }
+                
+                // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
+                linked_list_remove(scheduler_state->current_process->children, zombie_child);
+                linked_list_remove(&scheduler_state->zombie_queue, zombie_child);
+                
+                pid_t result = zombie_child->pid;
+                return result;
             }
-        }
-        current_child = current_child->next; // Iterate through parent's list of children
-    }
-
-
-    if (found_zombie) {
-        LOG_INFO("Found zombied child PID %d for parent PID %d", child_to_wait_on->pid, current_process->pid);
-        
-        // Log that we're waiting on this process
-        log_waited(child_to_wait_on->pid, child_to_wait_on->priority, child_to_wait_on->command);
-
-        // Store exit status if requested
-        if (wstatus != NULL) {
-            // TODO: Store exit status in PCB during s_exit
-            // *wstatus = child_to_wait_on->exit_status; 
-             *wstatus = 0; // Placeholder
-        }
-
-        pid_t waited_pid = child_to_wait_on->pid;
-
-        // Remove from parent's children list *first*
-        // Requires a list function: linked_list_remove_by_value(list, value) or similar
-        // bool removed_from_parent = linked_list_remove_node(current_process->children, child_to_wait_on);
-        // LOG_INFO("Removed from parent result: %d", removed_from_parent);
-        // TODO: Implement proper removal from parent's children list
-
-        // Remove from zombie queue - this triggers the destructor and frees the PCB
-        bool removed = remove_process_from_queue(&scheduler_state->zombie_queue, child_to_wait_on);
-        if (!removed) {
-             LOG_ERROR("Failed to remove PID %d from zombie queue!", waited_pid);
-             // This is problematic, indicates inconsistency.
-        } else {
-             LOG_INFO("Removed PID %d from zombie queue.", waited_pid);
+            
+            child = next;
         }
         
-        log_queue_state(); // Log state after cleanup
-        return waited_pid;
-    }
-
-    // No matching zombie child found
-    if (nohang) {
-        LOG_INFO("nohang=true, no zombied child found for PID %d.", pid);
-        return 0; // Return immediately
-    }
-
-    // --- Blocking Logic ---
-    // If nohang is false, block the current process until a child zombies.
-    LOG_INFO("Blocking PID %d waiting for child PID %d.", current_process->pid, pid);
-    
-    // Remove current process from its ready queue
-    if (!remove_process_from_ready_queues(current_process)) {
-         LOG_ERROR("Failed to remove current process %d from ready queues for blocking!", current_process->pid);
-         // Should not happen if it was running. Continue cautiously.
-    }
-    
-    // Change state and add to blocked queue
-    current_process->state = PROCESS_BLOCKED;
-    // TODO: Add field to PCB to store PID waited for? current_process->waiting_for_pid = pid;
-    linked_list_push_tail(&scheduler_state->blocked_queue, current_process);
-    
-    log_block(current_process->pid, current_process->priority, current_process->command);
-    log_queue_state();
-
-    // Yield control to the scheduler
-    // The scheduler (when a process exits/zombies) needs to check if the parent 
-    // is blocked waiting for it and unblock it.
-    run_scheduler(); // Call scheduler to switch process - IMPLEMENTATION NEEDED
-
-    // --- Execution resumes here after being unblocked ---
-    LOG_INFO("PID %d unblocked after waiting.", current_process->pid);
-    log_unblock(current_process->pid, current_process->priority, current_process->command);
-
-    // When unblocked, the child should now be a zombie. Retry the logic.
-    // This recursive call might be complex; alternatively, the unblocking logic
-    // in the scheduler could handle finding the zombie and returning its status.
-    // For simplicity, let's try calling waitpid again.
-    return s_waitpid(pid, wstatus, false); // Retry the wait, child should be zombie now.
-    // Need to be careful about infinite loops if unblocking happens without zombie.
-}
-
-
-/**
- * @brief Send a signal (terminate) to a particular process.
- *
- * @param pid Process ID of the target process.
- * @return 0 on success, -1 on error (e.g., process not found, permission denied).
- */
-int s_kill(pid_t pid)
-{
-    LOG_INFO("s_kill called for PID %d by PID %d", pid, scheduler_state->current_process->pid);
-
-    if (pid <= 0) { // Cannot kill init process or invalid PIDs
-        LOG_WARN("Attempted to kill invalid PID %d", pid);
-        errno = EINVAL;
-        return -1;
-    }
-    
-    if (pid == scheduler_state->current_process->pid) {
-        // Handle killing self - should likely call s_exit?
-        LOG_INFO("Process %d attempting to kill itself.", pid);
-        s_exit(SIGKILL); // Or some defined status for killed by self
-        return 0; // s_exit does not return
-    }
-
-    pcb_t *proc = find_process_anywhere(pid);
-    if (!proc) {
-        LOG_WARN("s_kill: Process PID %d not found.", pid);
-        errno = ESRCH;
-        return -1;
-    }
-    
-    LOG_INFO("Found process PID %d (state %d) to kill.", proc->pid, proc->state);
-    log_signaled(proc->pid, proc->priority, proc->command); // Log the signal event
-
-    // 1. Reparent children to init
-    k_proc_reparent_children(proc);
-
-    // 2. Cancel the underlying thread (best effort)
-    if (proc->thread) {
-        spthread_cancel(*(proc->thread));
-        // Note: Cancellation is asynchronous. Thread might not stop immediately.
-    }
-
-    // 3. Remove from current queue
-    bool removed = false;
-    if (proc->state == PROCESS_RUNNING) { // Includes ready processes
-        removed = remove_process_from_ready_queues(proc);
-    } else if (proc->state == PROCESS_BLOCKED) {
-        removed = remove_process_from_queue(&scheduler_state->blocked_queue, proc);
-    } else if (proc->state == PROCESS_STOPPED) {
-        removed = remove_process_from_queue(&scheduler_state->stopped_queue, proc);
-    }
-    
-    if (!removed && proc != scheduler_state->current_process) { // Current process wouldn't be in a queue yet
-        LOG_WARN("s_kill: Process PID %d was found but not in expected queues (state %d).", pid, proc->state);
-        // This might indicate a state inconsistency. Proceed with caution.
-    }
-
-    // 4. Change state to Zombie and add to zombie queue
-    proc->state = PROCESS_ZOMBIED;
-    // TODO: Set exit status proc->exit_status = W_MAKE_EXIT_STATUS(SIGKILL, 0); // Indicate killed by signal
-    linked_list_push_tail(&scheduler_state->zombie_queue, proc);
-
-    LOG_INFO("Process PID %d killed and moved to zombie queue.", pid);
-    log_queue_state();
-
-    return 0;
-}
-
-/**
- * @brief Change the priority of a process.
- * 
- * @param pid Process ID of the target process.
- * @param priority New priority level (PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW).
- * @return 0 on success, -1 on error.
- */
-int s_nice(pid_t pid, int priority)
-{
-    LOG_INFO("s_nice called for PID %d to priority %d by PID %d", pid, priority, scheduler_state->current_process->pid);
-
-    if (priority < PRIORITY_HIGH || priority > PRIORITY_LOW) {
-        LOG_WARN("s_nice: Invalid priority level %d specified.", priority);
-        errno = EINVAL;
-        return -1;
-    }
-
-    if (pid <= 0) { // Cannot nice init process or invalid PIDs
-        LOG_WARN("Attempted to nice invalid PID %d", pid);
-        errno = EINVAL;
-        return -1;
-    }
-    
-    pcb_t *proc = find_process_anywhere(pid);
-    if (!proc) {
-        LOG_WARN("s_nice: Process PID %d not found.", pid);
-        errno = ESRCH;
-        return -1;
-    }
-
-    if (proc->priority == priority) {
-        LOG_INFO("s_nice: Process PID %d already has priority %d.", pid, priority);
-        return 0; // No change needed
-    }
-
-    int old_priority = proc->priority;
-    proc->priority = priority; // Update priority field
-
-    // If the process is currently ready/running, move it to the new ready queue
-    if (proc->state == PROCESS_RUNNING) {
-        bool removed = remove_process_from_queue(&scheduler_state->ready_queues[old_priority], proc);
-        if (removed) {
-             linked_list_push_tail(&scheduler_state->ready_queues[priority], proc);
-             LOG_INFO("Moved PID %d from ready queue %d to %d.", pid, old_priority, priority);
-        } else if (proc != scheduler_state->current_process) { // Current proc might not be in queue if just switched
-             LOG_WARN("s_nice: Process PID %d (state RUNNING) not found in ready queue %d.", pid, old_priority);
-             // Might be current_process, just update priority field.
+        // No zombies found
+        if (scheduler_state->current_process->children->head == NULL) {
+            // No children at all
+            return -1;
         }
+        
+        if (nohang) {
+            // Have children, but none are zombies and nohang is true
+            return 0;
+        }
+        
+        // Need to wait for any child to terminate
+        // Block parent until a child terminates
+        block_process(scheduler_state->current_process);
+        
+        // Parent will be unblocked when a child terminates and becomes zombie
+        // After unblocking, recursively call waitpid to find and reap the zombie
+        return s_waitpid(-1, wstatus, false);
     } else {
-        // If blocked or stopped, just update the priority field. It stays in its current queue.
-        LOG_INFO("s_nice: Updated priority for blocked/stopped process PID %d to %d.", pid, priority);
-    }
-
-    log_nice(pid, old_priority, priority, proc->command);
-    log_queue_state();
-
-    return 0;
-}
-
-
-/**
- * @brief Send a stop signal to a process (moves to stopped queue).
- *
- * @param pid Process ID of the target process.
- * @return 0 on success, -1 on error.
- */
-int s_stop(pid_t pid)
-{
-    LOG_INFO("s_stop called for PID %d by PID %d", pid, scheduler_state->current_process->pid);
-    
-    if (pid <= 0) { // Cannot stop init process or invalid PIDs
-        LOG_WARN("Attempted to stop invalid PID %d", pid);
-        errno = EINVAL;
-        return -1;
-    }
-
-    if (pid == scheduler_state->current_process->pid) {
-        // Handle stopping self? Doesn't make much sense for cooperative model.
-        LOG_WARN("Process %d attempting to stop itself - operation ignored.", pid);
-        errno = EINVAL; // Or perhaps just return 0?
-        return -1; 
-    }
-    
-    pcb_t *proc = find_process_anywhere(pid);
-    if (!proc) {
-        LOG_WARN("s_stop: Process PID %d not found.", pid);
-        errno = ESRCH;
-    return -1;
-    }
-
-    if (proc->state == PROCESS_STOPPED || proc->state == PROCESS_ZOMBIED) {
-        LOG_INFO("s_stop: Process PID %d is already stopped or zombied.", pid);
-        return 0; // Already stopped/zombie, consider success?
-    }
-
-    log_stop(proc->pid, proc->priority, proc->command); // Log the stop event
-
-    bool removed = false;
-    if (proc->state == PROCESS_RUNNING) { // Includes ready
-        removed = remove_process_from_ready_queues(proc);
-    } else if (proc->state == PROCESS_BLOCKED) {
-        removed = remove_process_from_queue(&scheduler_state->blocked_queue, proc);
-    }
-
-    if (!removed) {
-         LOG_WARN("s_stop: Process PID %d was found but not in expected queues (state %d).", pid, proc->state);
-         // State inconsistency? Proceed cautiously.
-    }
-    
-    proc->state = PROCESS_STOPPED;
-    linked_list_push_tail(&scheduler_state->stopped_queue, proc);
-
-    LOG_INFO("Process PID %d stopped and moved to stopped queue.", pid);
-    log_queue_state();
-
-    return 0;
-}
-
-/**
- * @brief Send a continue signal to a stopped process (moves to ready queue).
- *
- * @param pid Process ID of the target process.
- * @return 0 on success, -1 on error.
- */
-int s_cont(pid_t pid)
-{
-    LOG_INFO("s_cont called for PID %d by PID %d", pid, scheduler_state->current_process->pid);
-
-     if (pid <= 0) { 
-        LOG_WARN("Attempted to cont invalid PID %d", pid);
-        errno = EINVAL;
-        return -1;
-    }
-
-    // Search *only* in the stopped queue
-    pcb_t *proc = find_process_in_queue(&scheduler_state->stopped_queue, pid);
-    
-    if (!proc) {
-        // Check if it exists but isn't stopped
-        pcb_t* other_proc = find_process_anywhere(pid);
-        if (other_proc) {
-             LOG_INFO("s_cont: Process PID %d exists but is not stopped (state %d).", pid, other_proc->state);
-             return 0; // Not an error, process is already running/ready/blocked
-        } else {
-             LOG_WARN("s_cont: Process PID %d not found.", pid);
-             errno = ESRCH;
-             return -1;
+        // Wait for specific child
+        pcb_t* child = get_process_by_pid(pid);
+        
+        if (child == NULL) {
+            return -1; // No such process
         }
+        
+        // If the process is not a child of the calling process, return -1
+        if (child->ppid != scheduler_state->current_process->pid) {
+            return -1;
+        }
+        
+        if (child->state == PROCESS_ZOMBIED) {
+            // Process is zombie, collect its status
+            if (wstatus != NULL) {
+                *wstatus = child->exit_status;
+            }
+            
+            // Remove from zombie queue and children list
+            linked_list_remove(scheduler_state->current_process->children, child);
+            linked_list_remove(&scheduler_state->zombie_queue, child);
+            
+            pid_t result = child->pid;
+            return result;
+        }
+        
+        if (nohang) {
+            // Child exists but isn't zombie, and nohang is true
+            return 0;
+        }
+        
+        // Need to wait for specific child to terminate
+        block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
+        
+        // After child terminates, it should be a zombie
+        // Return its PID after removing it from zombie queue and freeing
+        linked_list_remove(scheduler_state->current_process->children, child);
+        linked_list_remove(&scheduler_state->zombie_queue, child);
+        
+        pid_t result = child->pid;
+        return result;
     }
-
-    // Found in stopped queue
-    log_continue(proc->pid, proc->priority, proc->command); // Log the continue event
-
-    // Remove from stopped queue
-    bool removed = remove_process_from_queue(&scheduler_state->stopped_queue, proc);
-     if (!removed) {
-         LOG_ERROR("s_cont: Failed to remove PID %d from stopped queue!", pid);
-         // State inconsistency, but proceed.
-    }
-    
-    // Set state to running and add to appropriate ready queue
-    proc->state = PROCESS_RUNNING;
-    linked_list_push_tail(&scheduler_state->ready_queues[proc->priority], proc);
-
-    LOG_INFO("Process PID %d continued and moved to ready queue %d.", pid, proc->priority);
-    log_queue_state();
-
-    return 0;
 }
+
+/**
+ * @brief Send a signal to a particular process.
+ *
+ * @param pid Process ID of the target proces.
+ * @param signal Signal number to be sent.
+ * @return 0 on success, -1 on error.
+ */
+int s_kill(pid_t pid, int signal);
 
 /**
  * @brief Unconditionally exit the calling process.
- * @param status The exit status code.
  */
-void s_exit(int status)
-{
-    pcb_t* current_process = scheduler_state->current_process;
-    LOG_INFO("s_exit called by PID %d with status %d", current_process->pid, status);
+void s_exit(void);
 
-    if (current_process->pid == 0) {
-        LOG_ERROR("Init process (PID 0) attempted to exit!");
-        // What should happen? Maybe loop indefinitely or trigger kernel panic?
-        // For now, just prevent it from proceeding with exit logic.
-        while(1) { /* Loop forever? */ } 
-    }
+/**
+ * @brief Set the priority of the specified thread.
+ *
+ * @param pid Process ID of the target thread.
+ * @param priority The new priorty value of the thread (0, 1, or 2)
+ * @return 0 on success, -1 on failure.
+ */
+int s_nice(pid_t pid, int priority);
 
-    // 1. Reparent children
-    k_proc_reparent_children(current_process);
-
-    // 2. Set state, store exit status
-    current_process->state = PROCESS_ZOMBIED;
-    // TODO: Add exit_status field to pcb_t
-    // current_process->exit_status = status; 
-
-    // 3. Remove from ready queue (shouldn't be in one, but safety check)
-    remove_process_from_ready_queues(current_process); 
-    
-    // 4. Add to zombie queue
-    linked_list_push_tail(&scheduler_state->zombie_queue, current_process);
-
-    log_exit(current_process->pid, status); // Log exit event
-    log_queue_state();
-
-    // 5. Stop executing this thread and trigger scheduler
-    // The thread resources will be cleaned up by spthread_destroy called from 
-    // the pcb_destructor when the process is removed from the zombie queue by waitpid.
-
-    // Need to yield control - scheduler must run next.
-    // The thread needs to terminate itself *after* scheduler picks a new one.
-    // This is tricky. Maybe signal the scheduler? Or call run_scheduler indirectly?
-    
-    // Option A: Call scheduler, which should NOT return here.
-    // run_scheduler(); 
-    // fprintf(stderr, "ERROR: run_scheduler returned to s_exit for PID %d!\n", current_process->pid);
-    // exit(1); // Should not happen
-
-    // Option B: Use spthread_exit which cleans up and terminates the thread.
-    // The scheduler must be invoked somehow after this thread terminates.
-    // Perhaps the SIGALRM will eventually trigger it, or the unblocking logic
-    // in waitpid needs to trigger it.
-    spthread_exit((void*)(intptr_t)status); // Exit the underlying thread
-
-    // Should not reach here
-    LOG_ERROR("s_exit: Reached code after spthread_exit for PID %d!", current_process->pid);
-    while(1); // Loop forever if spthread_exit fails?
-}
-
-// void s_sleep(unsigned int ticks) {
-//     // TODO: Implement s_sleep
-//     // Move current process to blocked queue
-//     // Set current_process->sleep_time = ticks + scheduler_state->ticks; 
-//     // Call run_scheduler();
-// }
+/**
+ * @brief Suspends execution of the calling proces for a specified number of clock ticks.
+ *
+ * This function is analogous to `sleep(3)` in Linux, with the behavior that the system
+ * clock continues to tick even if the call is interrupted.
+ * The sleep can be interrupted by a P_SIGTERM signal, after which the function will
+ * return prematurely.
+ *
+ * @param ticks Duration of the sleep in system clock ticks. Must be greater than 0.
+ */
+void s_sleep(unsigned int ticks);

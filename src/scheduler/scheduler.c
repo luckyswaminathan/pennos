@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include "scheduler.h"
 #include "logger.h"
 #include "../../lib/exiting_alloc.h"
@@ -10,77 +10,71 @@
 #include <bits/sigaction.h>
 #include <asm-generic/signal-defs.h>
 
-scheduler_t* scheduler_state = NULL;
+scheduler_t *scheduler_state = NULL;
 static const int centisecond = 10000;
 static int quantum = 0;
 static sigset_t suspend_set;
 
 /**
+ * @brief The process to run at each quantum. Randomly disperesed array of 0s, 1s, and 2s (priority levels).
+ *
+ * This array is used to test the scheduler by running a specific process at each quantum.
+ * We have nine 0s, six 1s, and four 2s.
+ *
+ */
+static int process_to_run[19] = {0, 0, 1, 0, 0, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 2, 1, 0, 2};
+
+/**
  * @brief PCB destructor function for linked lists
- * 
+ *
  * This function is used as a destructor for PCBs in linked lists.
  * It frees the memory allocated for the PCB and its associated resources.
- * 
+ *
  * @param pcb Pointer to the PCB to destroy
  */
-void pcb_destructor(void* pcb) {
-    pcb_t* pcb_ptr = (pcb_t*)pcb;
-    if (pcb_ptr != NULL) {
+void pcb_destructor(void *pcb)
+{
+    pcb_t *pcb_ptr = (pcb_t *)pcb;
+    if (pcb_ptr != NULL)
+    {
         // Free the children list if it exists
-        if (pcb_ptr->children != NULL) {
+        if (pcb_ptr->children != NULL)
+        {
             linked_list_clear(pcb_ptr->children);
             free(pcb_ptr->children);
         }
-        
+
         // Free the thread if it exists
-        if (pcb_ptr->thread != NULL) {
+        if (pcb_ptr->thread != NULL)
+        {
             // Properly join the thread to clean up its resources
             spthread_join(*pcb_ptr->thread, NULL);
             free(pcb_ptr->thread);
         }
-        
+
         // Free command and argv if they exist
-        if (pcb_ptr->command != NULL) {
+        if (pcb_ptr->command != NULL)
+        {
             free(pcb_ptr->command);
         }
-        
-        if (pcb_ptr->argv != NULL) {
-            for (int i = 0; pcb_ptr->argv[i] != NULL; i++) {
+
+        if (pcb_ptr->argv != NULL)
+        {
+            for (int i = 0; pcb_ptr->argv[i] != NULL; i++)
+            {
                 free(pcb_ptr->argv[i]);
             }
             free(pcb_ptr->argv);
         }
-        
+
         // Free the PCB itself
         free(pcb_ptr);
     }
 }
 
 /**
- * @brief Initialize the init process
- */
-static void _init_init_process() {
-    scheduler_state->init_process = (pcb_t*)malloc(sizeof(pcb_t));
-    scheduler_state->init_process->pid = 0;
-    scheduler_state->init_process->ppid = 0;
-    scheduler_state->init_process->pgid = 0;
-    
-    // Initialize children list directly
-    scheduler_state->init_process->children = exiting_malloc(sizeof(linked_list(pcb_t)));
-    scheduler_state->init_process->children->head = NULL;
-    scheduler_state->init_process->children->tail = NULL;
-    scheduler_state->init_process->children->ele_dtor = pcb_destructor;
-    
-    scheduler_state->init_process->state = PROCESS_RUNNING;
-    scheduler_state->init_process->priority = PRIORITY_HIGH;
-    scheduler_state->init_process->sleep_time = 0;
-    scheduler_state->init_process->thread = NULL;
-    scheduler_state->init_process->func = NULL;
-}
-
-/**
  * @brief Signal handler for SIGALRM
- * 
+ *
  * This function is used to handle the SIGALRM signal.
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
@@ -88,10 +82,11 @@ static void alarm_handler(int signum) {}
 
 /**
  * @brief Set up the signal handler for SIGALRM
- * 
+ *
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
-static void _setup_sigalarm(sigset_t* suspend_set) {
+static void _setup_sigalarm(sigset_t *suspend_set)
+{
     // Set up signal handler for SIGALRM
     sigfillset(suspend_set);
     sigdelset(suspend_set, SIGALRM);
@@ -114,35 +109,30 @@ static void _setup_sigalarm(sigset_t* suspend_set) {
 /**
  * @brief Initialize the scheduler
  */
-void init_scheduler() {
-    scheduler_state = (scheduler_t*)exiting_malloc(sizeof(scheduler_t));
+void init_scheduler()
+{
+    scheduler_state = (scheduler_t *)exiting_malloc(sizeof(scheduler_t));
 
     // Initialize priority queues
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         scheduler_state->ready_queues[i].head = NULL;
         scheduler_state->ready_queues[i].tail = NULL;
         scheduler_state->ready_queues[i].ele_dtor = pcb_destructor;
     }
-    
+
     // Initialize other queues
     scheduler_state->blocked_queue.head = NULL;
     scheduler_state->blocked_queue.tail = NULL;
     scheduler_state->blocked_queue.ele_dtor = pcb_destructor;
-    
+
     scheduler_state->zombie_queue.head = NULL;
     scheduler_state->zombie_queue.tail = NULL;
     scheduler_state->zombie_queue.ele_dtor = pcb_destructor;
-    
+
     scheduler_state->stopped_queue.head = NULL;
     scheduler_state->stopped_queue.tail = NULL;
     scheduler_state->stopped_queue.ele_dtor = pcb_destructor;
-
-    // Initialize init process and put it on the highest priority queue
-    _init_init_process();
-    linked_list_push_tail(&scheduler_state->ready_queues[PRIORITY_HIGH], scheduler_state->init_process);
-
-    // Initialize current process
-    scheduler_state->current_process = scheduler_state->init_process;
 
     // Initialize ticks
     scheduler_state->ticks = 0;
@@ -159,66 +149,83 @@ void init_scheduler() {
 
 /**
  * @brief Add a process to the appropriate queue based on its priority
- * 
+ *
  * This function adds a process to the queue that corresponds to its priority.
- * 
+ *
  * @param process The process to add to the queue
  */
-void add_process_to_queue(pcb_t* process) {
+void add_process_to_queue(pcb_t *process)
+{
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
 }
 
 /**
  * @brief Select the next queue to run a process from
- * 
+ *
  * This function selects the next queue to run a process from.
- * 
+ *
  * @param scheduler_state The scheduler state
  */
-int _select_next_queue(scheduler_t* scheduler_state) {
-    // Generate a random number between 0 and 18
-    int priority_num = quantum % 19;
-    if (priority_num < 10 && scheduler_state->ready_queues[PRIORITY_HIGH].head != NULL) {
-        // Run 2.25x more often than the lowest priority queue
-        return PRIORITY_HIGH;
-    } else if (priority_num < 16 && scheduler_state->ready_queues[PRIORITY_MEDIUM].head != NULL) {
-        // Run 1.5x more often than the lowest priority queue
-        return PRIORITY_MEDIUM;
-    } else if (scheduler_state->ready_queues[PRIORITY_LOW].head != NULL) {
-        return PRIORITY_LOW;
-    } else {
-        return -1;
+int _select_next_queue(scheduler_t *scheduler_state)
+{
+    int index = quantum % 19;
+    // Uses the process_to_run array to select the next queue to run a process from
+    if (scheduler_state->ready_queues[process_to_run[index]].head != NULL)
+    {
+        return process_to_run[index];
     }
+    else
+    {
+        // If the queue selected is empty, then we select the next queue to run a process from
+        // in order of priority
+        for (int i = 0; i < 3; i++)
+        {
+            if (scheduler_state->ready_queues[i].head != NULL)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
 }
 
 /**
  * @brief Update the blocked processes
- * 
+ *
  * This function updates the blocked processes by decrementing their sleep time.
- * 
+ *
  * @param scheduler_state The scheduler state
  */
-void _update_blocked_processes() {
-    pcb_t* process = scheduler_state->blocked_queue.head;
-    while (process != NULL) {
+void _update_blocked_processes()
+{
+    pcb_t *process = scheduler_state->blocked_queue.head;
+    while (process != NULL)
+    {
         // Case 1: Process was sleeping and has now woken up
-        if (process->sleep_time > 0) {
+        if (process->sleep_time > 0)
+        {
             process->sleep_time--;
-            if (process->sleep_time == 0) {
+            if (process->sleep_time == 0)
+            {
                 unblock_process(process);
             }
-        } else {
+        }
+        else
+        {
             // Case 2: Process was waiting on a child process to exit
             bool all_children_exited = true;
-            pcb_t* child = process->children->head;
-            while (child != NULL) {
-                if (child->state != PROCESS_ZOMBIED) {
+            pcb_t *child = process->children->head;
+            while (child != NULL)
+            {
+                if (child->state != PROCESS_ZOMBIED)
+                {
                     all_children_exited = false;
-                        break;
+                    break;
                 }
                 child = child->next;
             }
-            if (all_children_exited) {
+            if (all_children_exited)
+            {
                 unblock_process(process);
             }
         }
@@ -229,26 +236,29 @@ void _update_blocked_processes() {
 
 /**
  * @brief Run the next process
- * 
+ *
  * This function runs the next process from the queue that was selected.
- * 
+ *
  * @param scheduler_state The scheduler state
  */
-void _run_next_process() {
+void _run_next_process()
+{
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
 
-    if (next_queue == -1) {
+    if (next_queue == -1)
+    {
         // No process to run, so we don't consume a quantum
         return;
     }
 
     // Get the process to run from the queue
-    pcb_t* process = (pcb_t*)exiting_malloc(sizeof(pcb_t));
-    if (process->thread == NULL) {
+    pcb_t *process = (pcb_t *)exiting_malloc(sizeof(pcb_t));
+    if (process->thread == NULL)
+    {
         // TODO: Add logging here and check if you should consume a quantum
         return;
     }
@@ -260,7 +270,7 @@ void _run_next_process() {
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
-    
+
     // Consume a quantum
     quantum++;
 
@@ -270,13 +280,15 @@ void _run_next_process() {
 
 /**
  * @brief Run the scheduler
- * 
+ *
  * This function runs the scheduler.
- * 
+ *
  * @param scheduler_state The scheduler state
  */
-void run_scheduler() {
-    while (1) {
+void run_scheduler()
+{
+    while (1)
+    {
         _run_next_process();
     }
 }
@@ -285,12 +297,13 @@ void run_scheduler() {
 
 /**
  * @brief Block a process
- * 
+ *
  * This function blocks a process by removing it from the queue it is currently on and adding it to the blocked queue.
- * 
+ *
  * @param process The process to block
  */
-void block_process(pcb_t* process) {
+void block_process(pcb_t *process)
+{
     // Remove the process from the queue it is currently on
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -300,12 +313,13 @@ void block_process(pcb_t* process) {
 
 /**
  * @brief Unblock a process
- * 
+ *
  * This function unblocks a process by removing it from the blocked queue and adding it to the appropriate queue based on its priority.
- * 
+ *
  * @param process The process to unblock
  */
-void unblock_process(pcb_t* process) {
+void unblock_process(pcb_t *process)
+{
     // Remove the process from the blocked queue
     linked_list_remove(&scheduler_state->blocked_queue, process);
 
@@ -315,12 +329,13 @@ void unblock_process(pcb_t* process) {
 
 /**
  * @brief Kill a process
- * 
+ *
  * This function kills a process by removing it from the queue it is currently on and adding it to the zombie queue.
- * 
+ *
  * @param process The process to kill
  */
-void kill_process(pcb_t* process) {
+void kill_process(pcb_t *process)
+{
     // Remove the process from the queue it is currently on
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -330,12 +345,13 @@ void kill_process(pcb_t* process) {
 
 /**
  * @brief Continue a process
- * 
+ *
  * This function continues a process by removing it from the blocked queue and adding it to the appropriate queue based on its priority.
- * 
+ *
  * @param process The process to continue
  */
-void continue_process(pcb_t* process) {
+void continue_process(pcb_t *process)
+{
     // Remove the process from the blocked queue
     linked_list_remove(&scheduler_state->blocked_queue, process);
 
@@ -345,13 +361,14 @@ void continue_process(pcb_t* process) {
 
 /**
  * @brief Update the priority of a process
- * 
+ *
  * This function updates the priority of a process by removing it from the queue it is currently on and adding it to the appropriate queue based on its priority.
- * 
+ *
  * @param process The process to update the priority of
  * @param priority The new priority of the process
  */
-void update_priority(pcb_t* process, int priority) {
+void update_priority(pcb_t *process, int priority)
+{
     // Remove the process from the queue it is currently on
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -361,12 +378,13 @@ void update_priority(pcb_t* process, int priority) {
 
 /**
  * @brief Put a process to sleep
- * 
+ *
  * This function puts a process to sleep by adding it to the blocked queue.
- * 
+ *
  * @param process The process to put to sleep
  */
-void put_process_to_sleep(pcb_t* process, unsigned int ticks) {
+void put_process_to_sleep(pcb_t *process, unsigned int ticks)
+{
     // Remove the process from the queue it is currently on
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -379,18 +397,108 @@ void put_process_to_sleep(pcb_t* process, unsigned int ticks) {
 
 /**
  * @brief Cleanup zombie children
- * 
+ *
  * This function cleans up zombie children by removing them from the parent's children list and freeing their resources.
- * 
+ *
  */
-void cleanup_zombie_children(pcb_t* parent) {
-    pcb_t* child = parent->children->head;
-    while (child != NULL) {
-        pcb_t* next = child->next;
-        if (child->state == PROCESS_ZOMBIED) {
+void cleanup_zombie_children(pcb_t *parent)
+{
+    pcb_t *child = parent->children->head;
+    while (child != NULL)
+    {
+        pcb_t *next = child->next;
+        if (child->state == PROCESS_ZOMBIED)
+        {
             linked_list_remove(parent->children, child);
             free(child);
         }
         child = next;
     }
+}
+
+/**
+ * @brief Get a process by its PID
+ *
+ * This function gets a process by its PID.
+ *
+ * @param pid The PID of the process to get
+ * @return The process with the given PID, or NULL if it is not found
+ */
+pcb_t *get_process_by_pid(pid_t pid)
+{
+    // Check all six queues for the process
+    for (int i = 0; i < 3; i++)
+    {
+        pcb_t *process = scheduler_state->ready_queues[i].head;
+        while (process != NULL)
+        {
+            if (process->pid == pid)
+            {
+                return process;
+            }
+            process = process->next;
+        }
+    }
+    pcb_t *process = scheduler_state->blocked_queue.head;
+    while (process != NULL)
+    {
+        if (process->pid == pid)
+        {
+            return process;
+        }
+        process = process->next;
+    }
+    pcb_t *process = scheduler_state->zombie_queue.head;
+    while (process != NULL)
+    {
+        if (process->pid == pid)
+        {
+            return process;
+        }
+        process = process->next;
+    }
+    pcb_t *process = scheduler_state->stopped_queue.head;
+    while (process != NULL)
+    {
+        if (process->pid == pid)
+        {
+            return process;
+        }
+        process = process->next;
+    }
+    return NULL;
+}
+
+/**
+ * @brief Block and wait for a child process to finish
+ *
+ * This function blocks the parent process and waits for the child process to finish.
+ *
+ * @param scheduler_state The scheduler state
+ * @param process The parent process
+ * @param child The child process
+ * @param wstatus The status of the child process
+ */
+void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, int *wstatus) {
+    block_process(scheduler_state->current_process);
+
+    // Wait for the child to finish
+    spthread_join(*child->thread, (void **)wstatus);
+
+    // Remove the child from its current queue
+    if (child->state == PROCESS_STOPPED) {
+        linked_list_remove(&scheduler_state->stopped_queue, child);
+    } else if (child->state == PROCESS_BLOCKED) {
+        linked_list_remove(&scheduler_state->blocked_queue, child);
+    } else {
+        linked_list_remove(&scheduler_state->ready_queues[child->priority], child);
+    }
+
+    // Mark child as zombie and add to zombie queue
+    child->state = PROCESS_ZOMBIED;
+    child->exit_status = *wstatus;
+    linked_list_add(&scheduler_state->zombie_queue, child);
+
+    // Unblock the parent process
+    unblock_process(scheduler_state->current_process);
 }
