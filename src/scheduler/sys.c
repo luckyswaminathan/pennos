@@ -177,94 +177,32 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
-    if (pid == -1) {
-        // Wait for any child process
-        pcb_t* child = scheduler_state->current_process->children->head;
-        pcb_t* zombie_child = NULL;
-        
-        // First pass: look for zombies
-        while (child != NULL) {
-            pcb_t* next = child->next; // Save next pointer as we might remove child
-            
-            if (child->state == PROCESS_ZOMBIED) {
-                // Found a zombie, collect its status
-                zombie_child = child;
-                if (wstatus != NULL) {
-                    *wstatus = zombie_child->exit_status;
-                }
-                
-                // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
-                linked_list_remove(scheduler_state->current_process->children, zombie_child);
-                linked_list_remove(&scheduler_state->zombie_queue, zombie_child);
-                
-                pid_t result = zombie_child->pid;
-                return result;
-            }
-            
-            child = next;
-        }
-        
-        // No zombies found
-        if (scheduler_state->current_process->children->head == NULL) {
-            // No children at all
-            return -1;
-        }
-        
-        if (nohang) {
-            // Have children, but none are zombies and nohang is true
-            return 0;
-        }
-        
-        // Need to wait for any child to terminate
-        // Block parent until a child terminates
-        block_process(scheduler_state->current_process);
-        
-        // Parent will be unblocked when a child terminates and becomes zombie
-        // After unblocking, recursively call waitpid to find and reap the zombie
-        return s_waitpid(-1, wstatus, false);
-    } else {
-        // Wait for specific child
-        pcb_t* child = get_process_by_pid(pid);
-        
-        if (child == NULL) {
-            return -1; // No such process
-        }
-        
-        // If the process is not a child of the calling process, return -1
-        if (child->ppid != scheduler_state->current_process->pid) {
-            return -1;
-        }
-        
-        if (child->state == PROCESS_ZOMBIED) {
-            // Process is zombie, collect its status
-            if (wstatus != NULL) {
-                *wstatus = child->exit_status;
-            }
-            
-            // Remove from zombie queue and children list
-            linked_list_remove(scheduler_state->current_process->children, child);
-            linked_list_remove(&scheduler_state->zombie_queue, child);
-            
-            pid_t result = child->pid;
-            return result;
-        }
-        
-        if (nohang) {
-            // Child exists but isn't zombie, and nohang is true
-            return 0;
-        }
-        
-        // Need to wait for specific child to terminate
-        block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
-        
-        // After child terminates, it should be a zombie
-        // Return its PID after removing it from zombie queue and freeing
-        linked_list_remove(scheduler_state->current_process->children, child);
-        linked_list_remove(&scheduler_state->zombie_queue, child);
-        
-        pid_t result = child->pid;
-        return result;
+    // 1. Get the current process PCB (the parent)
+    pcb_t* parent = k_get_current_process();
+    if (!parent) {
+        // Should not happen if called from a running process, but handle defensively.
+        fprintf(stderr, "s_waitpid Error: Could not get current process.\n");
+        return -1; // Or set appropriate errno
     }
+
+    // 2. Call the kernel implementation
+    // k_waitpid handles finding children, checking state, reaping, and blocking.
+    pid_t result = k_waitpid(parent, pid, wstatus, nohang);
+
+    // 3. Handle potential blocking case (if k_waitpid returns -2)
+    // This requires a loop and potentially yielding/rescheduling, which is complex.
+    // For now, we treat the blocking indicator as an error.
+    // A more complete implementation would involve yielding and retrying.
+    if (result == -2) { // Special return code from our current k_waitpid indicating blocking
+        fprintf(stderr, "s_waitpid: Kernel indicated blocking; syscall needs retry mechanism (not implemented).\n");
+        // In a real system, this might yield and retry, or return an error like EINTR/EAGAIN.
+        // Set errno to EAGAIN perhaps? For now, map to -1.
+        // errno = EAGAIN;
+        return -1; 
+    }
+    
+    // Return the result from k_waitpid (-1 for error, 0 for nohang, PID for success)
+    return result; 
 }
 
 /**

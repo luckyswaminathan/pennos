@@ -1,10 +1,7 @@
 #include "scheduler.h"
 
 /**
- * @brief Create a new child process, inheriting applicable properties from the parent.
- * This function handles PCB allocation, thread creation, and adding the process
- * to the ready queue.
- *
+ * @brief Create a new child process.
  * @param parent The parent process PCB (can be NULL for initial processes).
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel will copy this.
@@ -15,21 +12,65 @@
 pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], int fd0, int fd1);
 
 /**
- * @brief Clean up a terminated/finished thread's resources.
- * This may include freeing the PCB, handling children, etc.
+ * @brief Clean up a terminated/finished process's resources.
+ * Called internally by the kernel, typically after reaping.
+ * @param proc Pointer to the PCB of the process to clean up.
  */
 void k_proc_cleanup(pcb_t *proc);
 
 /**
  * @brief Adds a process to the appropriate scheduler ready queue based on its priority.
- *
  * @param proc The process control block to add.
  */
 void k_add_to_ready_queue(pcb_t *proc);
 
 /**
  * @brief Retrieves the Process Control Block (PCB) of the currently running process.
- *
  * @return pcb_t* Pointer to the current process's PCB, or NULL if no process is running.
  */
 pcb_t* k_get_current_process(void);
+
+/**
+ * @brief Finds a process by its PID across all scheduler queues (except zombie).
+ * @param pid The PID of the process to find.
+ * @return pcb_t* Pointer to the PCB if found, NULL otherwise.
+ */
+pcb_t* k_get_process_by_pid(pid_t pid);
+
+/**
+ * @brief Moves a process from its current ready/running queue to the blocked queue.
+ * Does not change the process state field directly, assumes caller manages state.
+ * @param process The process to block.
+ * @return true if the process was found and moved, false otherwise.
+ */
+bool k_block_process(pcb_t *process);
+
+/**
+ * @brief Moves a process from the blocked queue to the appropriate ready queue.
+ * Does not change the process state field directly, assumes caller manages state.
+ * @param process The process to unblock.
+ * @return true if the process was found and moved, false otherwise.
+ */
+bool k_unblock_process(pcb_t *process);
+
+/**
+ * @brief Kernel-level implementation for waiting on a child process.
+ *
+ * Handles finding zombie children, reaping them (including cleanup), 
+ * or blocking the parent if necessary (when nohang is false).
+ *
+ * @param parent The PCB of the calling (parent) process.
+ * @param pid The PID of the child to wait for (-1 for any child).
+ * @param wstatus Pointer to store the exit status of the reaped child.
+ * @param nohang If true, return immediately if no child has changed state.
+ * @return pid_t PID of the reaped child, 0 if nohang and no child ready, -1 on error (e.g., no such child, ECHILD).
+ */
+pid_t k_waitpid(pcb_t *parent, pid_t pid, int *wstatus, bool nohang);
+
+/**
+ * @brief Marks a process as terminated (zombie), sets its exit status, 
+ *        moves it to the zombie queue, and potentially unblocks a waiting parent.
+ * @param process The process that is exiting.
+ * @param exit_status The exit status code.
+ */
+void k_proc_exit(pcb_t *process, int exit_status);

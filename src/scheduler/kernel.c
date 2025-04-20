@@ -93,7 +93,6 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         return -1; // Return -1 on failure as per new signature
     }
 
-    // TODO: Make sure that the initialization of the PCB is correct
     // Initialize core fields
     proc->pid = next_pid++;
     proc->ppid = parent ? parent->pid : 0;
