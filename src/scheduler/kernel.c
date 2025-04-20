@@ -8,134 +8,154 @@
 #include <stdlib.h> // For malloc/free
 #include <stdio.h> // For debugging
 
+// PID 0 is reserved for init process (or kernel itself)
+// User processes start from PID 1
+static pid_t next_pid = 1;
 
-// Counter for assigning unique PIDs
-static pid_t next_pid = 1; // PID 0 is reserved for the init process
 
-pcb_t* k_proc_create(pcb_t *parent, void* arg) {
-    
+/**
+ * @brief Creates a new process control block (PCB) as a child of the given parent.
+ *
+ * This function allocates memory for a new PCB and initializes its fields.
+ * It assigns a unique process ID (PID) starting from 1.
+ * The new process inherits certain properties implicitly (like being added to the parent's child list)
+ * but specific fields like file descriptors, thread info, and the function to execute
+ * must be set by the caller after this function returns.
+ * The new process starts in the PROCESS_RUNNING state but is not yet placed in a scheduler queue.
+ *
+ * @param parent Pointer to the parent process's PCB. If NULL, the process is assumed
+ *               to be an initial process (like init) with PPID 0.
+ * @return pcb_t* Pointer to the newly created PCB, or NULL if allocation fails.
+ */
+pcbt* k_proc_create(pcb_t *parent) {
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
-
-    // Initialize PCB fields
-    proc->pid = next_pid++;
-    proc->ppid = parent->pid;
-    proc->pgid = (parent->pid == 0) ? proc->pid : parent->pgid; // New process group for children of init, otherwise inherit
-
-    // Allocate and initialize the children list for this new process
-    proc->children = (linked_list(pcb_t)*)exiting_malloc(sizeof(linked_list(pcb_t)));
-    proc->children->head = NULL;
-    proc->children->tail = NULL;
-    proc->children->ele_dtor = pcb_destructor; // Children list should also use the destructor
-
-    proc->state = PROCESS_RUNNING;
-    proc->sleep_time = 0;
-    proc->thread = NULL; // Thread will be created by s_spawn
-    proc->func = NULL;   // Function pointer will be set by s_spawn or similar
-    proc->argv = NULL;   // Will be set if created from exec-like command
-
-    // Set priority (handle init/shell specially if needed - PID 0 already handled at init)
-    // Spec says PID 0 (init) and PID 1 (shell?) should be high priority.
-    if (proc->pid == 1) { // Assuming PID 1 is the first shell
-        proc->priority = PRIORITY_HIGH;
-    } else {
-        proc->priority = PRIORITY_MEDIUM; // Default priority
+    if (!proc) {
+        perror("Failed to allocate PCB"); 
+        return NULL;
     }
 
-    // Initialize linked list pointers
+    proc->pid = next_pid++;
+    proc->ppid = parent ? parent->pid : 0; // Assume PID 0 for parent if NULL (e.g., init process)
+    proc->pgid = proc->pid; // New process starts a new process group
+
+    // Initialize children list (without destructor, cleanup is manual via k_proc_cleanup)
+    proc->children = (linked_list(pcb_t)*) exiting_malloc(sizeof(linked_list(pcb_t)));
+    if (!proc->children) {
+        perror("Failed to allocate children list");
+        free(proc);
+        return NULL;
+    }
+    *proc->children = linked_list_new(pcb_t, NULL); 
+
+    // Initialize other fields to defaults
+    proc->fd0 = -1; // Will be set by caller (e.g., s_spawn)
+    proc->fd1 = -1; // Will be set by caller
+    proc->state = PROCESS_RUNNING; // Initial state, will be moved to ready queue
+    proc->priority = PRIORITY_MEDIUM; // Default priority
+    proc->sleep_time = 0.0;
+    proc->thread = NULL; // Will be set by caller
+    proc->func = NULL;   // Will be set by caller
+    proc->command = NULL;// Will be set by caller
+    proc->argv = NULL;   // Will be set by caller
+    proc->exit_status = 0; // Default exit status
+
+    // Initialize list pointers
     proc->prev = NULL;
     proc->next = NULL;
-    
-    // Add this process to the parent's children list
-    // Ensure parent's children list is initialized
-    if (parent->children == NULL) {
-         // This should not happen if parent is init_process or created by k_proc_create
-         LOG_ERROR("Parent PID %d has NULL children list!", parent->pid);
-         // Handle error appropriately, maybe allocate it? For now, log and continue cautiously.
-         parent->children = (linked_list(pcb_t)*)exiting_malloc(sizeof(linked_list(pcb_t)));
-         parent->children->head = NULL;
-         parent->children->tail = NULL;
-         parent->children->ele_dtor = pcb_destructor;
-    }
-    linked_list_push_tail(parent->children, proc);
-    
-    // Handle command name based on argument (e.g., from shell command context)
-    if (arg != NULL) {
-        // Assuming arg is struct command_context* as before
-        // We need shell/commands.h for this structure definition
-        struct command_context* ctx = (struct command_context*)arg;
-        // Assuming command_context has char** command
-        if (ctx->command && ctx->command[0]) {
-             proc->command = strdup(ctx->command[0]);
-             // Potentially copy argv as well if needed later
-        } else {
-             proc->command = strdup("unknown"); // Fallback if command missing
-        }
-    } else {
-        // Default command name if no arg provided (e.g., init process creates shell?)
-        proc->command = strdup("process"); 
-        if(proc->pid == 1) { // Special case for shell likely created by init
-            free(proc->command);
-            proc->command = strdup("shell");
-        }
-    }
 
-    // Add the new process to the appropriate ready queue
-    linked_list_push_tail(&scheduler_state->ready_queues[proc->priority], proc);
-    
-    // Log process creation
-    LOG_INFO("Created process %d (parent %d, priority %d, cmd '%s')", proc->pid, proc->ppid, proc->priority, proc->command);
-    log_create(proc->pid, proc->priority, proc->command);
-    log_queue_state(); // Log queue state after adding
+    // Add to parent's children list
+    if (parent && parent->children) { 
+        linked_list_push_tail(parent->children, proc);
+    }
 
     return proc;
 }
 
 
 /**
- * @brief Reparents the children of a terminating process to the init process.
- * This function should be called before the process PCB is finally destroyed.
- * It does NOT free the proc PCB itself.
+ * @brief Cleans up resources associated with a terminated or finished process.
  *
- * @param proc The process whose children need reparenting.
+ * This function performs the necessary cleanup steps when a process is destroyed:
+ * 1. Reparents any orphaned children of the process to the init process (PID 0).
+ *    It assumes `scheduler_state` and `scheduler_state->init_process` are accessible.
+ * 2. Removes the process from its parent's list of children.
+ * 3. Frees allocated resources within the PCB, including the thread structure (if any),
+ *    command string, argv array, and the children list structure.
+ * 4. Frees the PCB structure itself.
+ *
+ * Note: This function does *not* handle removing the process from scheduler queues
+ * (ready, blocked, etc.) or joining the underlying thread; those actions should
+ * occur before calling cleanup.
+ *
+ * @param proc Pointer to the PCB of the process to clean up.
  */
-void k_proc_reparent_children(pcb_t *proc) {
-    if (!proc || !proc->children || !scheduler_state || !scheduler_state->init_process) {
-        LOG_ERROR("Invalid arguments to k_proc_reparent_children");
+void k_proc_cleanup(pcb_t *proc) {
+    if (!proc) {
         return;
     }
 
-    LOG_INFO("Reparenting children of terminating process %d", proc->pid);
-    log_process_state(); // Log state before reparenting
-
-    pcb_t* init_proc = scheduler_state->init_process;
-    
-    // Use linked_list_pop_head to safely iterate and remove from the old list
-    pcb_t* child = NULL;
-    while ((child = linked_list_pop_head(proc->children)) != NULL) {
-        LOG_INFO("Reparenting child %d to init process %d", child->pid, init_proc->pid);
-        child->ppid = init_proc->pid;
-
-        // Add child to init process's children list
-        if (init_proc->children == NULL) {
-            // Safety check, should be initialized in _init_init_process
-            LOG_ERROR("Init process %d has NULL children list!", init_proc->pid);
-            // Allocate? This indicates a deeper issue.
-            init_proc->children = (linked_list(pcb_t)*)exiting_malloc(sizeof(linked_list(pcb_t)));
-            init_proc->children->head = NULL;
-            init_proc->children->tail = NULL;
-            init_proc->children->ele_dtor = pcb_destructor;
+    // 1. Reparent children to init process
+    // Assumes scheduler_state and scheduler_state->init_process are valid and accessible
+    if (scheduler_state && scheduler_state->init_process && proc->children) {
+        pcb_t *child;
+        // Pop children one by one, reparent, and add to init's list
+        while ((child = linked_list_pop_head(proc->children)) != NULL) {
+            if (scheduler_state->init_process->children) {
+                child->ppid = scheduler_state->init_process->pid;
+                linked_list_push_tail(scheduler_state->init_process->children, child);
+            }
+            // TODO: What if init process children list is NULL? Handle error/log?
         }
-        linked_list_push_tail(init_proc->children, child);
-        
-        // Log orphaned process
-        log_orphan(child->pid, child->priority, child->command ? child->command : "unknown");
+        // Free the (now empty) children list structure of the cleaned-up process
+        free(proc->children);
+        proc->children = NULL;
     }
 
-    // The original children list structure is now empty, free it.
-    // The child PCBs themselves are now owned by the init_process's children list.
-    free(proc->children);
-    proc->children = NULL; // Avoid dangling pointer
+    // 2. Remove process from its parent's children list (manually unlink)
+    // We need get_process_by_pid which is now non-static in scheduler.c
+    pcb_t* parent = get_process_by_pid(proc->ppid);
+    if (parent && parent->children) {
+        linked_list(pcb_t)* children_list = parent->children;
+        
+        // Manually unlink 'proc' from the 'children_list' without calling destructor
+        if (proc->prev) {
+            proc->prev->next = proc->next;
+        } else {
+            // Proc is the head
+            children_list->head = proc->next;
+        }
+        
+        if (proc->next) {
+            proc->next->prev = proc->prev;
+        } else {
+            // Proc is the tail
+            children_list->tail = proc->prev;
+        }
 
-    LOG_INFO("Finished reparenting children of process %d", proc->pid);
-    // Note: We do NOT free(proc) here. That's handled by the list destructor later.
+        // Reset proc's pointers after unlinking
+        proc->prev = NULL;
+        proc->next = NULL;
+    }
+
+    // 3. Free process resources (similar to pcb_destructor but without list interactions)
+    if (proc->thread) {
+        // Note: Joining the thread should happen before cleanup, e.g., in waitpid.
+        // Here we just free the spthread_t structure.
+        free(proc->thread);
+        proc->thread = NULL;
+    }
+    if (proc->command) {
+        free(proc->command);
+        proc->command = NULL;
+    }
+    if (proc->argv) {
+        for (int i = 0; proc->argv[i] != NULL; i++) {
+            free(proc->argv[i]);
+        }
+        free(proc->argv);
+        proc->argv = NULL;
+    }
+
+    // 4. Free the PCB structure itself
+    free(proc);
 }

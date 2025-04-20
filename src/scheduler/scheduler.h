@@ -102,5 +102,6 @@ void continue_process(pcb_t* process);
 void put_process_to_sleep(pcb_t* process, unsigned int ticks);
 void cleanup_zombie_children(pcb_t* parent);
 
+pcbt *get_process_by_pid(pid_t pid);
 
 #endif
