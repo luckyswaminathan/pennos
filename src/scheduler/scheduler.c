@@ -259,15 +259,14 @@ void _update_blocked_processes()
  */
 void _run_next_process()
 {
-    printf("Running next process\n");
-    k_get_all_process_info();
+    // printf("Running next process\n");
+    // k_get_all_process_info();
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
 
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
-
 
     if (next_queue == -1)
     {
@@ -280,6 +279,7 @@ void _run_next_process()
 
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
+    printf("Process to run: %d %s; queue: %d\n", process->pid, process->command, next_queue);
 
     
     if (!process) {
@@ -312,8 +312,10 @@ void _run_next_process()
     quantum++;
 
     // Add the process back to the queue
-    linked_list_remove(&scheduler_state->ready_queues[next_queue], process); // remove from queue
+    linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
     linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
+    k_get_all_process_info();
+    printf("\n");
 }
 
 /**
@@ -442,10 +444,14 @@ static bool k_remove_from_active_queue(pcb_t *process) {
 void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
+    printf("Blocking process with pid %d\n", process->pid);
+    k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
+    printf("Post push tail\n");
+    k_get_all_process_info();
 }
 
 /**
@@ -659,10 +665,12 @@ pcb_t *k_get_process_by_pid(pid_t pid)
  * @param wstatus The status of the child process
  */
 void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, int *wstatus) {
+    printf("Blocking and waiting for child with pid %d\n", child->pid);
     block_process(scheduler_state->current_process);
 
     // Wait for the child to finish
     spthread_join(*child->thread, (void **)wstatus);
+    printf("Child finished\n");
 
     // Remove the child from its current queue
     if (child->state == PROCESS_STOPPED) {
@@ -777,6 +785,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         
         // Need to wait for specific child to terminate
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
+        printf("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
         
         // After child terminates, it should be a zombie
         // Return its PID after removing it from zombie queue and freeing
@@ -1013,10 +1022,16 @@ void k_get_processes_from_queue(pcb_ll_t queue) {
 // get info for running, blocked, and stopped processes
 void k_get_all_process_info() {
     // Cast to the correct type to avoid incompatible pointer types
+    printf("priority high\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_HIGH]);
+    printf("priority medium\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_MEDIUM]);
+    printf("priority low\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_LOW]);
+    printf("blocked\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->blocked_queue);
+    printf("stopped\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue);
+    printf("zombie\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue);
 }

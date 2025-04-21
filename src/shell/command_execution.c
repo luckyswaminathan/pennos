@@ -44,6 +44,7 @@ void execute_job(job* job)
     }
 
     struct command_context* context = exiting_malloc(sizeof(struct command_context));
+    printf("Executing command: %s\n", parsed_command->commands[0][0]);
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
@@ -68,6 +69,7 @@ void execute_job(job* job)
     if (job->status == J_RUNNING_FG) {   
         int status;
         printf("Waiting for foreground job %ld\n", job->id);
+        s_get_process_info();
         s_waitpid(pid, &status, false);
         
         // TODO: don't love putting this logic here
