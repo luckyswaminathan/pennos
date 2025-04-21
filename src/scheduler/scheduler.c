@@ -275,11 +275,11 @@ void _run_next_process()
         return;
     }
 
-    printf("Selecting next process\n");
-    k_get_all_process_info();
+    // printf("Selecting next process\n");
+    // k_get_all_process_info();
 
     // Get the process to run from the queue
-    pcb_t *process = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+    pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
 
     printf("Process:");
 
@@ -319,6 +319,7 @@ void _run_next_process()
     quantum++;
 
     // Add the process back to the queue
+    linked_list_remove(&scheduler_state->ready_queues[next_queue], process); // remove from queue
     linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
     printf("Process added back to queue\n");
 }

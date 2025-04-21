@@ -108,7 +108,7 @@ static void* init_process(void* arg) {
 
     while (true) {
         i++;
-        dprintf(2, "init running %d\n", i);
+        // dprintf(2, "init running %d\n", i);
         // k_get_all_process_info();
     }
 
