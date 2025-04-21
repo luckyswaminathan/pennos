@@ -674,7 +674,6 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // this is unintuitive but works for blocking and waiting
     
     block_process(scheduler_state->current_process);
-    spthread_cancel(*child->thread);
     spthread_continue(*child->thread);
     spthread_join(*child->thread, (void **)wstatus);
     printf("Blocked\n");
