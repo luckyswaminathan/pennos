@@ -18,8 +18,6 @@ jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
     while (true) {
-        LOG_INFO("Shell loop entered");
-
         display_prompt();  
 
         // while (true) {
@@ -104,12 +102,11 @@ static void* shell_loop(void* arg) {
 static void* init_process(void* arg) {
     s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
     // k_get_all_process_info();
-    int i = 0;
 
     while (true) {
-        i++;
         // dprintf(2, "init running %d\n", i);
         // k_get_all_process_info();
+        usleep(1000000);
     }
 
     return NULL;

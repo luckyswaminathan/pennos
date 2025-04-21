@@ -230,10 +230,10 @@ void _update_blocked_processes()
         {
             // Case 2: Process was waiting on a child process to exit
             bool all_children_exited = true;
-            pcb_t *child = process->children->head;
+            child_process_t *child = process->children->head;
             while (child != NULL)
             {
-                if (child->state != PROCESS_ZOMBIED)
+                if (child->process->state != PROCESS_ZOMBIED)
                 {
                     all_children_exited = false;
                     break;
@@ -690,6 +690,15 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     unblock_process(scheduler_state->current_process);
 }
 
+void remove_from_children_list(pcb_t *process, pcb_t *child) {
+    for (child_process_t* child_process = process->children->head; child_process != NULL; child_process = child_process->next) {
+        if (child_process->process == child) {
+            linked_list_remove(process->children, child_process);
+            return;
+        }
+    }
+}
+
 
 /**
  * @brief Wait on a child of the calling process, until it changes state.
@@ -705,25 +714,25 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
     if (pid == -1) {
         // Wait for any child process
-        pcb_t* child = scheduler_state->current_process->children->head;
-        pcb_t* zombie_child = NULL;
+        child_process_t* child = scheduler_state->current_process->children->head;
+        child_process_t* zombie_child = NULL;
         
         // First pass: look for zombies
         while (child != NULL) {
-            pcb_t* next = child->next; // Save next pointer as we might remove child
+            child_process_t* next = child->next; // Save next pointer as we might remove child
             
-            if (child->state == PROCESS_ZOMBIED) {
+            if (child->process->state == PROCESS_ZOMBIED) {
                 // Found a zombie, collect its status
                 zombie_child = child;
                 if (wstatus != NULL) {
-                    *wstatus = zombie_child->exit_status;
+                    *wstatus = zombie_child->process->exit_status;
                 }
                 
                 // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
                 linked_list_remove(scheduler_state->current_process->children, zombie_child);
-                linked_list_remove(&scheduler_state->zombie_queue, zombie_child);
+                linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
                 
-                pid_t result = zombie_child->pid;
+                pid_t result = zombie_child->process->pid;
                 return result;
             }
             
@@ -771,7 +780,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             }
             
             // Remove from zombie queue and children list
-            linked_list_remove(scheduler_state->current_process->children, child);
+            remove_from_children_list(scheduler_state->current_process, child);
             linked_list_remove(&scheduler_state->zombie_queue, child);
             
             pid_t result = child->pid;
@@ -789,7 +798,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         
         // After child terminates, it should be a zombie
         // Return its PID after removing it from zombie queue and freeing
-        linked_list_remove(scheduler_state->current_process->children, child);
+        remove_from_children_list(scheduler_state->current_process, child);
         linked_list_remove(&scheduler_state->zombie_queue, child);
         
         pid_t result = child->pid;

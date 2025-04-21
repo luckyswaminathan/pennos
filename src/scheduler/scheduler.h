@@ -30,6 +30,15 @@ typedef enum {
 typedef struct pcb_st pcb_t;
 typedef linked_list(pcb_t)* pcb_ll_t;
 
+typedef struct child_process_st child_process_t;
+typedef linked_list(child_process_t)* child_process_ll_t;
+
+struct child_process_st {
+    pcb_t* process;
+    child_process_t* next;
+    child_process_t* prev;
+};
+
 /*
     Process Control Block
     - Process identification
@@ -44,7 +53,7 @@ struct pcb_st {
     pid_t pid;        
     pid_t ppid;        
     pid_t pgid;          
-    pcb_ll_t children;
+    child_process_ll_t children;
 
     // File descriptors (may add moree)
     int fd0;

@@ -107,7 +107,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->next = NULL;
 
     // Initialize children list
-    proc->children = (pcb_ll_t) exiting_malloc(sizeof(pcb_ll_t));
+    proc->children = (child_process_ll_t) exiting_malloc(sizeof(child_process_ll_t));
     if (!proc->children) {
         perror("Failed to allocate children list");
         free(proc);
@@ -116,7 +116,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     // Initialize the allocated struct's members directly
     proc->children->head = NULL;
     proc->children->tail = NULL;
-    proc->children->ele_dtor = pcb_destructor; 
+    proc->children->ele_dtor = NULL; // TODO: add a destructor for child_process_t
 
     // Set execution context and I/O
     proc->func = func;
@@ -148,7 +148,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
 
     // Allocate and create the thread
     proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
-     if (!proc->thread) {
+    if (!proc->thread) {
         perror("Failed to allocate spthread_t");
         // Cleanup command and argv
         if (proc->command) free(proc->command);
@@ -180,9 +180,17 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         return -1;
     }
 
+    child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
+    if (!child_process) {
+        perror("Failed to allocate child_process_t");
+        free(proc);
+        return -1;
+    }
+    child_process->process = proc;
+
     // Add to parent's children list
     if (parent && parent->children) {
-        linked_list_push_tail(parent->children, proc);
+        linked_list_push_tail(parent->children, child_process);
     }
 
     // Add to scheduler ready queue (assuming k_add_to_ready_queue exists and is declared)
@@ -218,28 +226,29 @@ void k_proc_cleanup(pcb_t *proc) {
     // 1. Reparent children to init process
     // Assumes scheduler_state and scheduler_state->init_process are valid and accessible
     if (scheduler_state && scheduler_state->init_process && proc->children) {
-        pcb_t *child;
+        child_process_t* child;
         // Pop children one by one, reparent, and add to init's list
         while ((child = linked_list_pop_head(proc->children)) != NULL) { 
             // Check if init process exists and has a children list before reparenting
             if (scheduler_state->init_process && scheduler_state->init_process->children) {
-                child->ppid = scheduler_state->init_process->pid;
+                child->process->ppid = scheduler_state->init_process->pid;
                 linked_list_push_tail(scheduler_state->init_process->children, child);
             } else {
                 // Orphaned child and no init process to adopt it? 
                 // This is an error condition or requires a different orphan handling strategy.
                 // For now, just log and free the child (leaking resources if it had children itself?)
-                fprintf(stderr, "k_proc_cleanup Warning: Cannot reparent child PID %d (from parent PID %d) to init process.\n", child->pid, proc->pid);
+                fprintf(stderr, "k_proc_cleanup Warning: Cannot reparent child PID %d (from parent PID %d) to init process.\n", child->process->pid, proc->pid);
                 // We should ideally have a robust cleanup for such orphans too.
                 // Maybe call k_proc_cleanup recursively? Risk of stack overflow?
                 // Simplest for now might be to free its basic resources.
-                if (child->command) free(child->command);
-                if (child->argv) { 
-                    for(int i=0; child->argv[i]; ++i) free(child->argv[i]);
-                    free(child->argv);
+                if (child->process->command) free(child->process->command);
+                if (child->process->argv) { 
+                    for(int i=0; child->process->argv[i]; ++i) free(child->process->argv[i]);
+                    free(child->process->argv);
                 }
-                if (child->thread) free(child->thread); // Thread struct, not joining here.
-                if (child->children) free(child->children); // List struct itself
+                if (child->process->thread) free(child->process->thread); // Thread struct, not joining here.
+                if (child->process->children) free(child->process->children); // List struct itself
+                free(child->process); // Free the child PCB
                 free(child); // Free the child PCB
             }
         }
