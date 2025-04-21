@@ -33,45 +33,47 @@ static int process_to_run[19] = {0, 0, 1, 0, 0, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 2,
  *
  * @param pcb Pointer to the PCB to destroy
  */
-void pcb_destructor(void *pcb)
-{
-    pcb_t *pcb_ptr = (pcb_t *)pcb;
-    if (pcb_ptr != NULL)
-    {
-        // Free the children list if it exists
-        if (pcb_ptr->children != NULL)
-        {
-            linked_list_clear(pcb_ptr->children);
-            free(pcb_ptr->children);
-        }
+// void pcb_destructor(void *pcb)
+// {
+//     pcb_t *pcb_ptr = (pcb_t *)pcb;
+//     if (pcb_ptr != NULL)
+//     {
+//         // Free the children list if it exists
+//         if (pcb_ptr->children != NULL)
+//         {
+//             linked_list_clear(pcb_ptr->children);
+//             free(pcb_ptr->children);
+//         }
 
-        // Free the thread if it exists
-        if (pcb_ptr->thread != NULL)
-        {
-            // Properly join the thread to clean up its resources
-            spthread_join(*pcb_ptr->thread, NULL);
-            free(pcb_ptr->thread);
-        }
+//         // Free the thread if it exists
+//         if (pcb_ptr->thread != NULL)
+//         {
+//             // Properly join the thread to clean up its resources
+//             spthread_join(*pcb_ptr->thread, NULL);
+//             free(pcb_ptr->thread);
+//         }
 
-        // Free command and argv if they exist
-        if (pcb_ptr->command != NULL)
-        {
-            free(pcb_ptr->command);
-        }
+//         // Free command and argv if they exist
+//         if (pcb_ptr->command != NULL)
+//         {
+//             free(pcb_ptr->command);
+//         }
 
-        if (pcb_ptr->argv != NULL)
-        {
-            for (int i = 0; pcb_ptr->argv[i] != NULL; i++)
-            {
-                free(pcb_ptr->argv[i]);
-            }
-            free(pcb_ptr->argv);
-        }
+//         if (pcb_ptr->argv != NULL)
+//         {
+//             for (int i = 0; pcb_ptr->argv[i] != NULL; i++)
+//             {
+//                 free(pcb_ptr->argv[i]);
+//             }
+//             free(pcb_ptr->argv);
+//         }
 
-        // Free the PCB itself
-        free(pcb_ptr);
-    }
-}
+//         // Free the PCB itself
+//         free(pcb_ptr);
+//     }
+// }
+
+void pcb_destructor(void* pcb) {}
 
 /**
  * @brief Signal handler for SIGALRM
@@ -79,7 +81,9 @@ void pcb_destructor(void *pcb)
  * This function is used to handle the SIGALRM signal.
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
-static void alarm_handler(int signum) {}
+static void alarm_handler(int signum) {
+    // printf("Alarm handler\n");
+}
 
 /**
  * @brief Set up the signal handler for SIGALRM
@@ -166,6 +170,7 @@ void k_add_to_ready_queue(pcb_t *process)
     }
     
     // Use the linked list macro to add to the tail of the correct priority queue
+    fprintf(stderr, "Adding process PID %d to priority queue %d\n", process->pid, process->priority);
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
 }
@@ -257,8 +262,12 @@ void _run_next_process()
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
+    printf("Updating blocked processes\n");
+
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
+
+    printf("Next queue: %d\n", next_queue);
 
     if (next_queue == -1)
     {
@@ -266,8 +275,15 @@ void _run_next_process()
         return;
     }
 
+    printf("Selecting next process\n");
+    k_get_all_process_info();
+
     // Get the process to run from the queue
     pcb_t *process = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+
+    printf("Process:");
+
+    printf("Running process PID %d\n", process->pid);
     
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
@@ -289,16 +305,22 @@ void _run_next_process()
     // Set the current process to the process that was just run
     scheduler_state->current_process = process;
 
+    printf("Continuing process\n");
+
     // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
+    printf("Process resumed\n");
     spthread_suspend(*process->thread);
+
+    printf("Process suspended\n");
 
     // Consume a quantum
     quantum++;
 
     // Add the process back to the queue
     linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
+    printf("Process added back to queue\n");
 }
 
 /**
@@ -312,6 +334,7 @@ void run_scheduler()
 {
     while (1)
     {
+        printf("Running scheduler\n");
         _run_next_process();
     }
 }
@@ -976,7 +999,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
 void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
     while (current != NULL) {
-        printf("PID: %d, PPID: %d, Priority: %d, State: %d\n", current->pid, current->ppid, current->priority, current->state);
+        printf("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
         current = current->next;
     }
 }
@@ -989,4 +1012,5 @@ void k_get_all_process_info() {
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_LOW]);
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->blocked_queue);
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue);
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue);
 }

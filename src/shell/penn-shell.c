@@ -101,6 +101,20 @@ static void* shell_loop(void* arg) {
     return NULL;
 }
 
+static void* init_process(void* arg) {
+    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    k_get_all_process_info();
+    int i = 0;
+
+    while (i < 30000) {
+        i++;
+        printf("init running %d\n", i);
+        // k_get_all_process_info();
+    }
+
+    return NULL;
+}
+
 int main(int argc, char **argv) {
     // First ignore signals
     ignore_signals();
@@ -112,14 +126,15 @@ int main(int argc, char **argv) {
     init_logger("scheduler.log");
     init_scheduler();
 
+    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
+
     printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers
     setup_job_control_handlers();
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
-    
-    s_spawn(shell_loop, NULL, STDIN_FILENO, STDOUT_FILENO);
+
     run_scheduler();
 
     return EXIT_SUCCESS;

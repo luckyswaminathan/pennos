@@ -8,10 +8,6 @@
 #include <stdlib.h> // For malloc/free
 #include <stdio.h> // For debugging
 
-// PID 0 is reserved for init process (or kernel itself)
-// User processes start from PID 1
-static pid_t next_pid = 1;
-
 /**
  * @brief Duplicates the argument vector (argv).
  *
@@ -87,6 +83,12 @@ static char** duplicate_argv(char *const argv[]) {
  * @return pid_t The PID of the newly created process, or -1 if any allocation or thread creation fails.
  */
 pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], int fd0, int fd1) {
+
+    if (parent == NULL && scheduler_state->init_process != NULL) {
+        perror("k_proc_create: INIT process already exists");
+        return -1;
+    }
+
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
     if (!proc) {
         perror("Failed to allocate PCB");
@@ -94,11 +96,11 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     }
 
     // Initialize core fields
-    proc->pid = next_pid++;
+    proc->pid = scheduler_state->process_count++;
     proc->ppid = parent ? parent->pid : 0;
     proc->pgid = proc->pid; // New process starts a new process group
     proc->state = PROCESS_RUNNING; // Initial state
-    proc->priority = PRIORITY_MEDIUM; // Default priority
+    proc->priority = parent == NULL ? PRIORITY_HIGH : PRIORITY_MEDIUM; // Default priority
     proc->sleep_time = 0.0;
     proc->exit_status = 0;
     proc->prev = NULL;
@@ -114,7 +116,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     // Initialize the allocated struct's members directly
     proc->children->head = NULL;
     proc->children->tail = NULL;
-    proc->children->ele_dtor = NULL; 
+    proc->children->ele_dtor = pcb_destructor; 
 
     // Set execution context and I/O
     proc->func = func;
@@ -124,6 +126,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     // Duplicate argv and set command
     proc->argv = duplicate_argv(argv);
     if (!proc->argv) {
+        perror("Failed to duplicate argv");
         // duplicate_argv prints perror
         free(proc->children);
         free(proc);
@@ -142,7 +145,6 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
          free(proc);
          return -1;
     }
-
 
     // Allocate and create the thread
     proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
