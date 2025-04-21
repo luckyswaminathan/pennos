@@ -259,7 +259,6 @@ void _update_blocked_processes()
  */
 void _run_next_process()
 {
-    // printf("Running next process\n");
     // k_get_all_process_info();
     // Update the blocked processes before selecting the next process
     //printf("before updating blocked processes\n");
@@ -671,10 +670,15 @@ pcb_t *k_get_process_by_pid(pid_t pid)
  */
 void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, int *wstatus) {
     printf("Blocking and waiting for child with pid %d\n", child->pid);
+
+    // this is unintuitive but works for blocking and waiting
+    
     block_process(scheduler_state->current_process);
+    spthread_join(*child->thread, (void **)wstatus);
+    printf("Blocked\n");
+    printf("Status %d\n", *wstatus);
 
     // Wait for the child to finish
-    spthread_join(*child->thread, (void **)wstatus);
     printf("Child finished\n");
 
     // Remove the child from its current queue
@@ -798,6 +802,8 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
+        printf("current process pid: %d\n", scheduler_state->current_process->pid);
+        printf("waiting for %lu for %s\n", child->thread->thread, child->command);
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
         printf("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
         

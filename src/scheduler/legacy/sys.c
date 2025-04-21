@@ -31,6 +31,7 @@ pid_t s_spawn(void *(*func)(void *), void *arg)
         LOG_ERROR("Failed to create thread for process %d", proc->pid);
         return -1;
     }
+    printf("CREATED THREAD %lu %s\n", proc->thread->tid, proc->command);
     return proc->pid;
 }
 

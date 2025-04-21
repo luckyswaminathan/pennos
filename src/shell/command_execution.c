@@ -72,6 +72,7 @@ void execute_job(job* job)
         //s_get_process_info();
         printf("waitpid is hanging?");
         s_waitpid(pid, &status, false);
+        printf("finished waitpid");
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel

@@ -180,6 +180,8 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         return -1;
     }
 
+    printf("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
+
     child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
     if (!child_process) {
         perror("Failed to allocate child_process_t");

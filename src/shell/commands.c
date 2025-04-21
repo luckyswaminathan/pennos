@@ -30,8 +30,9 @@
 
 // Implementation of ps command
 void* ps(void* arg) {
-    printf("PS CALLEd\n");
+    
     s_get_process_info();
+    printf("ps called\n");
     return NULL;
 }
 // void* zombie_child(void* arg) {
@@ -39,6 +40,7 @@ void* ps(void* arg) {
 //     LOG_INFO("Child process running, will exit soon");
 //     return NULL;
 // }
+
 
 // void* zombify(void* arg) {
     
@@ -80,7 +82,9 @@ void* execute_command(void* arg) {
         return NULL;
     }
     if (strcmp(ctx[0], "ps") == 0) {
-        return ps(ctx);
+        ps(ctx);
+        printf("ps was called and finished\n");
+        return NULL;
     }
     // if (strcmp(ctx->command[0], "zombify") == 0) {
     //     return zombify(ctx);
