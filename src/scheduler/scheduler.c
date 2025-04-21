@@ -262,12 +262,10 @@ void _run_next_process()
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
-    printf("Updating blocked processes\n");
 
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
 
-    printf("Next queue: %d\n", next_queue);
 
     if (next_queue == -1)
     {
@@ -281,9 +279,6 @@ void _run_next_process()
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
 
-    printf("Process:");
-
-    printf("Running process PID %d\n", process->pid);
     
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
@@ -305,15 +300,11 @@ void _run_next_process()
     // Set the current process to the process that was just run
     scheduler_state->current_process = process;
 
-    printf("Continuing process\n");
-
     // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
-    printf("Process resumed\n");
     spthread_suspend(*process->thread);
 
-    printf("Process suspended\n");
 
     // Consume a quantum
     quantum++;
@@ -321,7 +312,6 @@ void _run_next_process()
     // Add the process back to the queue
     linked_list_remove(&scheduler_state->ready_queues[next_queue], process); // remove from queue
     linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
-    printf("Process added back to queue\n");
 }
 
 /**
@@ -335,7 +325,6 @@ void run_scheduler()
 {
     while (1)
     {
-        printf("Running scheduler\n");
         _run_next_process();
     }
 }

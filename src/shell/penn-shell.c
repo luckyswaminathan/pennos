@@ -103,7 +103,7 @@ static void* shell_loop(void* arg) {
 
 static void* init_process(void* arg) {
     s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
-    k_get_all_process_info();
+    // k_get_all_process_info();
     int i = 0;
 
     while (true) {
