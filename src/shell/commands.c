@@ -73,11 +73,12 @@ void* ps(void* arg) {
 
 
 void* execute_command(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    if (ctx->command == NULL) {
+    char** ctx = (char**)arg;
+    // We always want the first command to be the command name
+    if (ctx == NULL || ctx[0] == NULL) {
         return NULL;
     }
-    if (strcmp(ctx->command[0], "ps") == 0) {
+    if (strcmp(ctx[0], "ps") == 0) {
         return ps(ctx);
     }
     // if (strcmp(ctx->command[0], "zombify") == 0) {

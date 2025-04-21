@@ -53,19 +53,7 @@ bool k_block_process(pcb_t *process);
  */
 bool k_unblock_process(pcb_t *process);
 
-/**
- * @brief Kernel-level implementation for waiting on a child process.
- *
- * Handles finding zombie children, reaping them (including cleanup), 
- * or blocking the parent if necessary (when nohang is false).
- *
- * @param parent The PCB of the calling (parent) process.
- * @param pid The PID of the child to wait for (-1 for any child).
- * @param wstatus Pointer to store the exit status of the reaped child.
- * @param nohang If true, return immediately if no child has changed state.
- * @return pid_t PID of the reaped child, 0 if nohang and no child ready, -1 on error (e.g., no such child, ECHILD).
- */
-pid_t k_waitpid(pcb_t *parent, pid_t pid, int *wstatus, bool nohang);
+
 
 /**
  * @brief Marks a process as terminated (zombie), sets its exit status, 

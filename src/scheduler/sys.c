@@ -54,37 +54,8 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
-    // 1. Get the current process PCB (the parent)
-    pcb_t* parent = k_get_current_process();
-    if (!parent) {
-        // Should not happen if called from a running process, but handle defensively.
-        fprintf(stderr, "s_waitpid Error: Could not get current process.\n");
-        return -1; // Or set appropriate errno
-    }
-
-    // 2. Call the kernel implementation in a loop to handle blocking
-    pid_t result = -1; 
-    while (1) {
-        result = k_waitpid(parent, pid, wstatus, nohang);
-
-        if (result == -2) { // Special code for blocking
-            // Kernel indicated blocking is required. Yield and retry.
-            if (nohang) { 
-                // Should not happen if nohang is true, k_waitpid should return 0 instead.
-                // Treat as error or unexpected state.
-                fprintf(stderr, "s_waitpid Warning: k_waitpid requested blocking when nohang was set.\n");
-                return -1; 
-            }
-            k_yield(); // Give up CPU, will resume here later
-            // Loop back to call k_waitpid again
-        } else {
-            // Got a definitive result: PID, 0 (nohang), or -1 (error)
-            break; // Exit the loop
-        }
-    }
-    
-    // Return the final result from k_waitpid
-    return result; 
+    printf("s_waitpid called with pid %d, nohang %d\n", pid, nohang);
+    return k_waitpid(pid, wstatus, nohang);
 }
 
 /**

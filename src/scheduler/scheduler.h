@@ -109,7 +109,6 @@ void run_scheduler();
 void k_add_to_ready_queue(pcb_t* process);
 bool k_block_process(pcb_t* process);
 bool k_unblock_process(pcb_t* process);
-pid_t k_waitpid(pcb_t* parent, pid_t pid, int* wstatus, bool nohang);
 void k_proc_exit(pcb_t* process, int exit_status);
 void k_yield(void);
 bool k_stop_process(pcb_t* process);
@@ -119,6 +118,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks);
 void k_get_processes_from_queue(pcb_ll_t queue);
 void k_get_all_process_info(void);
 pcb_t* k_get_current_process(void);
+pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang);
 
 pcb_t* get_process_by_pid(pid_t pid);
 

@@ -16,7 +16,6 @@
 #include "./valid_input.h"
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
-#include "../scheduler/scheduler.h"
 #include "commands.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
@@ -48,22 +47,17 @@ void execute_job(job* job)
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
-    context->process = scheduler_state->current_process;
 
-    execute_command(context);
-    free(context);
-    return;
-
-    // pid_t pid = s_spawn((void* (*)(void*))execute_command,
-    //                       context->command,  // argv
-    //                       context->stdin_fd, // fd0
-    //                       context->stdout_fd // fd1
-    //                      );
-    // if (pid == -1)
-    // {
-    //     perror("Failed to spawn command");
-    //     exit(EXIT_FAILURE);
-    // }
+    pid_t pid = s_spawn((void* (*)(void*))execute_command,
+                          context->command,  // argv
+                          context->stdin_fd, // fd0
+                          context->stdout_fd // fd1
+                         );
+    if (pid == -1)
+    {
+        perror("Failed to spawn command");
+        exit(EXIT_FAILURE);
+    }
     
     // Store the lead process ID
     // job->pids[0] = pid;
@@ -71,27 +65,25 @@ void execute_job(job* job)
 
 
 
-    // if (job->status == J_RUNNING_FG) {   
-    //     tcsetpgrp(STDIN_FILENO, pid);
-    //     int status;
-    //     LOG_INFO("Waiting for foreground job %ld", job->id);
-    //     s_waitpid(pid, &status, false);
+    if (job->status == J_RUNNING_FG) {   
+        int status;
+        printf("Waiting for foreground job %ld\n", job->id);
+        s_waitpid(pid, &status, false);
         
-    //     // TODO: don't love putting this logic here
-    //     // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel
-    //     // status code from the child.
-    //     if (WIFEXITED(status) && WEXITSTATUS(status) == CHILD_STOPPED_EXIT_STATUS) {
-    //         printf("Child was stopped in execute_command");
-    //         job->status = J_STOPPED;
-    //         remove_foreground_job(job);
-    //         enqueue_job(job);
-    //     }
+        // TODO: don't love putting this logic here
+        // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel
+        // status code from the child.
+        if (WIFEXITED(status) && WEXITSTATUS(status) == CHILD_STOPPED_EXIT_STATUS) {
+            printf("Child was stopped in execute_command");
+            job->status = J_STOPPED;
+            remove_foreground_job(job);
+            enqueue_job(job);
+        }
 
-    //     // Use global shell_pgid
-    //     // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
-    //     tcsetpgrp(STDIN_FILENO, shell_pgid);
-    // } else if (job->status == J_RUNNING_BG) {
-    //     printf("job %lu is running in the background\n", job->id);
-    //     return;
-    // }
+        // Use global shell_pgid
+        // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
+    } else if (job->status == J_RUNNING_BG) {
+        printf("job %lu is running in the background\n", job->id);
+        return;
+    }
 }
