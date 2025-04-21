@@ -65,3 +65,5 @@ int s_nice(pid_t pid, int priority);
  */
 void s_sleep(unsigned int ticks);
 
+void s_get_process_info();
+

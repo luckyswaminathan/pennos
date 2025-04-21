@@ -11,77 +11,64 @@
 
 #define BUFFER_SIZE 256
 
-static void print_header(int output_fd) {
-    const char* header = "PID PPID PRI STAT CMD\n";
-    dprintf(output_fd, "%s", header);
-    LOG_INFO("%s", header);
-}
-static void print_process(pcb_t* proc, int output_fd) {
-    char state_char = 'R';
-    if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
-    } else if (proc->state == PROCESS_ZOMBIED) {
-        state_char = 'Z';
-    }
-    dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
-    LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
-}
+// static void print_header(int output_fd) {
+//     const char* header = "PID PPID PRI STAT CMD\n";
+//     dprintf(output_fd, "%s", header);
+//     LOG_INFO("%s", header);
+// }
+// static void print_process(pcb_t* proc, int output_fd) {
+//     char state_char = 'R';
+//     if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
+//     } else if (proc->state == PROCESS_ZOMBIED) {
+//         state_char = 'Z';
+//     }
+//     dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
+//     LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
+// }
 
 
 
 // Implementation of ps command
 void* ps(void* arg) {
-    LOG_INFO("ps command executed");
-    struct command_context* ctx = (struct command_context*)arg;
-    int stdout_fd = ctx->stdout_fd;
-    
-    print_header(stdout_fd);
+    s_get_process_info();
+    return NULL;
+}
+// void* zombie_child(void* arg) {
+//     // Child process exits normally
+//     LOG_INFO("Child process running, will exit soon");
+//     return NULL;
+// }
 
-    // Iterate through the global process list
-    pcb_t* proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        LOG_INFO("Found process PID %d, STATE %d", proc->pid, proc->state);
-        print_process(proc, stdout_fd);
-        proc = proc->process_pointers.next; // Use process_pointers for the global list
-    }
+// void* zombify(void* arg) {
     
-    return NULL;
-}
-void* zombie_child(void* arg) {
-    // Child process exits normally
-    LOG_INFO("Child process running, will exit soon");
-    return NULL;
-}
+//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+//     child_ctx->command = exiting_malloc(sizeof(char*));
+//     child_ctx->command[0] = strdup("zombie_child");
+//     child_ctx->process = NULL;
+//     // Spawn the child process
+//     pid_t child = s_spawn(zombie_child, child_ctx);
+//     LOG_INFO("Spawned child process with PID %d", child);
+//     while(1) {  
+//     };
+//     return NULL;
+// }
 
-void* zombify(void* arg) {
+// void* orphan_child(void* arg) {
     
-    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-    child_ctx->command = exiting_malloc(sizeof(char*));
-    child_ctx->command[0] = strdup("zombie_child");
-    child_ctx->process = NULL;
-    // Spawn the child process
-    pid_t child = s_spawn(zombie_child, child_ctx);
-    LOG_INFO("Spawned child process with PID %d", child);
-    while(1) {  
-    };
-    return NULL;
-}
+//     while(1) {
+//     };
+//     return NULL;
+// }
 
-void* orphan_child(void* arg) {
+// void* orphanify(void* arg) {
+//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+//     child_ctx->command = exiting_malloc(sizeof(char*));
+//     child_ctx->command[0] = strdup("orphan_child");
+//     child_ctx->process = NULL;
+//     s_spawn(orphan_child, child_ctx);
+//     return NULL;
     
-    while(1) {
-    };
-    return NULL;
-}
-
-void* orphanify(void* arg) {
-    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-    child_ctx->command = exiting_malloc(sizeof(char*));
-    child_ctx->command[0] = strdup("orphan_child");
-    child_ctx->process = NULL;
-    s_spawn(orphan_child, child_ctx);
-    return NULL;
-    
-}
+// }
 
 
 
@@ -93,11 +80,11 @@ void* execute_command(void* arg) {
     if (strcmp(ctx->command[0], "ps") == 0) {
         return ps(ctx);
     }
-    if (strcmp(ctx->command[0], "zombify") == 0) {
-        return zombify(ctx);
-    }
-    if (strcmp(ctx->command[0], "orphanify") == 0) {
-        return orphanify(ctx);
-    }
+    // if (strcmp(ctx->command[0], "zombify") == 0) {
+    //     return zombify(ctx);
+    // }
+    // if (strcmp(ctx->command[0], "orphanify") == 0) {
+    //     return orphanify(ctx);
+    // }
     return NULL;
 }

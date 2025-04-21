@@ -974,3 +974,20 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     // and sets state to PROCESS_BLOCKED.
     return k_block_process(process); 
 }
+
+void k_get_processes_from_queue(linked_list(pcb_t)* queue) {
+    pcb_t* current = queue->head;
+    while (current != NULL) {
+        printf("PID: %d, PPID: %d, Priority: %d, State: %d\n", current->pid, current->ppid, current->priority, current->state);
+        current = current->next;
+    }
+}
+
+// get info for running, blocked, and stopped processes
+void k_get_all_process_info() {
+    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_HIGH]);
+    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_MEDIUM]);
+    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_LOW]);
+    k_get_processes_from_queue(&scheduler_state->blocked_queue);
+    k_get_processes_from_queue(&scheduler_state->stopped_queue);
+}

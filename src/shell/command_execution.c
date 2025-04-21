@@ -48,9 +48,12 @@ void execute_job(job* job)
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
-    context->next_input_fd = -1;
-    context->process = scheduler_state->curr;
-    pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
+    context->process = scheduler_state->current_process;
+    pid_t pid = s_spawn((void* (*)(void*))execute_command,
+                          context->command,  // argv
+                          context->stdin_fd, // fd0
+                          context->stdout_fd // fd1
+                         );
     if (pid == -1)
     {
         perror("Failed to spawn command");

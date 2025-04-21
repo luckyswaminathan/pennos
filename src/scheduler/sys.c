@@ -218,3 +218,7 @@ void s_sleep(unsigned int ticks) {
          // Kernel function failed, maybe log error? Proceed without yielding.
     }
 }
+
+void s_get_process_info() {
+    k_get_all_process_info();
+}
