@@ -674,6 +674,8 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // this is unintuitive but works for blocking and waiting
     
     block_process(scheduler_state->current_process);
+    spthread_cancel(*child->thread);
+    spthread_continue(*child->thread);
     spthread_join(*child->thread, (void **)wstatus);
     printf("Blocked\n");
     printf("Status %d\n", *wstatus);
@@ -1042,6 +1044,7 @@ void k_get_processes_from_queue(pcb_ll_t queue) {
 // get info for running, blocked, and stopped processes
 void k_get_all_process_info() {
     // Cast to the correct type to avoid incompatible pointer types
+    printf("----------\n");
     printf("priority high\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_HIGH]);
     printf("priority medium\n");
@@ -1054,4 +1057,5 @@ void k_get_all_process_info() {
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue);
     printf("zombie\n");
     k_get_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue);
+    printf("----------\n");
 }
