@@ -262,7 +262,11 @@ void _run_next_process()
     // printf("Running next process\n");
     // k_get_all_process_info();
     // Update the blocked processes before selecting the next process
+    //printf("before updating blocked processes\n");
+    //k_get_all_process_info();
     _update_blocked_processes();
+    //printf("after updating blocked processes\n");
+    //k_get_all_process_info();
 
 
     // Select the next queue to run a process from
@@ -279,7 +283,7 @@ void _run_next_process()
 
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
-    printf("Process to run: %d %s; queue: %d\n", process->pid, process->command, next_queue);
+    //printf("Process to run: %d %s; queue: %d\n", process->pid, process->command, next_queue);
 
     
     if (!process) {
@@ -312,10 +316,11 @@ void _run_next_process()
     quantum++;
 
     // Add the process back to the queue
-    linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
-    linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
-    k_get_all_process_info();
-    printf("\n");
+    //k_get_all_process_info();
+    pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
+    linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
+    //k_get_all_process_info();
+    //printf("\n");
 }
 
 /**
@@ -445,13 +450,13 @@ void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
     printf("Blocking process with pid %d\n", process->pid);
-    k_get_all_process_info();
+    //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
     printf("Post push tail\n");
-    k_get_all_process_info();
+    //k_get_all_process_info();
 }
 
 /**

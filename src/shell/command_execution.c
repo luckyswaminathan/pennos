@@ -69,7 +69,8 @@ void execute_job(job* job)
     if (job->status == J_RUNNING_FG) {   
         int status;
         printf("Waiting for foreground job %ld\n", job->id);
-        s_get_process_info();
+        //s_get_process_info();
+        printf("waitpid is hanging?");
         s_waitpid(pid, &status, false);
         
         // TODO: don't love putting this logic here

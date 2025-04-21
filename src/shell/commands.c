@@ -30,6 +30,7 @@
 
 // Implementation of ps command
 void* ps(void* arg) {
+    printf("PS CALLEd\n");
     s_get_process_info();
     return NULL;
 }
