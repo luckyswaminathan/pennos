@@ -28,6 +28,7 @@ typedef enum {
 
 // Forward declaration
 typedef struct pcb_st pcb_t;
+typedef linked_list(pcb_t)* pcb_ll_t;
 
 /*
     Process Control Block
@@ -43,7 +44,7 @@ struct pcb_st {
     pid_t pid;        
     pid_t ppid;        
     pid_t pgid;          
-    linked_list(pcb_t)* children;
+    pcb_ll_t children;
 
     // File descriptors (may add moree)
     int fd0;
@@ -67,7 +68,6 @@ struct pcb_st {
     pcb_t* prev;
     pcb_t* next;
 };
-
 
 typedef struct scheduler {
     // Priority queues (0 = highest priority, 2 = lowest)
@@ -101,7 +101,24 @@ void kill_process(pcb_t* process);
 void continue_process(pcb_t* process);
 void put_process_to_sleep(pcb_t* process, unsigned int ticks);
 void cleanup_zombie_children(pcb_t* parent);
+void run_scheduler();
 
-pcb_t *get_process_by_pid(pid_t pid);
+// ================================ Kernel-Level Process Management ================================
+
+void k_add_to_ready_queue(pcb_t* process);
+bool k_block_process(pcb_t* process);
+bool k_unblock_process(pcb_t* process);
+pid_t k_waitpid(pcb_t* parent, pid_t pid, int* wstatus, bool nohang);
+void k_proc_exit(pcb_t* process, int exit_status);
+void k_yield(void);
+bool k_stop_process(pcb_t* process);
+bool k_continue_process(pcb_t* process);
+bool k_set_priority(pcb_t* process, int priority);
+bool k_sleep(pcb_t* process, unsigned int ticks);
+void k_get_processes_from_queue(pcb_ll_t queue);
+void k_get_all_process_info(void);
+pcb_t* k_get_current_process(void);
+
+pcb_t* get_process_by_pid(pid_t pid);
 
 #endif

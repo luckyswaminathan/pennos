@@ -218,7 +218,7 @@ void _update_blocked_processes()
             process->sleep_time--;
             if (process->sleep_time == 0)
             {
-                unblock_process(process);
+                k_unblock_process(process);
             }
         }
         else
@@ -237,7 +237,7 @@ void _update_blocked_processes()
             }
             if (all_children_exited)
             {
-                unblock_process(process);
+                k_unblock_process(process);
             }
         }
 
@@ -591,19 +591,17 @@ static pcb_t* k_find_zombie_child(pcb_t *parent) {
  */
 static bool k_remove_child_from_parent_list(pcb_t *parent, pcb_t *child) {
     if (!parent || !parent->children || !child) return false;
-
-    linked_list(pcb_t)* list = parent->children;
     
     // Manual unlink
     if (child->prev) {
         child->prev->next = child->next;
     } else {
-        list->head = child->next; // Child was head
+        parent->children->head = child->next; // Child was head
     }
     if (child->next) {
         child->next->prev = child->prev;
     } else {
-        list->tail = child->prev; // Child was tail
+        parent->children->tail = child->prev; // Child was tail
     }
     
     child->prev = NULL;
@@ -975,7 +973,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     return k_block_process(process); 
 }
 
-void k_get_processes_from_queue(linked_list(pcb_t)* queue) {
+void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
     while (current != NULL) {
         printf("PID: %d, PPID: %d, Priority: %d, State: %d\n", current->pid, current->ppid, current->priority, current->state);
@@ -985,9 +983,10 @@ void k_get_processes_from_queue(linked_list(pcb_t)* queue) {
 
 // get info for running, blocked, and stopped processes
 void k_get_all_process_info() {
-    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_HIGH]);
-    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_MEDIUM]);
-    k_get_processes_from_queue(&scheduler_state->ready_queues[PRIORITY_LOW]);
-    k_get_processes_from_queue(&scheduler_state->blocked_queue);
-    k_get_processes_from_queue(&scheduler_state->stopped_queue);
+    // Cast to the correct type to avoid incompatible pointer types
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_HIGH]);
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_MEDIUM]);
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_LOW]);
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->blocked_queue);
+    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue);
 }

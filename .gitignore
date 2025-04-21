@@ -18,6 +18,7 @@ test_scheduler
 log/*
 src/scheduler.log
 *.log
+scheduler.log
 
 # Build directories
 build/ 

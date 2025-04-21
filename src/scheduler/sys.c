@@ -219,6 +219,12 @@ void s_sleep(unsigned int ticks) {
     }
 }
 
+/**
+ * @brief Get information about all processes. Implements `ps`.
+ * 
+ * This function retrieves and prints detailed information about all processes,
+ * including their PID, PPID, priority, and state.
+*/
 void s_get_process_info() {
     k_get_all_process_info();
 }

@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
     printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
     
-    s_spawn(shell_loop, NULL);
+    s_spawn(shell_loop, NULL, STDIN_FILENO, STDOUT_FILENO);
     run_scheduler();
 
     return EXIT_SUCCESS;
