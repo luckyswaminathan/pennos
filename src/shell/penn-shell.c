@@ -22,19 +22,19 @@ static void* shell_loop(void* arg) {
 
         display_prompt();  
 
-        while (true) {
-            pid_t dead_pid = s_waitpid(-1, NULL, true);
-            if (dead_pid == -1 && errno != ECHILD) {
-                perror("Failed to wait for background jobs");
-                exit(EXIT_FAILURE);
-            }
+        // while (true) {
+        //     pid_t dead_pid = s_waitpid(-1, NULL, true);
+        //     if (dead_pid == -1 && errno != ECHILD) {
+        //         perror("Failed to wait for background jobs");
+        //         exit(EXIT_FAILURE);
+        //     }
 
-            if (dead_pid == 0 || (dead_pid == -1 && errno == ECHILD)) {
-                break;
-            }
+        //     if (dead_pid == 0 || (dead_pid == -1 && errno == ECHILD)) {
+        //         break;
+        //     }
 
-            remove_job_by_pid(dead_pid);
-        }
+        //     remove_job_by_pid(dead_pid);
+        // }
      
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
@@ -106,9 +106,9 @@ static void* init_process(void* arg) {
     k_get_all_process_info();
     int i = 0;
 
-    while (i < 30000) {
+    while (true) {
         i++;
-        printf("init running %d\n", i);
+        dprintf(2, "init running %d\n", i);
         // k_get_all_process_info();
     }
 
