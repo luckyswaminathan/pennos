@@ -67,7 +67,6 @@ static int process_to_run[19] = {0, 0, 1, 0, 0, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 2,
 //             }
 //             free(pcb_ptr->argv);
 //         }
-
 //         // Free the PCB itself
 //         free(pcb_ptr);
 //     }

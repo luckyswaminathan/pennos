@@ -7,8 +7,12 @@ struct command_context {
     int stdout_fd;       // Output file descriptor
 };
 
+// Command execution functions
 void* execute_command(void* arg);
-
-
+void* ps(void* arg);
+void* zombify(void* arg);
+void* orphanify(void* arg);
+void* busy(void* arg);
+void* nice_command(void* arg);
 
 #endif // CONTEXT_H
