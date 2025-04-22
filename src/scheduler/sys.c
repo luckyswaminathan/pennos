@@ -121,11 +121,6 @@ void s_exit(int status) {
         fprintf(stderr, "s_exit Error: Could not get current process!\n");
     }
 
-    // Ensure the thread terminates and doesn't return from s_exit.
-    // Using spthread_exit is appropriate here if available and intended.
-    // Alternatively, an infinite loop prevents return, relying on the scheduler 
-    // to never schedule this zombie process again.
-    spthread_exit(NULL); // Use spthread library's exit mechanism
     
     // Fallback infinite loop in case spthread_exit fails or isn't used.
     // while(1) { sleep(1000); } // sleep() is forbidden, use busy wait or yield

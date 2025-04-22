@@ -181,6 +181,7 @@ void* execute_command(void* arg) {
     if (strcmp(ctx[0], "ps") == 0) {
         ps(ctx);
         printf("ps was called and finished\n");
+        s_exit(0);
         return NULL;
     }
     // if (strcmp(ctx->command[0], "zombify") == 0) {
@@ -189,5 +190,6 @@ void* execute_command(void* arg) {
     // if (strcmp(ctx->command[0], "orphanify") == 0) {
     //     return orphanify(ctx);
     // }
+    s_exit(0);
     return NULL;
 }

@@ -673,7 +673,6 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // this is unintuitive but works for blocking and waiting
     
     block_process(scheduler_state->current_process);
-    spthread_continue(*child->thread);
     spthread_join(*child->thread, (void **)wstatus);
     printf("Blocked\n");
     printf("Status %d\n", *wstatus);
@@ -868,6 +867,13 @@ void k_proc_exit(pcb_t *process, int exit_status) {
      // If called from s_exit, it won't return. If called implicitly (func returns),
      // the wrapper that called func should probably yield or exit.
      // For now, assume the context switch happens appropriately elsewhere.
+
+
+    // Ensure the thread terminates and doesn't return from s_exit.
+    // Using spthread_exit is appropriate here if available and intended.
+    // Alternatively, an infinite loop prevents return, relying on the scheduler 
+    // to never schedule this zombie process again.
+    spthread_exit(NULL); // Use spthread library's exit mechanism
 }
 
 /**
