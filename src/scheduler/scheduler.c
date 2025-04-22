@@ -315,8 +315,12 @@ void _run_next_process()
 
     // Add the process back to the queue
     //k_get_all_process_info();
-    pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
-    linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
+    if (process->state == PROCESS_ZOMBIED) {
+        // do nothing b/c handled by s_exit
+    } else {
+        pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
+        linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
+    }
     //k_get_all_process_info();
     //printf("\n");
 }
@@ -842,11 +846,13 @@ void k_proc_exit(pcb_t *process, int exit_status) {
          // Maybe set scheduler_state->current_process = NULL; here? Or handle in scheduler loop.
          // Let's assume scheduler loop checks state after sigsuspend.
      } else {
-          k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
+        fprintf(stderr, "SHOULD NOT HAVE A NON CURRENT PROCESS");
      }
-     
+     k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
+     fprintf(stderr, "all processes after zombie push, %d\n", process->pid);
+     k_get_all_process_info();
 
 
      // 4. Check if the parent is waiting and unblock it
