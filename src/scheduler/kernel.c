@@ -107,7 +107,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->next = NULL;
 
     // Initialize children list
-    proc->children = (child_process_ll_t) exiting_malloc(sizeof(child_process_ll_t));
+    proc->children = (child_process_ll_t) exiting_malloc(sizeof(*(proc->children)));
     if (!proc->children) {
         perror("Failed to allocate children list");
         free(proc);
