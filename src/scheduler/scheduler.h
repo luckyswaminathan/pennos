@@ -61,6 +61,7 @@ struct pcb_st {
 
     // Process state
     process_state state;
+    pid_t waited_child;
 
     // Process priority
     priority_t priority;

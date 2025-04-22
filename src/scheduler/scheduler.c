@@ -316,7 +316,15 @@ void _run_next_process()
     // Add the process back to the queue
     //k_get_all_process_info();
     if (process->state == PROCESS_ZOMBIED) {
-        // do nothing b/c handled by s_exit
+        pcb_t* blocked_ptr = linked_list_head(&scheduler_state->blocked_queue);
+        while (blocked_ptr != NULL) {
+            if (blocked_ptr->waited_child == process->pid) {
+                //TODO: might need to refactor logic
+                unblock_process(blocked_ptr);
+                break;
+            }
+            // TODO: add -1 case
+        }
     } else {
         pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
         linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
@@ -455,6 +463,7 @@ void block_process(pcb_t *process)
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
+    process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
     printf("Post push tail\n");
@@ -472,7 +481,7 @@ void unblock_process(pcb_t *process)
 {
     // Remove the process from the blocked queue
     linked_list_remove(&scheduler_state->blocked_queue, process);
-
+    process->state = PROCESS_RUNNING;
     // Add the process to the appropriate queue based on its priority
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
 }
@@ -677,7 +686,7 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // this is unintuitive but works for blocking and waiting
     
     block_process(scheduler_state->current_process);
-    spthread_join(*child->thread, (void **)wstatus);
+    spthread_suspend_self();
     printf("Blocked\n");
     printf("Status %d\n", *wstatus);
 

@@ -105,6 +105,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->exit_status = 0;
     proc->prev = NULL;
     proc->next = NULL;
+    proc->waited_child = -2;
 
     // Initialize children list
     proc->children = (child_process_ll_t) exiting_malloc(sizeof(*(proc->children)));
