@@ -16,7 +16,6 @@
 #include "./valid_input.h"
 #include "./signals.h"  // Add this to access shell_pgid
 #include "./jobs.h"
-#include "../scheduler/scheduler.h"
 #include "commands.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
@@ -45,28 +44,35 @@ void execute_job(job* job)
     }
 
     struct command_context* context = exiting_malloc(sizeof(struct command_context));
+    printf("Executing command: %s\n", parsed_command->commands[0][0]);
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
-    context->next_input_fd = -1;
-    context->process = scheduler_state->curr;
-    pid_t pid = s_spawn((void* (*)(void*))execute_command, context);
+
+    pid_t pid = s_spawn((void* (*)(void*))execute_command,
+                          context->command,  // argv
+                          context->stdin_fd, // fd0
+                          context->stdout_fd // fd1
+                         );
     if (pid == -1)
     {
         perror("Failed to spawn command");
         exit(EXIT_FAILURE);
     }
+    
     // Store the lead process ID
-    job->pids[0] = pid;
-    job->num_processes = parsed_command->num_commands;
+    // job->pids[0] = pid;
+    // job->num_processes = parsed_command->num_commands;
 
 
 
     if (job->status == J_RUNNING_FG) {   
-        tcsetpgrp(STDIN_FILENO, pid);
         int status;
-        LOG_INFO("Waiting for foreground job %ld", job->id);
+        printf("Waiting for foreground job %ld\n", job->id);
+        //s_get_process_info();
+        printf("waitpid is hanging?");
         s_waitpid(pid, &status, false);
+        printf("finished waitpid");
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel
@@ -80,7 +86,6 @@ void execute_job(job* job)
 
         // Use global shell_pgid
         // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
-        tcsetpgrp(STDIN_FILENO, shell_pgid);
     } else if (job->status == J_RUNNING_BG) {
         printf("job %lu is running in the background\n", job->id);
         return;

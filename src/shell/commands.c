@@ -12,93 +12,67 @@
 
 #define BUFFER_SIZE 256
 
-// CPU usage constants
-#define BUSY_LOOP_ITERATIONS 10000000
-#define TOTAL_TIME_SLICES 18.0
-#define HIGH_PRIORITY_SLICES 9.0
-#define MEDIUM_PRIORITY_SLICES 6.0
-#define LOW_PRIORITY_SLICES 3.0
-
-// Global flag to indicate if the process should exit
-static volatile int busy_running = 1;
-
-// Signal handler for SIGINT
-static void busy_sigint_handler(int sig) {
-    LOG_INFO("SIGINT received, stopping busy process");
-    busy_running = 0;
-}
-
-static void print_header(int output_fd) {
-    const char* header = "PID PPID PRI STAT CMD\n";
-    dprintf(output_fd, "%s", header);
-    LOG_INFO("%s", header);
-}
-static void print_process(pcb_t* proc, int output_fd) {
-    char state_char = 'R';
-    if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
-    } else if (proc->state == PROCESS_ZOMBIED) {
-        state_char = 'Z';
-    }
-    dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
-    LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
-}
+// static void print_header(int output_fd) {
+//     const char* header = "PID PPID PRI STAT CMD\n";
+//     dprintf(output_fd, "%s", header);
+//     LOG_INFO("%s", header);
+// }
+// static void print_process(pcb_t* proc, int output_fd) {
+//     char state_char = 'R';
+//     if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
+//     } else if (proc->state == PROCESS_ZOMBIED) {
+//         state_char = 'Z';
+//     }
+//     dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
+//     LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
+// }
 
 
 
 // Implementation of ps command
 void* ps(void* arg) {
-    LOG_INFO("ps command executed");
-    struct command_context* ctx = (struct command_context*)arg;
-    int stdout_fd = ctx->stdout_fd;
     
-    print_header(stdout_fd);
+    s_get_process_info();
+    printf("ps called\n");
+    return NULL;
+}
+// void* zombie_child(void* arg) {
+//     // Child process exits normally
+//     LOG_INFO("Child process running, will exit soon");
+//     return NULL;
+// }
 
-    // Iterate through the global process list
-    pcb_t* proc = scheduler_state->processes.head;
-    while (proc != NULL) {
-        LOG_INFO("Found process PID %d, STATE %d", proc->pid, proc->state);
-        print_process(proc, stdout_fd);
-        proc = proc->process_pointers.next; // Use process_pointers for the global list
-    }
-    
-    return NULL;
-}
-void* zombie_child(void* arg) {
-    // Child process exits normally
-    LOG_INFO("Child process running, will exit soon");
-    return NULL;
-}
 
-void* zombify(void* arg) {
+// void* zombify(void* arg) {
     
-    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-    child_ctx->command = exiting_malloc(sizeof(char*));
-    child_ctx->command[0] = strdup("zombie_child");
-    child_ctx->process = NULL;
-    // Spawn the child process
-    pid_t child = s_spawn(zombie_child, child_ctx);
-    LOG_INFO("Spawned child process with PID %d", child);
-    while(1) {  
-    };
-    return NULL;
-}
+//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+//     child_ctx->command = exiting_malloc(sizeof(char*));
+//     child_ctx->command[0] = strdup("zombie_child");
+//     child_ctx->process = NULL;
+//     // Spawn the child process
+//     pid_t child = s_spawn(zombie_child, child_ctx);
+//     LOG_INFO("Spawned child process with PID %d", child);
+//     while(1) {  
+//     };
+//     return NULL;
+// }
 
-void* orphan_child(void* arg) {
+// void* orphan_child(void* arg) {
     
-    while(1) {
-    };
-    return NULL;
-}
+//     while(1) {
+//     };
+//     return NULL;
+// }
 
-void* orphanify(void* arg) {
-    struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-    child_ctx->command = exiting_malloc(sizeof(char*));
-    child_ctx->command[0] = strdup("orphan_child");
-    child_ctx->process = NULL;
-    s_spawn(orphan_child, child_ctx);
-    return NULL;
+// void* orphanify(void* arg) {
+//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
+//     child_ctx->command = exiting_malloc(sizeof(char*));
+//     child_ctx->command[0] = strdup("orphan_child");
+//     child_ctx->process = NULL;
+//     s_spawn(orphan_child, child_ctx);
+//     return NULL;
     
-}
+// }
 
 /**
  * @brief Busy wait indefinitely.
@@ -198,24 +172,21 @@ void* nice_command(void* arg) {
 }
 
 void* execute_command(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    if (ctx->command == NULL) {
+    char** ctx = (char**)arg;
+    // We always want the first command to be the command name
+    if (ctx == NULL || ctx[0] == NULL) {
         return NULL;
     }
-    if (strcmp(ctx->command[0], "ps") == 0) {
-        return ps(ctx);
+    if (strcmp(ctx[0], "ps") == 0) {
+        ps(ctx);
+        printf("ps was called and finished\n");
+        return NULL;
     }
-    if (strcmp(ctx->command[0], "zombify") == 0) {
-        return zombify(ctx);
-    }
-    if (strcmp(ctx->command[0], "orphanify") == 0) {
-        return orphanify(ctx);
-    }
-    if (strcmp(ctx->command[0], "busy") == 0) {
-        return busy(ctx);
-    }
-    if (strcmp(ctx->command[0], "nice") == 0) {
-        return nice_command(ctx);
-    }
+    // if (strcmp(ctx->command[0], "zombify") == 0) {
+    //     return zombify(ctx);
+    // }
+    // if (strcmp(ctx->command[0], "orphanify") == 0) {
+    //     return orphanify(ctx);
+    // }
     return NULL;
 }
