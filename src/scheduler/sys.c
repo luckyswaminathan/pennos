@@ -76,7 +76,7 @@ int s_kill(pid_t pid, int signal) {
 
     bool success = false;
     switch (signal) {
-        case SIGTERM: 
+        case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
             fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
@@ -84,13 +84,13 @@ int s_kill(pid_t pid, int signal) {
             success = true; // k_proc_exit doesn't return status, assume success if target found
             break;
 
-        case SIGSTOP:
+        case P_SIGSTOP:
             // Stop the process
             fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
             success = k_stop_process(target);
             break;
 
-        case SIGCONT:
+        case P_SIGCONT:
             // Continue a stopped process
              fprintf(stdout, "s_kill: Sending SIGCONT to PID %d\n", pid);
             success = k_continue_process(target);

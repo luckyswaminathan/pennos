@@ -1,5 +1,9 @@
 #include "scheduler.h"
 
+#define P_SIGTERM 1
+#define P_SIGSTOP 2
+#define P_SIGCONT 3
+
 /**
  * @brief Create a new child process.
  * @param parent The parent process PCB (can be NULL for initial processes).

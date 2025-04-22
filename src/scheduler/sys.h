@@ -1,9 +1,12 @@
 #include "scheduler.h"
-#include "kernel.h"
 #include "logger.h"
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+
+#define P_SIGTERM 1
+#define P_SIGSTOP 2
+#define P_SIGCONT 3
 
 /**
  * @brief Create a child process that executes the function `func`.
