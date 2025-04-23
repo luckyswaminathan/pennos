@@ -44,7 +44,6 @@ void execute_job(job* job)
     }
 
     struct command_context* context = exiting_malloc(sizeof(struct command_context));
-    printf("Executing command: %s\n", parsed_command->commands[0][0]);
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;

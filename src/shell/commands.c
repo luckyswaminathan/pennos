@@ -248,6 +248,9 @@ void* execute_command(void* arg) {
     if (strcmp(ctx[0], "orphanify") == 0) {
         return orphanify(ctx);
     }
+    if (strcmp(ctx[0], "busy") == 0) {
+        return busy(ctx);
+    }
     s_exit(0);
     return NULL;
 }
