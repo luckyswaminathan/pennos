@@ -107,6 +107,10 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->next = NULL;
     proc->waited_child = -2;
 
+    if (proc->pid == 0) {
+        scheduler_state->init_process = proc;
+    }
+
     // Initialize children list
     proc->children = (child_process_ll_t) exiting_malloc(sizeof(*(proc->children)));
     if (!proc->children) {
@@ -182,6 +186,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     }
 
     printf("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
+    k_get_all_process_info();
 
     child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
     if (!child_process) {
