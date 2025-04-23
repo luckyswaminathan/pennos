@@ -240,8 +240,9 @@ void _update_blocked_processes()
         if (process->sleep_time > 0)
         {
            
-            process->sleep_time--;
-            if (process->sleep_time == 0)
+            process->sleep_time -= 0.1;
+            fprintf(stderr, "process sleep time: %f\n", process->sleep_time);
+            if (process->sleep_time <= 0)
             {
                 unblock_process(process);
             }
@@ -976,6 +977,7 @@ void k_yield(void) {
     // switching logic.
     // Here, we mimic yielding by suspending until the next SIGALRM, 
     // which triggers the scheduler loop externally.
+    fprintf(stderr, "current process id: %d\n", scheduler_state->current_process->pid);
     extern sigset_t suspend_set; // Defined static in scheduler.c
     sigsuspend(&suspend_set);
     // Execution resumes here after SIGALRM is handled

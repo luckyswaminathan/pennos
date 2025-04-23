@@ -181,7 +181,7 @@ void s_sleep(unsigned int ticks) {
     // Call kernel sleep function
     if (k_sleep(current, ticks)) {
         // If kernel successfully put process to sleep, yield the CPU
-        k_yield(); 
+        spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
          fprintf(stderr, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
