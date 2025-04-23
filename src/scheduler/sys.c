@@ -78,8 +78,11 @@ int s_kill(pid_t pid, int signal) {
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
-            fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
-            k_proc_exit(target, 1); // Using status 1 for killed by signal
+            
+            if (target->pid != 1) {
+                fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
+                k_proc_exit(target, 1); // Using status 1 for killed by signal
+            }
             success = true; // k_proc_exit doesn't return status, assume success if target found
             break;
 

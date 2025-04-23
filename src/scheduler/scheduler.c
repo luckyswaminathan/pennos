@@ -233,11 +233,13 @@ int _select_next_queue(scheduler_t *scheduler_state)
 void _update_blocked_processes()
 {
     pcb_t *process = scheduler_state->blocked_queue.head;
+    
     while (process != NULL)
     {
         // Case 1: Process was sleeping and has now woken up
         if (process->sleep_time > 0)
         {
+           
             process->sleep_time--;
             if (process->sleep_time == 0)
             {
@@ -285,7 +287,6 @@ void _run_next_process()
     //k_get_all_process_info();
     _update_blocked_processes();
     //printf("after updating blocked processes\n");
-    //k_get_all_process_info();
 
 
     // Select the next queue to run a process from
@@ -495,6 +496,7 @@ void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
     k_log("Blocking process with pid %d\n", process->pid);
+    fprintf(stderr, "Blocking process with pid %d\n", process->pid);
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -502,7 +504,14 @@ void block_process(pcb_t *process)
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
     k_log("Post push tail\n");
+    fprintf(stderr, "Post push tail\n");
+
     //k_get_all_process_info();
+    pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
+    while (curr != NULL) {
+        fprintf(stderr, "Blocked process PID %d\n", curr->pid);
+        curr = curr->next;
+    }
 }
 
 /**
@@ -1094,11 +1103,12 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     if (!process || ticks == 0) {
         return false;
     }
-
+    fprintf(stderr, "k_sleep process %d\n", process->pid);
     process->sleep_time = ticks; 
     // k_block_process handles removing from active queue and adding to blocked queue,
     // and sets state to PROCESS_BLOCKED.
     block_process(process); 
+    //k_proc_exit(process, 0);
     return true;
 }
 
@@ -1138,7 +1148,7 @@ void k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
  * @brief List all processes on PennOS, displaying PID, PPID, priority, status, 
  * and command name, similar to `ps`.
  *
- * Prints only if extra logging is enabled via k_toggle_logging().
+ * Prints only if extra logging i s enabled via k_toggle_logging().
  * Status codes: R (Running), B (Blocked), S (Stopped), Z (Zombie).
  */
 void k_get_all_process_info() {
