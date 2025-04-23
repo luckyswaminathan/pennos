@@ -126,6 +126,7 @@ int main(int argc, char **argv) {
     init_scheduler();
 
     s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    
 
     printf("Scheduler initialized\n");
     
