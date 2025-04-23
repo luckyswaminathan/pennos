@@ -72,13 +72,16 @@ int s_kill(pid_t pid, int signal) {
         fprintf(stderr, "s_kill: Process PID %d not found.\n", pid);
         return -1; // ESRCH (No such process)
     }
+    fprintf(stderr, "called s_kill\n");
 
     bool success = false;
     switch (signal) {
+        fprintf(stderr, "SIGNAL %d\n", signal);
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
             fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
+            k_get_all_process_info();
             k_proc_exit(target, 1); // Using status 1 for killed by signal
             success = true; // k_proc_exit doesn't return status, assume success if target found
             break;

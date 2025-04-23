@@ -35,7 +35,7 @@ void job_control_handler(int sig) {
             printf("SIGTSTP: getpid(): %d\n", getpid());
             
             // Use PennOS s_stop instead of real kill system call
-            s_kill(fg_pgid, P_SIGSTOP);
+            s_kill(scheduler_state->current_process->pid, P_SIGSTOP);
             
             // Don't wait here - let the parent's waitpid handle it
             job->status = J_STOPPED;
@@ -55,7 +55,8 @@ void job_control_handler(int sig) {
             fprintf(stderr, "SIGINT received, killing foreground job PID: %d\n", fg_pgid);
             
             // Use only PennOS s_kill to properly terminate PennOS processes
-            s_kill(fg_pgid, P_SIGTERM);
+
+            s_kill(scheduler_state->current_process->pid, P_SIGTERM);
             
             // Make sure the terminal control is returned to the shell
             tcsetpgrp(STDIN_FILENO, shell_pgid);
