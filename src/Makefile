@@ -6,7 +6,6 @@ CPPFLAGS = -DNDEBUG -I. -I./shell -I./scheduler
 SCHED_SRCS = scheduler/scheduler.c scheduler/spthread.c scheduler/logger.c ../lib/exiting_alloc.c scheduler/kernel.c scheduler/sys.c
 SCHED_HDRS = scheduler/scheduler.h scheduler/spthread.h scheduler/logger.h ../lib/exiting_alloc.h scheduler/kernel.h ../lib/linked_list.h scheduler/sys.h
 SCHED_OBJS = $(SCHED_SRCS:.c=.o)
-SCHED_TEST = scheduler/sched-test
 
 # Shell files
 SHELL_PROG = shell/penn-shell

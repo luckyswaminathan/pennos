@@ -1,288 +1,197 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include <errno.h>
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include <stdlib.h> // For NULL
+#include <string.h> // For strcmp etc. if needed
+#include <signal.h> // For signal definitions (SIGTERM, SIGSTOP, SIGCONT)
+#include <stdio.h>  // For fprintf
+#include <unistd.h> // For _exit? No, use spthread_exit or infinite loop.
+
+// Forward declaration for the scheduler function (to be implemented later)
+void run_scheduler(); 
 
 /**
  * @brief Create a child process that executes the function `func`.
  * The child will retain some attributes of the parent.
  *
  * @param func Function to be executed by the child process.
- * @param argv Null-terminated array of args, including the command name as argv[0].
- * @param fd0 Input file descriptor.
- * @param fd1 Output file descriptor.
- * @return pid_t The process ID of the created child process.
+ * @param arg Argument to be passed to the function.
+ * @return pid_t The process ID of the created child process, or -1 on error.
  */
-pid_t s_spawn(void *(*func)(void *), void *arg)
-{
-    log_queue_state();
-    LOG_INFO("s_spawn called with parent %d", scheduler_state->curr->pid);
-    pcb_t *proc = k_proc_create(scheduler_state->curr, arg);
-    linked_list_push_tail(&scheduler_state->curr->children, proc, child_pointers.prev, child_pointers.next);
-    pcb_t *child = scheduler_state->curr->children.head;
-    LOG_INFO("child %d", child->pid);
-    log_queue_state();
-    proc->thread = (spthread_t *)exiting_malloc(sizeof(spthread_t));
-    if (spthread_create(proc->thread, NULL, func, arg) != 0)
-    {
-        LOG_ERROR("Failed to create thread for process %d", proc->pid);
-        return -1;
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
+    // Get the parent process PCB using the kernel helper function.
+    // This avoids direct access to scheduler_state from the system call layer.
+    pcb_t* parent = k_get_current_process();
+
+    fprintf(stderr, "s_spawn: Parent PID: %p\n", (void*)parent);
+
+    // Directly call the kernel function to create the process.
+    // k_proc_create now handles PCB setup, thread creation, and scheduling.
+    pid_t new_pid = k_proc_create(parent, func, argv, fd0, fd1);
+
+    // k_proc_create returns -1 on error, so we can return that directly.
+    if (new_pid < 0) {
+        // Optionally log the error at the syscall level if desired
+        fprintf(stderr, "s_spawn: Failed to create process.\n");
     }
-    return proc->pid;
+
+    return new_pid;
 }
 
+
 /**
- * @brief Wait on a child of the calling process, until it changes state.
+ * @brief Wait on a child of the calling process, until it changes state (zombies).
  * If `nohang` is true, this will not block the calling process and return immediately.
+ * 
+ * First clean up zombies, then check nohang status, then block and wait if required.
  *
- * @param pid Process ID of the child to wait for.
- * @param wstatus Pointer to an integer variable where the status will be stored.
- * @param nohang If true, return immediately if no child has exited.
- * @return pid_t The process ID of the child which has changed state on success, -1 on error.
+ * @param pid Process ID of the child to wait for (-1 for any child).
+ * @param wstatus Pointer to an integer variable where the exit status will be stored.
+ * @param nohang If true, return immediately if no child has zombied.
+ * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
-pid_t s_waitpid(pid_t pid, int *wstatus, bool nohang)
-{
-    LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
-    log_process_state();
-    LOG_INFO("s_waitpid called with pid %d, nohang %d", pid, nohang);
-    LOG_INFO("curr %d", scheduler_state->curr->pid);
-    pcb_t* proc = scheduler_state->curr->children.head;
-    //pcb_t* curr = scheduler_state->curr;
-    while (proc != NULL) {
-        if (pid == -1 || proc->pid == pid) {
-            LOG_INFO("Found running process %d", proc->pid);
-
-            if (proc->state == PROCESS_ZOMBIED || proc->state == PROCESS_STOPPED)
-            {
-                // Log that we're waiting on this process
-                log_waited(proc->pid, proc->priority, proc->command);
-                linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-                return proc->pid;
-            }
-
-            if (nohang)
-            {
-                return 0;
-            }
-            else
-            {
-                // Block until process completes
-                int status = spthread_join(*proc->thread, (void **)wstatus);
-                if (status != 0)
-                {
-                    return -1;
-                }
-                proc->state = PROCESS_ZOMBIED;
-                linked_list_remove(&scheduler_state->processes, proc, process_pointers.prev, process_pointers.next);
-                linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-
-                // Log that we've waited on this process
-                log_waited(proc->pid, proc->priority, proc->command);
-
-                return proc->pid;
-            }
-        }
-        proc = proc->process_pointers.next;
-    }
-    return 0;
+pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    return k_waitpid(pid, wstatus, nohang);
 }
 
 /**
  * @brief Send a signal to a particular process.
+ * Current implementation supports SIGTERM, SIGSTOP, SIGCONT.
  *
  * @param pid Process ID of the target proces.
  * @param signal Signal number to be sent.
- * @return 0 on success, -1 on error.
+ * @return 0 on success, -1 on error (e.g., process not found, invalid signal).
  */
-int s_kill(pid_t pid)
-{
-    fprintf(stderr, "killing process %d\n", pid);
-    pcb_t *proc = scheduler_state->processes.head;
-    while (proc != NULL)
-    {
-        if (proc->pid == pid)
-        {
-            LOG_INFO("Killing process %d", proc->pid);
-            int priority = proc->priority;
-            if (priority == PRIORITY_HIGH)
-            {
-                linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-            }
-            else if (priority == PRIORITY_MEDIUM)
-            {
-                linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-            }
-            else if (priority == PRIORITY_LOW)
-            {
-                linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-            }
-            proc->state = PROCESS_STOPPED;
-            linked_list_push_tail(&scheduler_state->terminated_processes, proc, priority_pointers.prev, priority_pointers.next);
-
-            // Log the process being signaled
-            log_signaled(proc->pid, proc->priority, proc->command);
-
-            spthread_cancel(*proc->thread);
-            return 0;
-        }
-        else if (proc->ppid == pid) {
-            log_orphan(proc->pid, proc->priority, proc->command);
-            // set the parent pid to be
-            LOG_INFO("freeing child %d", proc->pid);
-            proc->ppid = 0;
-            linked_list_push_tail(&scheduler_state->init->children, proc, child_pointers.prev, child_pointers.next);
-        }
-        proc = proc->process_pointers.next;
+int s_kill(pid_t pid, int signal) {
+    // Find the target process using the kernel helper
+    pcb_t* target = k_get_process_by_pid(pid);
+    if (!target) {
+        fprintf(stderr, "s_kill: Process PID %d not found.\n", pid);
+        return -1; // ESRCH (No such process)
     }
-    return -1;
-}
 
-int s_nice(pid_t pid, int priority)
-{
-    pcb_t *proc = scheduler_state->processes.head;
-    while (proc != NULL)
-    {
-        if (proc->pid == pid)
-        {
-            LOG_INFO("Setting priority of process %d to %d", proc->pid, priority);
-            if (proc->priority != priority)
-            {
-                int old_priority = proc->priority;
+    bool success = false;
+    switch (signal) {
+        case P_SIGTERM: 
+            // Terminate the process. Use a default status for now.
+            // k_proc_exit handles moving to zombie queue and waking parent.
+            fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
+            k_proc_exit(target, 1); // Using status 1 for killed by signal
+            success = true; // k_proc_exit doesn't return status, assume success if target found
+            break;
 
-                if (priority == PRIORITY_HIGH)
-                {
-                    if (proc->priority == PRIORITY_MEDIUM)
-                    {
-                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    else if (proc->priority == PRIORITY_LOW)
-                    {
-                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-                }
-                else if (priority == PRIORITY_MEDIUM)
-                {
-                    if (proc->priority == PRIORITY_HIGH)
-                    {
-                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    else if (proc->priority == PRIORITY_LOW)
-                    {
-                        linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-                }
-                else if (priority == PRIORITY_LOW)
-                {
-                    if (proc->priority == PRIORITY_HIGH)
-                    {
-                        linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    else if (proc->priority == PRIORITY_MEDIUM)
-                    {
-                        linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-                    }
-                    proc->priority = priority;
-                    linked_list_push_tail(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-                }
+        case P_SIGSTOP:
+            // Stop the process
+            fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
+            success = k_stop_process(target);
+            break;
 
-                // Log the priority change
-                log_nice(proc->pid, old_priority, priority, proc->command);
-            }
-            return 0;
-        }
-        proc = proc->process_pointers.next;
+        case P_SIGCONT:
+            // Continue a stopped process
+             fprintf(stdout, "s_kill: Sending SIGCONT to PID %d\n", pid);
+            success = k_continue_process(target);
+            break;
+
+        // Add cases for other signals as needed (SIGINT, SIGHUP, etc.)
+
+        default:
+            fprintf(stderr, "s_kill: Signal %d not supported.\n", signal);
+            return -1; // EINVAL (Invalid argument)
     }
-    return -1;
+
+    return success ? 0 : -1;
 }
 
 /**
- * @brief Send a stop signal to a process (similar to SIGSTOP).
+ * @brief Unconditionally exit the calling process with the given status.
+ * This function does not return.
+ * @param status The exit status code.
+ */
+void s_exit(int status) {
+    pcb_t* current = k_get_current_process();
+    if (current) {
+        // Notify the kernel that this process is exiting
+        k_proc_exit(current, status);
+    } else {
+        // Should not happen from a running process
+        fprintf(stderr, "s_exit Error: Could not get current process!\n");
+    }
+
+    
+    // Fallback infinite loop in case spthread_exit fails or isn't used.
+    // while(1) { sleep(1000); } // sleep() is forbidden, use busy wait or yield
+    // while(1) { k_yield(); } // Yielding might still allow cleanup issues
+    // A simple infinite loop is perhaps safest if spthread_exit isn't guaranteed.
+    // while(1); 
+}
+
+/**
+ * @brief Set the priority of the specified process.
  *
  * @param pid Process ID of the target process.
- * @return 0 on success, -1 on error.
+ * @param priority The new priority value of the process (0, 1, or 2).
+ * @return 0 on success, -1 on failure (e.g., process not found, invalid priority).
  */
-int s_stop(pid_t pid)
-{
-    pcb_t *proc = scheduler_state->processes.head;
-    while (proc != NULL)
-    {
-        if (proc->pid == pid)
-        {
-            LOG_INFO("Stopping process %d", proc->pid);
-
-            // Call the stop_process function to handle the actual stopping
-            stop_process(proc);
-
-            // We don't actually suspend the thread here, just change its state
-            // In a real OS, this would send a SIGSTOP signal
-
-            return 0;
-        }
-        proc = proc->process_pointers.next;
+int s_nice(pid_t pid, int priority) {
+    pcb_t* target = k_get_process_by_pid(pid);
+    if (!target) {
+        fprintf(stderr, "s_nice: Process PID %d not found.\n", pid);
+        return -1;
     }
-    return -1;
+
+    // Validate priority (assuming enum values 0, 1, 2)
+    if (priority < PRIORITY_HIGH || priority > PRIORITY_LOW) {
+         fprintf(stderr, "s_nice: Invalid priority value %d for PID %d.\n", priority, pid);
+         return -1;
+    }
+
+    if (k_set_priority(target, priority)) {
+        return 0;
+    } else {
+        // k_set_priority might fail if internal state is inconsistent
+        fprintf(stderr, "s_nice: Kernel failed to set priority for PID %d.\n", pid);
+        return -1;
+    }
 }
 
 /**
- * @brief Send a continue signal to a process (similar to SIGCONT).
+ * @brief Suspends execution of the calling process for a specified number of clock ticks.
  *
- * @param pid Process ID of the target process.
- * @return 0 on success, -1 on error.
+ * @param ticks Duration of the sleep in system clock ticks. Must be greater than 0.
  */
-int s_cont(pid_t pid)
-{
-    // First check in the standard process list
-    pcb_t *proc = scheduler_state->processes.head;
-    while (proc != NULL)
-    {
-        if (proc->pid == pid && proc->state == PROCESS_BLOCKED)
-        {
-            LOG_INFO("Continuing process %d", proc->pid);
-
-            // Call the continue_process function to handle the actual continuation
-            continue_process(proc);
-
-            return 0;
-        }
-        proc = proc->process_pointers.next;
+void s_sleep(unsigned int ticks) {
+    if (ticks == 0) {
+        // Sleeping for 0 ticks could be interpreted as a yield, but 
+        // the description implies ticks > 0. We'll do nothing for 0.
+        return; 
     }
 
-    // Also check in the blocked_processes list
-    proc = scheduler_state->blocked_processes.head;
-    while (proc != NULL)
-    {
-        if (proc->pid == pid)
-        {
-            LOG_INFO("Continuing blocked process %d", proc->pid);
-
-            // Call the continue_process function to handle the actual continuation
-            continue_process(proc);
-
-            return 0;
-        }
-        proc = proc->priority_pointers.next;
+    pcb_t* current = k_get_current_process();
+    if (!current) {
+        fprintf(stderr, "s_sleep Error: Could not get current process!\n");
+        return; // Cannot sleep if not a process
     }
 
-    return -1;
+    // Call kernel sleep function
+    if (k_sleep(current, ticks)) {
+        // If kernel successfully put process to sleep, yield the CPU
+        k_yield(); 
+        // Execution resumes here after sleep duration (or signal)
+    } else {
+         fprintf(stderr, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
+         // Kernel function failed, maybe log error? Proceed without yielding.
+    }
 }
 
 /**
- * @brief Unconditionally exit the calling process.
- */
-void s_exit(void)
-{
-    PANIC("s_exit not implemented");
+ * @brief Get information about all processes. Implements `ps`.
+ * 
+ * This function retrieves and prints detailed information about all processes,
+ * including their PID, PPID, priority, and state.
+*/
+void s_get_process_info() {
+    k_get_all_process_info();
 }
-
-// void s_sleep(unsigned int ticks) {
-//     put_process_to_sleep(scheduler_state->curr, ticks);
-//     run_scheduler();
-// }
