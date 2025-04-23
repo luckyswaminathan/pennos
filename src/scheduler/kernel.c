@@ -95,8 +95,11 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         return -1; // Return -1 on failure as per new signature
     }
 
+    // Increment process count
+    scheduler_state->process_count++;
+
     // Initialize core fields
-    proc->pid = scheduler_state->process_count++;
+    proc->pid = scheduler_state->process_count;
     proc->ppid = parent ? parent->pid : 0;
     proc->pgid = proc->pid; // New process starts a new process group
     proc->state = PROCESS_RUNNING; // Initial state
@@ -185,8 +188,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
         return -1;
     }
 
-    printf("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
-    k_get_all_process_info();
+    k_log("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
 
     child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
     if (!child_process) {

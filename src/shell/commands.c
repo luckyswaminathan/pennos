@@ -13,6 +13,21 @@
 #define BUFFER_SIZE 256
 #define BUSY_LOOP_ITERATIONS 100000000
 
+bool busy_running = 1;
+
+// Helper function specific to ps command within this file
+static void print_process_line(pcb_t* proc, char state_char) {
+     if (!proc) return;
+     // Print process info directly using printf
+     printf("%3d %4d %3d %c    %s\n", 
+            proc->pid, 
+            proc->ppid, 
+            proc->priority, 
+            state_char, 
+            proc->command ? proc->command : "<?>" // Use command name
+     );
+}
+
 // static void print_header(int output_fd) {
 //     const char* header = "PID PPID PRI STAT CMD\n";
 //     dprintf(output_fd, "%s", header);
@@ -32,12 +47,57 @@
 
 // Implementation of ps command
 void* ps(void* arg) {
-    
-    s_get_process_info();
-    printf("ps called\n");
-    s_exit(0);
+    // Directly access kernel state (assuming this is allowed by the project structure)
+    if (!scheduler_state) {
+        printf("Scheduler not initialized.\n");
+        s_exit(1); // Exit with an error code
+        return NULL; 
+    }
+
+    // Print header
+    printf("PID PPID PRI STAT CMD\n");
+
+    // Get current process - careful, this is the 'ps' process itself
+    // pcb_t *ps_process = scheduler_state->current_process; 
+    // pid_t ps_pid = (ps_process) ? ps_process->pid : -1;
+
+
+    // --- Iterate through all queues ---
+
+    // Ready Queues (excluding the ps process itself)
+    for (int i = 0; i < 3; i++) {
+        pcb_t* current = scheduler_state->ready_queues[i].head;
+        while (current != NULL) {
+            print_process_line(current, 'R');
+            current = current->next;
+        }
+    }
+
+    // Blocked Queue
+    pcb_t* current = scheduler_state->blocked_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'B');
+        current = current->next;
+    }
+
+    // Stopped Queue
+    current = scheduler_state->stopped_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'S');
+        current = current->next;
+    }
+
+    // Zombie Queue
+    current = scheduler_state->zombie_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'Z');
+        current = current->next;
+    }
+
+    s_exit(0); // Exit the ps process itself cleanly
     return NULL;
 }
+
 void* zombie_child(void* arg) {
     // Child process exits normally
     LOG_INFO("Child process running, will exit soon");
@@ -72,71 +132,71 @@ void* orphanify(void* arg) {
     return NULL;
 }
 
+void busy_sigint_handler(int signum) {
+    busy_running = 0;  // Set flag to stop the busy loop
+}
 
-// /**
-//  * @brief Busy wait indefinitely.
-//  * It can only be interrupted via signals.
-//  *
-//  * Example Usage: busy
-//  */
-// void* busy(void* arg) {
-//     LOG_INFO("Starting busy process");
-//     struct command_context* ctx = (struct command_context*)arg;
+/**
+ * @brief Busy wait indefinitely.
+ * It can only be interrupted via signals.
+ *
+ * Example Usage: busy
+ */
+void* busy(void* arg) {
+    LOG_INFO("Starting busy process");
+    struct command_context* ctx = (struct command_context*)arg;
+    // Set up signal handling for SIGINT
+    struct sigaction sig_action = {
+        .sa_handler = busy_sigint_handler,  // Use our custom handler
+        .sa_flags = 0
+    };
+    sigemptyset(&sig_action.sa_mask);
+    // Install signal handler for SIGINT (Ctrl-C)
+    sigaction(SIGINT, &sig_action, NULL);
     
-//     // Set up signal handling for SIGINT
-//     struct sigaction sig_action;
-//     sig_action.sa_handler = busy_sigint_handler;  // Use our custom handler
-//     sigemptyset(&sig_action.sa_mask);
-//     sig_action.sa_flags = 0;
+    // Reset the global flag
+    busy_running = 1;
     
-//     // Install signal handler for SIGINT (Ctrl-C)
-//     sigaction(SIGINT, &sig_action, NULL);
-    
-//     // Reset the global flag
-//     busy_running = 1;
-    
-//     // Check if a priority level was specified
-//     if (ctx->command[1] != NULL) {
-//         int priority_level = atoi(ctx->command[1]);
+    // Check if a priority level was specified
+    if (ctx->command[1] != NULL) {
+        int priority_level = atoi(ctx->command[1]);
 
-//         printf("priority_level: %d\n", priority_level);
+        printf("priority_level: %d\n", priority_level);
         
-//         // Update the priority of the current process
-//         pcb_t* proc = scheduler_state->curr;
+        // Update the priority of the current process
+        pcb_t* proc = scheduler_state->current_process;
         
-//         // Remove from current priority queue
-//         if (proc->priority == PRIORITY_HIGH) {
-//             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-//         } else if (proc->priority == PRIORITY_MEDIUM) {
-//             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-//         } else {
-//             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-//         }
+        // Remove from current priority queue
+        linked_list_remove(&scheduler_state->ready_queues[proc->priority], proc);
         
-//         // Update priority based on requested level
-//         if (priority_level == 0) {
-//             proc->priority = PRIORITY_HIGH;
-//         } else if (priority_level == 1) {
-//             proc->priority = PRIORITY_MEDIUM;
-//         } else {
-//             proc->priority = PRIORITY_LOW;
-//         }
+        // Update priority based on requested level
+        if (priority_level == 0) {
+            proc->priority = PRIORITY_HIGH;
+        } else if (priority_level == 1) {
+            proc->priority = PRIORITY_MEDIUM;
+        } else {
+            proc->priority = PRIORITY_LOW;
+        }
         
-//         // Add back to the appropriate queue
-//         add_process_to_queue(proc);
+        // Add back to the appropriate queue
+        linked_list_push_tail(&scheduler_state->ready_queues[proc->priority], proc);
         
-//         LOG_INFO("Set busy process priority to %d", priority_level);
-//     }
+        LOG_INFO("Set busy process priority to %d", priority_level);
+    }
     
-//     // Create a CPU intensive workload
-//     while(busy_running) {
-//         // This is a tight loop that consumes CPU
-//         for(int i = 0; i < BUSY_LOOP_ITERATIONS && busy_running; i++) {
-//             // Do nothing, just burn CPU cycles
-//         }
-//     }
-//     return NULL;
-// }
+    int x = 0;
+
+    // Create a CPU intensive workload
+    while(busy_running) {
+        // This is a tight loop that consumes CPU
+        for(int i = 0; i < BUSY_LOOP_ITERATIONS && busy_running; i++) {
+            // Do nothing, just burn CPU cycles
+            x++;
+            dprintf(2, "x: %d\n", x);
+        }
+    }
+    return NULL;
+}
 
 // Implementation of nice command to use the system s_nice function
 void* nice_command(void* arg) {
