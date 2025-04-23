@@ -355,7 +355,7 @@ void _run_next_process()
 
         child_process_t* children_ptr = linked_list_head(process->children);
         while (children_ptr != NULL) {
-            children_ptr->process->ppid = 0;
+            children_ptr->process->ppid = 1;
             child_process_t* next_children_ptr = children_ptr->next;
             linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
             children_ptr = next_children_ptr;
