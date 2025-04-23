@@ -15,6 +15,19 @@
 
 bool busy_running = 1;
 
+// Helper function specific to ps command within this file
+static void print_process_line(pcb_t* proc, char state_char) {
+     if (!proc) return;
+     // Print process info directly using printf
+     printf("%3d %4d %3d %c    %s\n", 
+            proc->pid, 
+            proc->ppid, 
+            proc->priority, 
+            state_char, 
+            proc->command ? proc->command : "<?>" // Use command name
+     );
+}
+
 // static void print_header(int output_fd) {
 //     const char* header = "PID PPID PRI STAT CMD\n";
 //     dprintf(output_fd, "%s", header);
@@ -34,12 +47,57 @@ bool busy_running = 1;
 
 // Implementation of ps command
 void* ps(void* arg) {
-    
-    s_get_process_info();
-    printf("ps called\n");
-    s_exit(0);
+    // Directly access kernel state (assuming this is allowed by the project structure)
+    if (!scheduler_state) {
+        printf("Scheduler not initialized.\n");
+        s_exit(1); // Exit with an error code
+        return NULL; 
+    }
+
+    // Print header
+    printf("PID PPID PRI STAT CMD\n");
+
+    // Get current process - careful, this is the 'ps' process itself
+    // pcb_t *ps_process = scheduler_state->current_process; 
+    // pid_t ps_pid = (ps_process) ? ps_process->pid : -1;
+
+
+    // --- Iterate through all queues ---
+
+    // Ready Queues (excluding the ps process itself)
+    for (int i = 0; i < 3; i++) {
+        pcb_t* current = scheduler_state->ready_queues[i].head;
+        while (current != NULL) {
+            print_process_line(current, 'R');
+            current = current->next;
+        }
+    }
+
+    // Blocked Queue
+    pcb_t* current = scheduler_state->blocked_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'B');
+        current = current->next;
+    }
+
+    // Stopped Queue
+    current = scheduler_state->stopped_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'S');
+        current = current->next;
+    }
+
+    // Zombie Queue
+    current = scheduler_state->zombie_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'Z');
+        current = current->next;
+    }
+
+    s_exit(0); // Exit the ps process itself cleanly
     return NULL;
 }
+
 void* zombie_child(void* arg) {
     // Child process exits normally
     LOG_INFO("Child process running, will exit soon");
