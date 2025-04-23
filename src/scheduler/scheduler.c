@@ -729,6 +729,16 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // unblock_process(scheduler_state->current_process);
 }
 
+/**
+ * @brief Remove a child from the children list of a process
+ * 
+ * This function searches through the children list of a process and removes
+ * a child process from it. It compares the process pointer of each child in
+ * the list to find the child process to remove.
+ * 
+ * @param process The process to remove the child from
+ * @param child The child process to remove
+ */
 void remove_from_children_list(pcb_t *process, pcb_t *child) {
     for (child_process_t* child_process = process->children->head; child_process != NULL; child_process = child_process->next) {
         if (child_process->process == child) {
