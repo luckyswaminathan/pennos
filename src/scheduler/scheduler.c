@@ -241,7 +241,6 @@ void _update_blocked_processes()
         {
            
             process->sleep_time -= 0.1;
-            fprintf(stderr, "process sleep time: %f\n", process->sleep_time);
             if (process->sleep_time <= 0)
             {
                 unblock_process(process);

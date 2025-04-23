@@ -230,15 +230,15 @@ void* nice_command(void* arg) {
     return NULL;
 }
 
-void* sleep_command(void* arg) {
+void* sleep_command(void* arg, char* time) {
     //struct command_context* ctx = (struct command_context*)arg;
     fprintf(stderr, "sleep command called\n");
-    // if (ctx->command[1] == NULL) {
-    //     fprintf(stderr, "Error: sleep command requires a number of ticks\n");
-    //     s_exit(1);
-    //     return NULL;
-    // }
-    int ticks = 10;
+    if (time == NULL) {
+        fprintf(stderr, "Error: sleep command requires a number of ticks\n");
+        s_exit(1);
+        return NULL;
+    }
+    int ticks = atoi(time);
     fprintf(stderr, "sleep ticks: %d\n", ticks);
     s_sleep(ticks);
     s_exit(0);
@@ -267,7 +267,7 @@ void* execute_command(void* arg) {
         return busy(ctx);
     }
     if (strcmp(ctx[0], "sleep") == 0) {
-        return sleep_command(ctx);
+        return sleep_command(ctx, ctx[1]);
     }
     s_exit(0);
     return NULL;
