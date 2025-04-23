@@ -103,9 +103,12 @@ static void* init_process(void* arg) {
     // k_get_all_process_info();
 
     while (true) {
-        // dprintf(2, "init running %d\n", i);
-        // k_get_all_process_info();
-        usleep(1000000);
+        // // dprintf(2, "init running %d\n", i);
+        // // k_get_all_process_info();
+        //usleep(1000000);
+        int wstatus;
+        while (s_waitpid(-1, &wstatus, true) > 0) {
+        }
     }
 
     return NULL;

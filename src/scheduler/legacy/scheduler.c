@@ -125,7 +125,7 @@ void init_scheduler() {
     init->priority = PRIORITY_HIGH;
     init->state = PROCESS_RUNNING;
     init->command = "init";
-    init->children = linked_list_new(pcb_t, NULL);
+    init->children = linked_list_new(child_process_t, NULL);
     init->argv = NULL;
     
     init->thread = (spthread_t*)exiting_malloc(sizeof(spthread_t));

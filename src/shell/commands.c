@@ -35,45 +35,43 @@ void* ps(void* arg) {
     
     s_get_process_info();
     printf("ps called\n");
+    s_exit(0);
     return NULL;
 }
-// void* zombie_child(void* arg) {
-//     // Child process exits normally
-//     LOG_INFO("Child process running, will exit soon");
-//     return NULL;
-// }
+void* zombie_child(void* arg) {
+    // Child process exits normally
+    LOG_INFO("Child process running, will exit soon");
+    s_exit(0);
+    return NULL;
+}
 
 
-// void* zombify(void* arg) {
+void* zombify(void* arg) {
     
-//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-//     child_ctx->command = exiting_malloc(sizeof(char*));
-//     child_ctx->command[0] = strdup("zombie_child");
-//     child_ctx->process = NULL;
-//     // Spawn the child process
-//     pid_t child = s_spawn(zombie_child, child_ctx);
-//     LOG_INFO("Spawned child process with PID %d", child);
-//     while(1) {  
-//     };
-//     return NULL;
-// }
+    // Spawn the child process
+    pid_t child = s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_get_process_info();
+    LOG_INFO("Spawned child process with PID %d", child);
+    while(1) {  
+    };
+    s_exit(0);
+    return NULL;
+}
 
-// void* orphan_child(void* arg) {
+void* orphan_child(void* arg) {
     
-//     while(1) {
-//     };
-//     return NULL;
-// }
+    while(1) {
+    };
+    s_exit(0);
+    return NULL;
+}
 
-// void* orphanify(void* arg) {
-//     struct command_context* child_ctx = exiting_malloc(sizeof(struct command_context));
-//     child_ctx->command = exiting_malloc(sizeof(char*));
-//     child_ctx->command[0] = strdup("orphan_child");
-//     child_ctx->process = NULL;
-//     s_spawn(orphan_child, child_ctx);
-//     return NULL;
-    
-// }
+void* orphanify(void* arg) {
+    s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_exit(0);
+    return NULL;
+}
+
 
 // /**
 //  * @brief Busy wait indefinitely.
@@ -181,15 +179,15 @@ void* execute_command(void* arg) {
     if (strcmp(ctx[0], "ps") == 0) {
         ps(ctx);
         printf("ps was called and finished\n");
-        s_exit(0);
         return NULL;
     }
-    // if (strcmp(ctx->command[0], "zombify") == 0) {
-    //     return zombify(ctx);
-    // }
-    // if (strcmp(ctx->command[0], "orphanify") == 0) {
-    //     return orphanify(ctx);
-    // }
+    if (strcmp(ctx[0], "zombify") == 0) {
+        zombify(ctx);
+        return NULL;
+    }
+    if (strcmp(ctx[0], "orphanify") == 0) {
+        return orphanify(ctx);
+    }
     s_exit(0);
     return NULL;
 }

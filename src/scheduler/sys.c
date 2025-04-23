@@ -54,7 +54,6 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
-    printf("s_waitpid called with pid %d, nohang %d\n", pid, nohang);
     return k_waitpid(pid, wstatus, nohang);
 }
 

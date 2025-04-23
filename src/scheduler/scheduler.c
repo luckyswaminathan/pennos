@@ -333,6 +333,14 @@ void _run_next_process()
             blocked_ptr = blocked_ptr->next;
             // TODO: add -1 case
         }
+
+        child_process_t* children_ptr = linked_list_head(process->children);
+        while (children_ptr != NULL) {
+            children_ptr->process->ppid = 0;
+            child_process_t* next_children_ptr = children_ptr->next;
+            linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
+            children_ptr = next_children_ptr;
+        }
     } else if (linked_list_head(&scheduler_state->ready_queues[next_queue]) != NULL){
         pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
         linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
