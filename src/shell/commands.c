@@ -230,6 +230,21 @@ void* nice_command(void* arg) {
     return NULL;
 }
 
+void* sleep_command(void* arg) {
+    //struct command_context* ctx = (struct command_context*)arg;
+    fprintf(stderr, "sleep command called\n");
+    // if (ctx->command[1] == NULL) {
+    //     fprintf(stderr, "Error: sleep command requires a number of ticks\n");
+    //     s_exit(1);
+    //     return NULL;
+    // }
+    int ticks = 10;
+    fprintf(stderr, "sleep ticks: %d\n", ticks);
+    s_sleep(ticks);
+    s_exit(0);
+    return NULL;
+}
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -250,6 +265,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "busy") == 0) {
         return busy(ctx);
+    }
+    if (strcmp(ctx[0], "sleep") == 0) {
+        return sleep_command(ctx);
     }
     s_exit(0);
     return NULL;

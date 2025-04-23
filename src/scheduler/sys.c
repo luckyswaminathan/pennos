@@ -78,8 +78,11 @@ int s_kill(pid_t pid, int signal) {
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
-            fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
-            k_proc_exit(target, 1); // Using status 1 for killed by signal
+            
+            if (target->pid != 1) {
+                fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
+                k_proc_exit(target, 1); // Using status 1 for killed by signal
+            }
             success = true; // k_proc_exit doesn't return status, assume success if target found
             break;
 
@@ -178,7 +181,7 @@ void s_sleep(unsigned int ticks) {
     // Call kernel sleep function
     if (k_sleep(current, ticks)) {
         // If kernel successfully put process to sleep, yield the CPU
-        k_yield(); 
+        spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
          fprintf(stderr, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
