@@ -110,7 +110,8 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->next = NULL;
     proc->waited_child = -2;
 
-    if (proc->pid == 0) {
+    // this is the init process
+    if (parent == NULL) {
         scheduler_state->init_process = proc;
     }
 
