@@ -228,21 +228,23 @@ void _update_blocked_processes()
         else
         {
             // Case 2: Process was waiting on a child process to exit
-            bool all_children_exited = true;
-            child_process_t *child = process->children->head;
-            while (child != NULL)
-            {
-                if (child->process->state != PROCESS_ZOMBIED)
-                {
-                    all_children_exited = false;
-                    break;
-                }
-                child = child->next;
-            }
-            if (all_children_exited)
-            {
-                unblock_process(process);
-            }
+
+            // TODO: do we need this
+            // bool all_children_exited = true;
+            // child_process_t *child = process->children->head;
+            // while (child != NULL)
+            // {
+            //     if (child->process->state != PROCESS_ZOMBIED)
+            //     {
+            //         all_children_exited = false;
+            //         break;
+            //     }
+            //     child = child->next;
+            // }
+            // if (all_children_exited)
+            // {
+            //     unblock_process(process);
+            // }
         }
 
         process = process->next;
@@ -314,18 +316,24 @@ void _run_next_process()
     quantum++;
 
     // Add the process back to the queue
-    //k_get_all_process_info();
     if (process->state == PROCESS_ZOMBIED) {
+        
         pcb_t* blocked_ptr = linked_list_head(&scheduler_state->blocked_queue);
         while (blocked_ptr != NULL) {
+            fprintf(stderr, "BLOCKED PTR PID %d\n", blocked_ptr->pid);
             if (blocked_ptr->waited_child == process->pid) {
                 //TODO: might need to refactor logic
+                fprintf(stderr, "unblocking process IN RUN NEXT PROCESS %d\n", blocked_ptr->pid);
                 unblock_process(blocked_ptr);
+                k_get_all_process_info();
                 break;
+            } else if (blocked_ptr->waited_child == -1) {
+                //
             }
+            blocked_ptr = blocked_ptr->next;
             // TODO: add -1 case
         }
-    } else {
+    } else if (linked_list_head(&scheduler_state->ready_queues[next_queue]) != NULL){
         pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
         linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
     }
@@ -684,7 +692,6 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     printf("Blocking and waiting for child with pid %d\n", child->pid);
 
     // this is unintuitive but works for blocking and waiting
-    
     block_process(scheduler_state->current_process);
     spthread_suspend_self();
     printf("Blocked\n");
@@ -692,23 +699,26 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
 
     // Wait for the child to finish
     printf("Child finished\n");
+    k_get_all_process_info();
 
     // Remove the child from its current queue
-    if (child->state == PROCESS_STOPPED) {
-        linked_list_remove(&scheduler_state->stopped_queue, child);
-    } else if (child->state == PROCESS_BLOCKED) {
-        linked_list_remove(&scheduler_state->blocked_queue, child);
-    } else {
-        linked_list_remove(&scheduler_state->ready_queues[child->priority], child);
-    }
+    // if (child->state == PROCESS_STOPPED) {
+    //     linked_list_remove(&scheduler_state->stopped_queue, child);
+    // } else if (child->state == PROCESS_BLOCKED) {
+    //     linked_list_remove(&scheduler_state->blocked_queue, child);
+    // } else {
+    //     linked_list_remove(&scheduler_state->ready_queues[child->priority], child);
+    // }
+    linked_list_remove(&scheduler_state->zombie_queue, child);
 
+    k_get_all_process_info();
     // Mark child as zombie and add to zombie queue
-    child->state = PROCESS_ZOMBIED;
-    child->exit_status = *wstatus;
-    linked_list_push_tail(&scheduler_state->zombie_queue, child);
 
+    // TODO: actually cleanup/free the child
+
+    *wstatus = child->exit_status;
     // Unblock the parent process
-    unblock_process(scheduler_state->current_process);
+    // unblock_process(scheduler_state->current_process);
 }
 
 void remove_from_children_list(pcb_t *process, pcb_t *child) {
@@ -735,6 +745,7 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
     if (pid == -1) {
         // Wait for any child process
+        scheduler_state->current_process->waited_child = -1;
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
         
@@ -782,7 +793,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         printf("Waiting for specific child with pid %d\n", pid);
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
-
+        scheduler_state->current_process->waited_child = pid;
         printf("Child found with pid %d\n", child->pid);
         
         if (child == NULL) {
@@ -814,10 +825,12 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
+
         printf("current process pid: %d\n", scheduler_state->current_process->pid);
         printf("waiting for %lu for %s\n", child->thread->thread, child->command);
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
         printf("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
+        k_get_all_process_info();
         
         // After child terminates, it should be a zombie
         // Return its PID after removing it from zombie queue and freeing
@@ -865,14 +878,14 @@ void k_proc_exit(pcb_t *process, int exit_status) {
 
 
      // 4. Check if the parent is waiting and unblock it
-     pcb_t *parent = k_get_process_by_pid(process->ppid);
-     if (parent && parent->state == PROCESS_BLOCKED) {
-         // TODO: Add more specific check if parent is blocked *specifically* for this child
-         // e.g., if (parent->waiting_for_child == process->pid || parent->waiting_for_child == ANY_CHILD)
-         // For now, unblock if parent is blocked for any reason and one of its children exited.
-         fprintf(stdout, "k_proc_exit: Unblocking parent PID %d because child PID %d exited.\n", parent->pid, process->pid);
-         unblock_process(parent); 
-     }
+     //pcb_t *parent = k_get_process_by_pid(process->ppid);
+    //  if (parent && parent->state == PROCESS_BLOCKED) {
+    //      // TODO: Add more specific check if parent is blocked *specifically* for this child
+    //      // e.g., if (parent->waiting_for_child == process->pid || parent->waiting_for_child == ANY_CHILD)
+    //      // For now, unblock if parent is blocked for any reason and one of its children exited.
+    //      fprintf(stdout, "k_proc_exit: Unblocking parent PID %d because child PID %d exited.\n", parent->pid, process->pid);
+    //      unblock_process(parent); 
+    //  }
 
      // NOTE: The actual thread *must* have exited its main function before this is called.
      // The spthread_join happens later during reaping (in k_reap_child).
