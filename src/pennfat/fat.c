@@ -1272,9 +1272,9 @@ int ls_dir_entry(directory_entry *ptr_to_dir_entry)
     // construct the permission string
     char perm_str[5];
     perm_str[0] = (ptr_to_dir_entry->type == 2) ? 'd' : '-';
-    perm_str[1] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
-    perm_str[2] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
-    perm_str[3] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
+    perm_str[1] = (ptr_to_dir_entry->perm & 4) ? 'r' : '-'; // 0b100 = 4
+    perm_str[2] = (ptr_to_dir_entry->perm & 2) ? 'w' : '-'; // 0b010 = 2
+    perm_str[3] = (ptr_to_dir_entry->perm & 1) ? 'x' : '-'; // 0b001 = 1
     perm_str[4] = '\0';
 
     n_bytes_written = sprintf(buf + n_bytes_written, " %s", perm_str);

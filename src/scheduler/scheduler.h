@@ -39,6 +39,21 @@ struct child_process_st {
     child_process_t* prev;
 };
 
+
+/**
+ * Process level file descriptor table
+ */
+
+#define PROCESS_FD_TABLE_SIZE 128 
+typedef struct process_fd_entry_st
+{
+    uint16_t global_fd; // file descriptor
+    uint32_t offset;
+    uint8_t mode; // F_READ, F_WRITE, F_APPEND
+    bool in_use;
+} process_fd_entry;
+
+
 /*
     Process Control Block
     - Process identification
@@ -58,6 +73,9 @@ struct pcb_st {
     // File descriptors (may add moree)
     int fd0;
     int fd1;
+
+    // Process level file descriptor table
+    process_fd_entry process_fd_table[PROCESS_FD_TABLE_SIZE];
 
     // Process state
     process_state state;

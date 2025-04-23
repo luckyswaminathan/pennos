@@ -170,6 +170,20 @@ void* nice_command(void* arg) {
     return NULL;
 }
 
+void* ls(void* arg) {
+    struct command_context* ctx = (struct command_context*)arg;
+    s_ls(ctx->command[1]); // will be NULL if no argument is provided
+    s_exit(0);
+    return NULL;
+}
+
+void* echo(void* arg) {
+    struct command_context* ctx = (struct command_context*)arg;
+    s_write(STDOUT_FILENO, ctx->command[1], strlen(ctx->command[1]));
+    s_exit(0);
+    return NULL;
+}
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -187,6 +201,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "orphanify") == 0) {
         return orphanify(ctx);
+    }
+    if (strcmp(ctx[0], "ls") == 0) {
+        return ls(ctx);
     }
     s_exit(0);
     return NULL;

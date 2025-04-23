@@ -3,6 +3,7 @@
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include "pennfat/fat_syscalls.h"
 
 #define P_SIGTERM 1
 #define P_SIGSTOP 2

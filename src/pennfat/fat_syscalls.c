@@ -1,25 +1,16 @@
 #include <stdint.h>
 #include "src/pennfat/fat.h"
+#include "src/scheduler/kernel.h"
 
-#define PROCESS_FD_TABLE_SIZE 1024
 #define PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL 0xFFFF
-
-typedef struct process_fd_entry_st
-{
-    uint16_t global_fd; // file descriptor
-    uint32_t offset;
-    uint8_t mode; // F_READ, F_WRITE, F_APPEND
-    bool in_use;
-} process_fd_entry;
-
-process_fd_entry process_fd_table[PROCESS_FD_TABLE_SIZE] = {0}; // all in_use are false
 
 int find_empty_spot_in_process_fd_table(void)
 {
+    pcb_t *current_process = k_get_current_process();
     for (uint32_t i = 0; i < PROCESS_FD_TABLE_SIZE; i++)
     {
         // check if the entry already exists (requires ref_count > 0)
-        if (!process_fd_table[i].in_use)
+        if (!current_process->process_fd_table[i].in_use)
         {
             return i;
         }
@@ -29,9 +20,10 @@ int find_empty_spot_in_process_fd_table(void)
 
 int find_global_fd_in_process_fd_table(int global_fd)
 {
+    pcb_t *current_process = k_get_current_process();
     for (uint32_t i = 0; i < PROCESS_FD_TABLE_SIZE; i++)
     {
-        if (process_fd_table[i].in_use && process_fd_table[i].global_fd == global_fd)
+        if (current_process->process_fd_table[i].in_use && current_process->process_fd_table[i].global_fd == global_fd)
         {
             return i;
         }
@@ -52,10 +44,10 @@ int s_open(const char *fname, int mode)
     }
 
     // Check if the fd is already in the process fd table
-
-    if (find_global_fd_in_process_fd_table(global_fd) != PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
+    int process_fd = find_global_fd_in_process_fd_table(global_fd);
+    if (process_fd != PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
     {
-        return global_fd;
+        return process_fd;
     }
 
     // find an empty spot in the process fd table
@@ -66,10 +58,11 @@ int s_open(const char *fname, int mode)
     }
 
     // update the process fd table
-    process_fd_table[empty_spot].global_fd = global_fd;
-    process_fd_table[empty_spot].in_use = true;
-    process_fd_table[empty_spot].offset = 0;
-    process_fd_table[empty_spot].mode = mode;
+    pcb_t *current_process = k_get_current_process();
+    current_process->process_fd_table[empty_spot].global_fd = global_fd;
+    current_process->process_fd_table[empty_spot].in_use = true;
+    current_process->process_fd_table[empty_spot].offset = 0;
+    current_process->process_fd_table[empty_spot].mode = mode;
     return empty_spot;
 }
 
@@ -77,15 +70,16 @@ int s_open(const char *fname, int mode)
 
 int s_read(int fd, int n, char *buf)
 {
-    if (fd >= PROCESS_FD_TABLE_SIZE || !process_fd_table[fd].in_use)
+    pcb_t *current_process = k_get_current_process();
+    if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
         return ES_READ_UNKNOWN_FD;
     }
 
     // set the offset in the global fd table
-    k_lseek(process_fd_table[fd].global_fd, process_fd_table[fd].offset, F_SEEK_SET);
-    int bytes_read = k_read(process_fd_table[fd].global_fd, n, buf);
-    process_fd_table[fd].offset += bytes_read;
+    k_lseek(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].offset, F_SEEK_SET);
+    int bytes_read = k_read(current_process->process_fd_table[fd].global_fd, n, buf);
+    current_process->process_fd_table[fd].offset += bytes_read;
     return bytes_read;
 }
 
@@ -94,31 +88,32 @@ int s_read(int fd, int n, char *buf)
 #define ES_SETMODE_ERROR -104
 int s_write(int fd, const char *str, int n)
 {
-    if (fd >= PROCESS_FD_TABLE_SIZE || !process_fd_table[fd].in_use)
+    pcb_t *current_process = k_get_current_process();
+    if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
         return ES_WRITE_UNKNOWN_FD;
     }
 
     // set the offset in the global fd table
-    if (k_lseek(process_fd_table[fd].global_fd, process_fd_table[fd].offset, F_SEEK_SET) < 0)
+    if (k_lseek(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].offset, F_SEEK_SET) < 0)
     {
         return ES_SEEK_ERROR;
     }
 
-    int old_mode = k_getmode(process_fd_table[fd].global_fd);
-    if (k_setmode(process_fd_table[fd].global_fd, process_fd_table[fd].mode) != 0)
+    int old_mode = k_getmode(current_process->process_fd_table[fd].global_fd);
+    if (k_setmode(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].mode) != 0)
     {
         return ES_SETMODE_ERROR;
     }
 
-    int bytes_written = k_write(process_fd_table[fd].global_fd, str, n);
+    int bytes_written = k_write(current_process->process_fd_table[fd].global_fd, str, n);
 
-    if (k_setmode(process_fd_table[fd].global_fd, old_mode) != 0)
+    if (k_setmode(current_process->process_fd_table[fd].global_fd, old_mode) != 0)
     {
         return ES_SETMODE_ERROR;
     }
 
-    process_fd_table[fd].offset += bytes_written;
+    current_process->process_fd_table[fd].offset += bytes_written;
     return bytes_written;
 }
 
@@ -126,13 +121,14 @@ int s_write(int fd, const char *str, int n)
 
 int s_close(int fd)
 {
-    if (fd >= PROCESS_FD_TABLE_SIZE || !process_fd_table[fd].in_use)
+    pcb_t *current_process = k_get_current_process();
+    if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
         return ES_CLOSE_UNKNOWN_FD;
     }
     // close the global fd
-    k_close(process_fd_table[fd].global_fd);
-    process_fd_table[fd].in_use = false;
+    k_close(current_process->process_fd_table[fd].global_fd);
+    current_process->process_fd_table[fd].in_use = false;
     return 0;
 }
 
