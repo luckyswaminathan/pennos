@@ -212,6 +212,24 @@ void* sleep_command(void* arg, char* time) {
     return NULL;
 }
 
+
+void* man(void* arg) {
+    struct command_context* ctx = (struct command_context*)arg;
+    int stdout_fd = ctx->stdout_fd;
+    
+    dprintf(stdout_fd, "Available commands:\n\n");
+    dprintf(stdout_fd, "ps          - List all running processes and their states\n");
+    dprintf(stdout_fd, "zombify     - Create a zombie process\n");
+    dprintf(stdout_fd, "orphanify   - Create an orphan process\n");
+    dprintf(stdout_fd, "busy        - Start a CPU-intensive process\n");
+    dprintf(stdout_fd, "sleep <n>   - Sleep for n ticks\n");
+    dprintf(stdout_fd, "nice_pid <pid> <priority>\n            - Change priority of process <pid> to <priority> (0-2)\n");
+    dprintf(stdout_fd, "man         - Show this help message\n");
+    
+    s_exit(0);
+    return NULL;
+}
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -236,8 +254,11 @@ void* execute_command(void* arg) {
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);
     }
-    if (strcmp(ctx[0], "nice") == 0) {
+    if (strcmp(ctx[0], "nice_pid") == 0) {
         return nice_command(ctx, ctx[1], ctx[2]);
+    }
+    if (strcmp(ctx[0], "man") == 0) {
+        return man(ctx);
     }
     s_exit(0);
     return NULL;
