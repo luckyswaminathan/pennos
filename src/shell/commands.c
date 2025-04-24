@@ -199,18 +199,18 @@ void* busy(void* arg) {
 }
 
 // Implementation of nice command to use the system s_nice function
-void* nice_command(void* arg) {
+void* nice_command(void* arg, char* pid, char* priority) {
     struct command_context* ctx = (struct command_context*)arg;
     int stdout_fd = ctx->stdout_fd;
     
-    if (ctx->command[1] == NULL || ctx->command[2] == NULL) {
+    if (pid == NULL || priority == NULL) {
         dprintf(stdout_fd, "Usage: nice <pid> <priority_level>\n");
         return NULL;
     }
     
     // Parse PID and priority level
-    pid_t target_pid = atoi(ctx->command[1]);
-    int priority_level = atoi(ctx->command[2]);
+    pid_t target_pid = atoi(pid);
+    int priority_level = atoi(priority);
     
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
@@ -226,7 +226,7 @@ void* nice_command(void* arg) {
     } else {
         dprintf(stdout_fd, "Failed to change priority of process %d\n", target_pid);
     }
-    
+    s_exit(0);
     return NULL;
 }
 
@@ -268,6 +268,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);
+    }
+    if (strcmp(ctx[0], "nice") == 0) {
+        return nice_command(ctx, ctx[1], ctx[2]);
     }
     s_exit(0);
     return NULL;
