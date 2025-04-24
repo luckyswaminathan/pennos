@@ -178,9 +178,9 @@ void* ls(void* arg) {
 }
 
 void* echo(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    s_write(STDOUT_FILENO, ctx->command[1], strlen(ctx->command[1]));
-    s_exit(0);
+    char** command = (char**) arg;
+    int ret = s_write(STDOUT_FILENO, command[1], strlen(command[1]));
+    s_exit(ret);
     return NULL;
 }
 
@@ -204,6 +204,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "ls") == 0) {
         return ls(ctx);
+    }
+    if (strcmp(ctx[0], "echo") == 0) {
+        return echo(ctx);
     }
     s_exit(0);
     return NULL;
