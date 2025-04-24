@@ -11,9 +11,6 @@
 #include "../scheduler/spthread.h"
 
 #define BUFFER_SIZE 256
-#define BUSY_LOOP_ITERATIONS 100000000
-
-bool busy_running = 1;
 
 // Helper function specific to ps command within this file
 static void print_process_line(pcb_t* proc, char state_char) {
@@ -65,6 +62,7 @@ void* ps(void* arg) {
     // --- Iterate through all queues ---
 
     // Ready Queues (excluding the ps process itself)
+    // TODO: Maintain abstraction here
     for (int i = 0; i < 3; i++) {
         pcb_t* current = scheduler_state->ready_queues[i].head;
         while (current != NULL) {
@@ -132,69 +130,38 @@ void* orphanify(void* arg) {
     return NULL;
 }
 
-void busy_sigint_handler(int signum) {
-    busy_running = 0;  // Set flag to stop the busy loop
-}
-
 /**
- * @brief Busy wait indefinitely.
- * It can only be interrupted via signals.
- *
- * Example Usage: busy
+ * @brief This function is used to busy wait a process.
+ * 
+ * It removes the current process from the ready queue and adds it to the ready queue with the new priority.
+ * It then busy waits.
+ * 
+ * @param arg The command context.
+ * @param priority The priority to set the process to.
+ * @return NULL.
  */
-void* busy(void* arg) {
-    LOG_INFO("Starting busy process");
+void* busy(void* arg, char* priority) {
+    // Get the command context
     struct command_context* ctx = (struct command_context*)arg;
-    // Set up signal handling for SIGINT
-    struct sigaction sig_action = {
-        .sa_handler = busy_sigint_handler,  // Use our custom handler
-        .sa_flags = 0
-    };
-    sigemptyset(&sig_action.sa_mask);
-    // Install signal handler for SIGINT (Ctrl-C)
-    sigaction(SIGINT, &sig_action, NULL);
-    
-    // Reset the global flag
-    busy_running = 1;
-    
-    // Check if a priority level was specified
-    if (ctx->command[1] != NULL) {
-        int priority_level = atoi(ctx->command[1]);
+    int priority_level = atoi(priority);
 
-        printf("priority_level: %d\n", priority_level);
-        
-        // Update the priority of the current process
-        pcb_t* proc = scheduler_state->current_process;
-        
-        // Remove from current priority queue
-        linked_list_remove(&scheduler_state->ready_queues[proc->priority], proc);
-        
-        // Update priority based on requested level
-        if (priority_level == 0) {
-            proc->priority = PRIORITY_HIGH;
-        } else if (priority_level == 1) {
-            proc->priority = PRIORITY_MEDIUM;
-        } else {
-            proc->priority = PRIORITY_LOW;
-        }
-        
-        // Add back to the appropriate queue
-        linked_list_push_tail(&scheduler_state->ready_queues[proc->priority], proc);
-        
-        LOG_INFO("Set busy process priority to %d", priority_level);
+    // Validate the priority level
+    if (priority_level < 0 || priority_level > 2) {
+        dprintf(ctx->stdout_fd, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_exit(1);
+        return NULL;
     }
-    
-    int x = 0;
 
-    // Create a CPU intensive workload
-    while(busy_running) {
-        // This is a tight loop that consumes CPU
-        for(int i = 0; i < BUSY_LOOP_ITERATIONS && busy_running; i++) {
-            // Do nothing, just burn CPU cycles
-            x++;
-            dprintf(2, "x: %d\n", x);
-        }
-    }
+    // Remove the current process from the ready queue and add it to the ready queue with the new priority
+    pcb_t* proc = scheduler_state->current_process;
+    linked_list_remove(&scheduler_state->ready_queues[proc->priority], proc);
+    proc->priority = priority_level;
+    linked_list_push_tail(&scheduler_state->ready_queues[priority_level], proc);
+
+    // Busy wait
+    while (1) {}
+
+    s_exit(0);
     return NULL;
 }
 
@@ -264,7 +231,7 @@ void* execute_command(void* arg) {
         return orphanify(ctx);
     }
     if (strcmp(ctx[0], "busy") == 0) {
-        return busy(ctx);
+        return busy(ctx, ctx[1]);
     }
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);
