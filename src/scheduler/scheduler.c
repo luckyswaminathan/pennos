@@ -241,7 +241,6 @@ void _update_blocked_processes()
         {
            
             process->sleep_time -= 0.1;
-            fprintf(stderr, "process sleep time: %f\n", process->sleep_time);
             if (process->sleep_time <= 0)
             {
                 unblock_process(process);
@@ -1059,6 +1058,7 @@ bool k_set_priority(pcb_t* process, int priority) {
 
     int old_priority = process->priority;
     process->priority = (priority_t)priority;
+    fprintf(stderr, "Changed priority of process %d from %d to %d\n", process->pid, old_priority, priority);
 
     // Only move queues if the process is currently in a ready queue
     if (process->state == PROCESS_RUNNING && old_priority != priority) {
@@ -1067,6 +1067,7 @@ bool k_set_priority(pcb_t* process, int priority) {
         pcb_t* current = scheduler_state->ready_queues[old_priority].head;
         while (current != NULL) {
             if (current == process) {
+                fprintf(stderr, "Removing process %d from ready queue %d\n", process->pid, old_priority);
                 if (current->prev) current->prev->next = current->next;
                 else scheduler_state->ready_queues[old_priority].head = current->next;
                 if (current->next) current->next->prev = current->prev;
@@ -1079,6 +1080,7 @@ bool k_set_priority(pcb_t* process, int priority) {
         }
 
         if (removed) {
+            fprintf(stderr, "Adding process %d to ready queue %d\n", process->pid, priority);
             // Add to the new ready queue
             k_add_to_ready_queue(process); 
         } else {
