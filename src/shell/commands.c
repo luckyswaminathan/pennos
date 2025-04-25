@@ -9,7 +9,7 @@
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
 #include "../scheduler/spthread.h"
-
+#include "jobs.h"
 #define BUFFER_SIZE 256
 
 // Helper function specific to ps command within this file
@@ -278,6 +278,12 @@ void* man(void* arg) {
     return NULL;
 }
 
+void* jobs_command(void* arg) {
+    print_all_jobs();
+    s_exit(0);
+    return NULL;
+}
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -310,6 +316,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "kill") == 0) {
         return kill_process_shell(ctx, ctx[1]);
+    }
+    if (strcmp(ctx[0], "jobs") == 0) {
+        return jobs_command(ctx);
     }
     s_exit(0);
     return NULL;
