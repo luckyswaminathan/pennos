@@ -32,6 +32,8 @@ void handle_jobs();
  */
 void enqueue_job(job* job);
 
+void print_all_jobs();
+
 // Find a job by ID
 job* find_job_by_id(jid_t id);
 
