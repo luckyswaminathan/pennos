@@ -269,6 +269,9 @@ void* man(void* arg) {
     dprintf(stdout_fd, "busy        - Start a CPU-intensive process\n");
     dprintf(stdout_fd, "sleep <n>   - Sleep for n ticks\n");
     dprintf(stdout_fd, "nice_pid <pid> <priority>\n            - Change priority of process <pid> to <priority> (0-2)\n");
+    dprintf(stdout_fd, "kill -term <pid> - Terminate process <pid>\n");
+    dprintf(stdout_fd, "kill -stop <pid> - Stop process <pid>\n");
+    dprintf(stdout_fd, "kill -cont <pid> - Continue process <pid>\n");
     dprintf(stdout_fd, "man         - Show this help message\n");
     
     s_exit(0);
