@@ -166,7 +166,7 @@ void* busy(void* arg, char* priority) {
 }
 
 // Implementation of nice command to use the system s_nice function
-void* nice_command(void* arg, char* pid, char* priority) {
+void* nice_pid_command(void* arg, char* pid, char* priority) {
     struct command_context* ctx = (struct command_context*)arg;
     int stdout_fd = ctx->stdout_fd;
     
@@ -208,6 +208,51 @@ void* sleep_command(void* arg, char* time) {
     int ticks = atoi(time);
     fprintf(stderr, "sleep ticks: %d\n", ticks);
     s_sleep(ticks);
+    s_exit(0);
+    return NULL;
+}
+
+void* kill_process_shell(void* arg, char* first_term) {
+    char** args = (char**)arg;
+    if (args == NULL || first_term == NULL) {
+        fprintf(stderr, "Error: kill command requires a process ID\n");
+        s_exit(1);
+        return NULL;
+    }
+    int signal = P_SIGTERM; // Default signal
+    int start_idx = 1; // Default to first argument as PID
+
+    // Check if we have a signal flag
+    if (first_term != NULL && first_term[0] == '-') {
+        if (strcmp(first_term, "-term") == 0) {
+            signal = P_SIGTERM;
+        } else if (strcmp(first_term, "-stop") == 0) {
+            signal = P_SIGSTOP;
+        } else if (strcmp(first_term, "-cont") == 0) {
+            signal = P_SIGCONT;
+        } else {
+            fprintf(stderr, "Unknown signal flag: %s\n", first_term);
+            fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+            s_exit(1);
+            return NULL;
+        }
+        start_idx = 2; // Skip the flag argument
+    }
+
+    // Check if we have any PIDs
+    if (args[start_idx] == NULL) {  
+        fprintf(stderr, "Error: kill command requires at least one PID\n");
+        fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+        s_exit(1);
+        return NULL;
+    }
+
+    // Process all PIDs
+    for (int i = start_idx; args[i] != NULL; i++) {
+        int pid = atoi(args[i]);
+        s_kill(pid, signal);
+    }
+    fprintf(stderr, "killed correctly\n");
     s_exit(0);
     return NULL;
 }
@@ -255,10 +300,13 @@ void* execute_command(void* arg) {
         return sleep_command(ctx, ctx[1]);
     }
     if (strcmp(ctx[0], "nice_pid") == 0) {
-        return nice_command(ctx, ctx[1], ctx[2]);
+        return nice_pid_command(ctx, ctx[1], ctx[2]);
     }
     if (strcmp(ctx[0], "man") == 0) {
         return man(ctx);
+    }
+    if (strcmp(ctx[0], "kill") == 0) {
+        return kill_process_shell(ctx, ctx[1]);
     }
     s_exit(0);
     return NULL;

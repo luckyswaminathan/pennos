@@ -906,16 +906,10 @@ void k_proc_exit(pcb_t *process, int exit_status) {
      // 1. Set state and exit status
      process->state = PROCESS_ZOMBIED;
      process->exit_status = exit_status;
+   
 
      // 2. Remove from any active queue it might be in (ready/blocked/stopped/current)
      // If it's the current process, the scheduler loop needs to handle not running it again.
-     if (scheduler_state->current_process == process) {
-         // Mark it so the scheduler loop knows not to requeue it
-         // Maybe set scheduler_state->current_process = NULL; here? Or handle in scheduler loop.
-         // Let's assume scheduler loop checks state after sigsuspend.
-     } else {
-        fprintf(stderr, "SHOULD NOT HAVE A NON CURRENT PROCESS");
-     }
      k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
@@ -947,7 +941,11 @@ void k_proc_exit(pcb_t *process, int exit_status) {
     // Using spthread_exit is appropriate here if available and intended.
     // Alternatively, an infinite loop prevents return, relying on the scheduler 
     // to never schedule this zombie process again.
-    spthread_exit(NULL); // Use spthread library's exit mechanism
+
+    // todo - when we call s_kill, the process is a bit weird
+    if (process->pid == scheduler_state->current_process->pid) {
+        spthread_exit(NULL); // Use spthread library's exit mechanism
+    }
 }
 
 /**
