@@ -1442,6 +1442,7 @@ int k_mv(const char *src, const char *dest)
         return EK_MV_UNLINK_FAILED;
     }
 
+    // TODO: do we need read perms to mv?
     int src_fd = k_open(src, F_READ); // we only need to check read permissions here
                                       // since the actual contents will not change and
                                       // so we don't need to make sure there are no simultaneous
