@@ -3,7 +3,6 @@
  * @brief Unit tests for the linked_list.h implementation
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

@@ -1,7 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -122,15 +121,5 @@ void log_message(log_level_t level, const char* format, ...);
 #define LOG_INFO(...) log_message(LOG_INFO, __VA_ARGS__)
 #define LOG_WARN(...) log_message(LOG_WARN, __VA_ARGS__)
 #define LOG_ERROR(...) log_message(LOG_ERROR, __VA_ARGS__)
-
-/**
- * Logs a critical error message and terminates the program
- * @param msg The error message
- */
-#define PANIC(msg) do { \
-    log_message(LOG_ERROR, "PANIC: %s", (msg)); \
-    fprintf(stderr, "PANIC: %s\n", (msg)); \
-    exit(EXIT_FAILURE); \
-} while (0)
 
 #endif

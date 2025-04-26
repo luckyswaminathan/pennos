@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdarg.h> // Needed for va_list, etc.
 #include "scheduler.h"
@@ -11,6 +11,10 @@
 #include <bits/sigaction.h>
 #include <asm-generic/signal-defs.h>
 #include <stdbool.h> // Required for bool type
+#include "src/utils/error_codes.h"
+
+// TODO: remove this as soon as we switch k_log
+#include <stdio.h>
 
 scheduler_t *scheduler_state = NULL;
 static const int centisecond = 10000;
@@ -40,6 +44,7 @@ void k_log(const char *format, ...) {
     }
     va_list args;
     va_start(args, format);
+    // TODO: swap with k_write (currently have k_fprintf_short which can only handle 1023 characters)
     vfprintf(stderr, format, args);
     va_end(args);
 }
@@ -175,21 +180,23 @@ void init_scheduler()
  *
  * @param process The process PCB to add.
  */
-void k_add_to_ready_queue(pcb_t *process)
+int k_add_to_ready_queue(pcb_t *process)
 {
-    if (!process || !scheduler_state) return; // Basic safety check
+    if (!scheduler_state) return E_INVALID_SCHEDULER_STATE; // Basic safety check
+    if (!process) return E_INVALID_PCB; // Basic safety check
 
     // Ensure priority is within valid range (optional, but good practice)
     if (process->priority < PRIORITY_HIGH || process->priority > PRIORITY_LOW) {
         // Handle error - log? Default to medium? For now, just return.
-        fprintf(stderr, "Kernel Error: Process PID %d has invalid priority %d\n", process->pid, process->priority);
-        return;
+        k_fprintf_short(STDERR_FILENO, "Kernel Error: Process PID %d has invalid priority %d\n", process->pid, process->priority);
+        return E_INVALID_PCB;
     }
     
     // Use the linked list macro to add to the tail of the correct priority queue
     k_log("Adding process PID %d to priority queue %d\n", process->pid, process->priority);
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
+    return 0;
 }
 
 /**
@@ -278,14 +285,13 @@ void _run_next_process()
     
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
-        fprintf(stderr, "Scheduler Error: No process found in selected ready queue %d\n", next_queue);
         return; // Don't consume quantum
     }
 
     if (process->thread == NULL)
     {
         // This process has no thread associated? Major error.
-        fprintf(stderr, "Scheduler Error: Process PID %d dequeued but has NULL thread! Discarding.\n", process->pid);
+        k_fprintf_short(STDERR_FILENO, "Scheduler Error: Process PID %d dequeued but has NULL thread! Discarding.\n", process->pid);
         // Clean up this invalid PCB? If we just free it, internal pointers might be bad.
         // Add it to zombie queue? For now, just discard and don't consume quantum.
         // TODO: Decide on proper cleanup for invalid PCB state here.
@@ -700,9 +706,11 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
  *
  * @param process The PCB of the process that is exiting.
  * @param exit_status The exit status code for the process.
+ * @return 0 on success, and a negative error code on failure.
  */
-void k_proc_exit(pcb_t *process, int exit_status) {
-     if (!process || !scheduler_state) return;
+int k_proc_exit(pcb_t *process, int exit_status) {
+    if (!process) return E_INVALID_ARGUMENT;
+    if (!scheduler_state) return E_INVALID_SCHEDULER_STATE;
 
      // 1. Set state and exit status
      process->state = PROCESS_ZOMBIED;
@@ -714,8 +722,6 @@ void k_proc_exit(pcb_t *process, int exit_status) {
      k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
-     k_log("all processes after zombie push, %d\n", process->pid);
-     k_get_all_process_info();
 
      // NOTE: The actual thread *must* have exited its main function before this is called.
      // The spthread_join happens later during reaping (in k_reap_child).
@@ -764,7 +770,6 @@ void k_yield(void) {
     // switching logic.
     // Here, we mimic yielding by suspending until the next SIGALRM, 
     // which triggers the scheduler loop externally.
-    fprintf(stderr, "current process id: %d\n", scheduler_state->current_process->pid);
     extern sigset_t suspend_set; // Defined static in scheduler.c
     sigsuspend(&suspend_set);
     // Execution resumes here after SIGALRM is handled
@@ -846,7 +851,6 @@ bool k_set_priority(pcb_t* process, int priority) {
 
     int old_priority = process->priority;
     process->priority = (priority_t)priority;
-    fprintf(stderr, "Changed priority of process %d from %d to %d\n", process->pid, old_priority, priority);
 
     // Only move queues if the process is currently in a ready queue
     if (process->state == PROCESS_RUNNING && old_priority != priority) {
@@ -855,7 +859,6 @@ bool k_set_priority(pcb_t* process, int priority) {
         pcb_t* current = scheduler_state->ready_queues[old_priority].head;
         while (current != NULL) {
             if (current == process) {
-                fprintf(stderr, "Removing process %d from ready queue %d\n", process->pid, old_priority);
                 if (current->prev) current->prev->next = current->next;
                 else scheduler_state->ready_queues[old_priority].head = current->next;
                 if (current->next) current->next->prev = current->prev;
@@ -868,12 +871,14 @@ bool k_set_priority(pcb_t* process, int priority) {
         }
 
         if (removed) {
-            fprintf(stderr, "Adding process %d to ready queue %d\n", process->pid, priority);
             // Add to the new ready queue
-            k_add_to_ready_queue(process); 
+            int status = k_add_to_ready_queue(process); 
+            if (status < 0) {
+                return status;
+            }
         } else {
             // Process was RUNNING but not found in its expected ready queue? Log error.
-            fprintf(stderr, "k_set_priority Warning: Process PID %d state is RUNNING but not found in ready queue %d.\n", process->pid, old_priority);
+            k_fprintf_short(STDERR_FILENO, "k_set_p)riority Warning: Process PID %d state is RUNNING but not found in ready queue %d.\n", process->pid, old_priority);
             // Still update priority field, but return false as queue move failed.
             return false;
         }
@@ -917,22 +922,29 @@ void k_get_processes_from_queue(pcb_ll_t queue) {
  * @param queue The queue to iterate over.
  * @param state_char The character representing the process state ('R', 'B', 'S', 'Z').
  */
-void k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
+int k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
     pcb_t* current = queue->head;
     while (current != NULL) {
         // Don't print the currently executing process here, it's handled separately
         if (current != scheduler_state->current_process) { 
-             // Adjusted format string for alignment, assuming reasonable PID/PPID width
-            k_log("%3d %4d %3d %c    %s\n", 
-                  current->pid, 
-                  current->ppid, 
-                  current->priority, 
-                  state_char, 
-                  current->command ? current->command : "<?>" // Use command name
+            // Adjusted format string for alignment, assuming reasonable PID/PPID width
+            // assume the length of the command string is at most 100 characters
+            int status = k_fprintf_short(
+                STDERR_FILENO,
+                "%3d %4d %3d %c    %s\n",
+                current->pid, 
+                current->ppid, 
+                current->priority, 
+                state_char, 
+                current->command ? current->command : "<?>" // Use command name
             );
+            if (status < 0) {
+                return status;
+            }
         }
         current = current->next;
     }
+    return 0;
 }
 
 /**
@@ -948,18 +960,21 @@ void k_get_all_process_info() {
     }
 
     // Print header once
-    k_log("PID PPID PRI STAT CMD\n");
+    char* header = "PID PPID PRI STAT CMD\n";
+    k_write(STDERR_FILENO, header, strlen(header));
 
     // Print current running process first (if any)
     pcb_t *current_proc = scheduler_state->current_process;
     if (current_proc && current_proc->state != PROCESS_ZOMBIED) { // Don't list as R if exiting
-         k_log("%3d %4d %3d %c    %s\n", 
-                  current_proc->pid, 
-                  current_proc->ppid, 
-                  current_proc->priority, 
-                  'R', // Always 'R' for the current process
-                  current_proc->command ? current_proc->command : "<?>"
-            );
+        k_fprintf_short(
+            STDERR_FILENO,
+            "%3d %4d %3d %c    %s\n", 
+            current_proc->pid, 
+            current_proc->ppid, 
+            current_proc->priority, 
+            'R', // Always 'R' for the current process
+            current_proc->command ? current_proc->command : "<?>"
+        );
     }
 
 
@@ -983,5 +998,5 @@ void k_get_all_process_info() {
  */
 void k_toggle_logging() {
     extra_logging_enabled = !extra_logging_enabled;
-    printf("Extra logging %s.\n", extra_logging_enabled ? "enabled" : "disabled");
+    k_fprintf_short(STDERR_FILENO, "Extra logging %s.\n", extra_logging_enabled ? "enabled" : "disabled");
 }
