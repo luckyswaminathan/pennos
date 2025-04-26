@@ -53,15 +53,12 @@ static void* shell_loop(void* arg) {
             continue;  // Empty command, try again
         }
 
-        fprintf(stderr, "Parsed command: ");
-        print_parsed_command(parsed_command);
-
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
         bool is_jobs_command = handle_jobs_commands(parsed_command);
-        printf("!!! is_jobs_command: %d\n", is_jobs_command);
+
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
@@ -70,7 +67,6 @@ static void* shell_loop(void* arg) {
 
         job* job_ptr = (job*) exiting_malloc(sizeof(job));
         job_ptr->id = ++job_id;
-        fprintf(stderr, "job_id: %lu\n", job_ptr->id);
         job_ptr->pids = NULL;
         job_ptr->status = J_RUNNING_FG;
         job_ptr->cmd = parsed_command;

@@ -144,6 +144,7 @@ void* orphanify(void* arg) {
 void* busy(void* arg, char* priority) {
     // Get the command context
     //char** command = (char**)arg;
+    
     int priority_level = atoi(priority);
 
     // Validate the priority level
@@ -555,6 +556,15 @@ void* mv(void* arg) {
 
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
+    printf("Command arguments:\n");
+    for (int i = 0; ctx[i] != NULL; i++) {
+        if (ctx[i] == NULL) {
+            printf("ctx[%d]: NULL\n", i);
+        } else {
+            printf("ctx[%d]: %s\n", i, ctx[i]);
+        }
+    }
+    
     // We always want the first command to be the command name
     if (ctx == NULL || ctx[0] == NULL) {
         return NULL;
@@ -596,7 +606,8 @@ void* execute_command(void* arg) {
         return mv(ctx);
     }
     if (strcmp(ctx[0], "busy") == 0) {
-        return busy(ctx, ctx[1]);
+        char* priority_level = ctx[1] == NULL ? "1" : ctx[1];
+        return busy(ctx, priority_level);
     }
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);

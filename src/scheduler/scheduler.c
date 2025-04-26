@@ -17,6 +17,7 @@ static const int centisecond = 10000;
 static int quantum = 0;
 static sigset_t suspend_set;
 static bool extra_logging_enabled = false; // Added global toggle
+static bool shell_spawned = false;
 
 /**
  * @brief The process to run at each quantum. Randomly disperesed array of 0s, 1s, and 2s (priority levels).
@@ -262,6 +263,9 @@ void _run_next_process()
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
+    if (!shell_spawned) {
+        shell_spawned = k_get_process_by_pid(2) != NULL;
+    }
 
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
@@ -272,10 +276,16 @@ void _run_next_process()
         return;
     }
 
+    // Consume a quantum
+    quantum++;
+
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
 
-    
+    if (process->pid == 1 && scheduler_state->zombie_queue.head == NULL && shell_spawned) {
+        return;
+    }
+
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
         fprintf(stderr, "Scheduler Error: No process found in selected ready queue %d\n", next_queue);
@@ -300,10 +310,6 @@ void _run_next_process()
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
-
-
-    // Consume a quantum
-    quantum++;
 
     // Add the process back to the queue
     if (process->state == PROCESS_ZOMBIED) {
@@ -437,7 +443,6 @@ void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
     k_log("Blocking process with pid %d\n", process->pid);
-    fprintf(stderr, "Blocking process with pid %d\n", process->pid);
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -445,11 +450,9 @@ void block_process(pcb_t *process)
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
     k_log("Post push tail\n");
-    fprintf(stderr, "Post push tail\n");
 
     pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
     while (curr != NULL) {
-        fprintf(stderr, "Blocked process PID %d\n", curr->pid);
         curr = curr->next;
     }
 }
