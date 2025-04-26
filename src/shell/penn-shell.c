@@ -13,6 +13,7 @@
 #include "../scheduler/scheduler.h"
 #include "../scheduler/sys.h"
 #include "commands.h"
+#include "src/pennfat/fat.h"
 
 jid_t job_id = 0;
 
@@ -115,6 +116,11 @@ static void* init_process(void* arg) {
 }
 
 int main(int argc, char **argv) {
+    int mount_status = mount("pennosfat");
+    if (mount_status != 0) {
+        exit(mount_status);
+    }
+
     // First ignore signals
     ignore_signals();
     

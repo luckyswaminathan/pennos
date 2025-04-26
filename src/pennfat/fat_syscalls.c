@@ -101,7 +101,8 @@ int s_write(int fd, const char *str, int n)
     }
 
     int old_mode = k_getmode(current_process->process_fd_table[fd].global_fd);
-    if (k_setmode(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].mode) != 0)
+    int setmode_status = k_setmode(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].mode);
+    if (setmode_status != 0)
     {
         return ES_SETMODE_ERROR;
     }
