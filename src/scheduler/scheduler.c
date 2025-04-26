@@ -100,7 +100,6 @@ void pcb_destructor(void* pcb) {}
  * It is used to trigger the scheduler by sending SIGALRM every 100ms
  */
 static void alarm_handler(int signum) {
-    // printf("Alarm handler\n");
 }
 
 /**
@@ -246,27 +245,6 @@ void _update_blocked_processes()
                 unblock_process(process);
             }
         }
-        else
-        {
-            // Case 2: Process was waiting on a child process to exit
-
-            // TODO: do we need this
-            // bool all_children_exited = true;
-            // child_process_t *child = process->children->head;
-            // while (child != NULL)
-            // {
-            //     if (child->process->state != PROCESS_ZOMBIED)
-            //     {
-            //         all_children_exited = false;
-            //         break;
-            //     }
-            //     child = child->next;
-            // }
-            // if (all_children_exited)
-            // {
-            //     unblock_process(process);
-            // }
-        }
 
         process = process->next;
     }
@@ -281,12 +259,8 @@ void _update_blocked_processes()
  */
 void _run_next_process()
 {
-    // k_get_all_process_info();
     // Update the blocked processes before selecting the next process
-    //printf("before updating blocked processes\n");
-    //k_get_all_process_info();
     _update_blocked_processes();
-    //printf("after updating blocked processes\n");
 
 
     // Select the next queue to run a process from
@@ -298,12 +272,8 @@ void _run_next_process()
         return;
     }
 
-    // printf("Selecting next process\n");
-    // k_get_all_process_info();
-
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
-    //printf("Process to run: %d %s; queue: %d\n", process->pid, process->command, next_queue);
 
     
     if (!process) {
@@ -365,8 +335,6 @@ void _run_next_process()
         pcb_t* head = linked_list_pop_head(&scheduler_state->ready_queues[next_queue]); // remove from queue
         linked_list_push_tail(&scheduler_state->ready_queues[next_queue], head);
     }
-    //k_get_all_process_info();
-    //printf("\n");
 }
 
 /**
@@ -458,33 +426,6 @@ static bool k_remove_from_active_queue(pcb_t *process) {
     return false; // Not found in any active queue
 }
 
-// /**
-//  * @brief Internal helper to remove a process from the zombie queue 
-//  *        without calling its destructor.
-//  *
-//  * This function manually unlinks the process from the zombie queue's doubly linked list.
-//  *
-//  * @param process The PCB of the process to remove from the zombie queue.
-//  * @return true if the process was found and removed, false otherwise.
-//  */
-// static bool k_remove_from_zombie_queue(pcb_t *process) {
-//      if (!process || !scheduler_state) return false;
-//      // Manual removal from zombie queue
-//      pcb_t* current = scheduler_state->zombie_queue.head;
-//      while (current != NULL) {
-//          if (current == process) {
-//             if (current->prev) current->prev->next = current->next;
-//             else scheduler_state->zombie_queue.head = current->next;
-//             if (current->next) current->next->prev = current->prev;
-//             else scheduler_state->zombie_queue.tail = current->prev;
-//             process->prev = process->next = NULL;
-//             return true; // Found and removed
-//         }
-//         current = current->next;
-//     }
-//     return false; // Not found
-// }
-
 /**
  * @brief Block a process
  *
@@ -506,7 +447,6 @@ void block_process(pcb_t *process)
     k_log("Post push tail\n");
     fprintf(stderr, "Post push tail\n");
 
-    //k_get_all_process_info();
     pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
     while (curr != NULL) {
         fprintf(stderr, "Blocked process PID %d\n", curr->pid);
@@ -584,136 +524,6 @@ pcb_t *k_get_process_by_pid(pid_t pid)
     return NULL; 
 }
 
-// /**
-//  * @brief Internal helper to find a specific child process by PID within a parent's children list.
-//  *
-//  * @param parent The parent process PCB.
-//  * @param pid The PID of the child to search for.
-//  * @return pcb_t* Pointer to the child PCB if found, NULL otherwise.
-//  */
-// static pcb_t* k_find_child_by_pid(pcb_t *parent, pid_t pid) {
-//     if (!parent || !parent->children) return NULL;
-//     pcb_t* child = parent->children->head;
-//     while(child) {
-//         if (child->pid == pid) {
-//             return child;
-//         }
-//         child = child->next;
-//     }
-//     return NULL;
-// }
-
-// /**
-//  * @brief Internal helper to find *any* zombie child within a parent's children list.
-//  *
-//  * @param parent The parent process PCB.
-//  * @return pcb_t* Pointer to the first zombie child PCB found, NULL if none exist.
-//  */
-// static pcb_t* k_find_zombie_child(pcb_t *parent) {
-//      if (!parent || !parent->children) return NULL;
-//     pcb_t* child = parent->children->head;
-//     while(child) {
-//         // Check state directly - this is internal kernel logic
-//         if (child->state == PROCESS_ZOMBIED) { 
-//             return child;
-//         }
-//         child = child->next;
-//     }
-//     return NULL;
-// }
-
-/**
- * @brief Internal helper to remove a child from its parent's children list
- *        using manual unlinking. Does NOT call destructor or free PCB.
- *
-//  * @param parent The parent process PCB.
-//  * @param child The child process PCB to remove from the parent's list.
-//  * @return true if the child was successfully unlinked, false otherwise (e.g., NULL pointers).
-//  */
-// static bool k_remove_child_from_parent_list(pcb_t *parent, pcb_t *child) {
-//     if (!parent || !parent->children || !child) return false;
-    
-//     // Manual unlink
-//     if (child->prev) {
-//         child->prev->next = child->next;
-//     } else {
-//         parent->children->head = child->next; // Child was head
-//     }
-//     if (child->next) {
-//         child->next->prev = child->prev;
-//     } else {
-//         parent->children->tail = child->prev; // Child was tail
-//     }
-    
-//     child->prev = NULL;
-//     child->next = NULL;
-//     // TODO: Decrement parent's children count if we track it.
-//     return true;
-// }
-
-
-// /**
-//  * @brief Internal helper to reap a specific zombie child.
-//  *
-//  * This function performs the final cleanup for a terminated child process:
-//  * 1. Collects the exit status.
-//  * 2. Joins the underlying spthread.
-//  * 3. Frees the spthread_t structure.
-//  * 4. Removes the child from its parent's children list.
-//  * 5. Removes the child from the global zombie queue.
-//  * 6. Calls k_proc_cleanup to free the PCB and its associated resources.
-//  *
-//  * @param child The PCB of the zombie child process to reap.
-//  * @param wstatus Pointer to an integer where the child's exit status will be stored (if not NULL).
-//  * @return pid_t The PID of the reaped child on success, -1 on error (e.g., child was not a zombie).
-//  */
-// static pid_t k_reap_child(pcb_t *child, int *wstatus) {
-//     if (!child || child->state != PROCESS_ZOMBIED) {
-//         return -1; // Not a zombie or NULL child
-//     }
-    
-//     pid_t child_pid = child->pid;
-
-//     // 1. Get exit status
-//     if (wstatus) {
-//         *wstatus = child->exit_status;
-//     }
-
-//     // 2. Join the underlying thread (important!)
-//     //    This assumes the thread actually terminated. If not, this could block.
-//     //    k_proc_exit should ensure the thread function has returned before marking zombie.
-//     if (child->thread) {
-//          // We might not *need* the return value if exit status is already stored.
-//          spthread_join(*(child->thread), NULL); 
-//          // Free the thread struct itself now that it's joined
-//          free(child->thread);
-//          child->thread = NULL; 
-//     }
-
-
-//     // 3. Remove from parent's children list
-//     // Need the parent PCB. Get it using the PPID.
-//     // Note: Parent might have exited! If so, child should have been reparented to init.
-//     pcb_t *parent = k_get_process_by_pid(child->ppid); // Find parent (could be init)
-//     if (parent) {
-//         k_remove_child_from_parent_list(parent, child);
-//     } else {
-//         // Parent not found (potentially exited and cleaned up?). Log this?
-//         fprintf(stderr, "Kernel Warning: Parent PID %d not found when reaping child PID %d\n", child->ppid, child_pid);
-//     }
-
-
-//     // 4. Remove from the global zombie queue
-//     k_remove_from_zombie_queue(child);
-
-//     // 5. Perform final cleanup of the PCB and associated resources
-//     // k_proc_cleanup handles freeing argv, command, children list (which should be empty now), and the PCB itself.
-//     // It expects the child to be unlinked from lists already.
-//     k_proc_cleanup(child); // This frees the 'child' pointer.
-
-//     return child_pid;
-// }
-
 /**
  * @brief Block and wait for a child process to finish
  *
@@ -737,14 +547,6 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     k_log("Child finished\n");
     k_get_all_process_info();
 
-    // Remove the child from its current queue
-    // if (child->state == PROCESS_STOPPED) {
-    //     linked_list_remove(&scheduler_state->stopped_queue, child);
-    // } else if (child->state == PROCESS_BLOCKED) {
-    //     linked_list_remove(&scheduler_state->blocked_queue, child);
-    // } else {
-    //     linked_list_remove(&scheduler_state->ready_queues[child->priority], child);
-    // }
     linked_list_remove(&scheduler_state->zombie_queue, child);
 
     k_get_all_process_info();
@@ -915,17 +717,6 @@ void k_proc_exit(pcb_t *process, int exit_status) {
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
      k_log("all processes after zombie push, %d\n", process->pid);
      k_get_all_process_info();
-
-
-     // 4. Check if the parent is waiting and unblock it
-     //pcb_t *parent = k_get_process_by_pid(process->ppid);
-    //  if (parent && parent->state == PROCESS_BLOCKED) {
-    //      // TODO: Add more specific check if parent is blocked *specifically* for this child
-    //      // e.g., if (parent->waiting_for_child == process->pid || parent->waiting_for_child == ANY_CHILD)
-    //      // For now, unblock if parent is blocked for any reason and one of its children exited.
-    //      fprintf(stdout, "k_proc_exit: Unblocking parent PID %d because child PID %d exited.\n", parent->pid, process->pid);
-    //      unblock_process(parent); 
-    //  }
 
      // NOTE: The actual thread *must* have exited its main function before this is called.
      // The spthread_join happens later during reaping (in k_reap_child).

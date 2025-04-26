@@ -151,8 +151,6 @@ void s_exit(int status) {
 
     
     // Fallback infinite loop in case spthread_exit fails or isn't used.
-    // while(1) { sleep(1000); } // sleep() is forbidden, use busy wait or yield
-    // while(1) { k_yield(); } // Yielding might still allow cleanup issues
     // A simple infinite loop is perhaps safest if spthread_exit isn't guaranteed.
     // while(1); 
 }
