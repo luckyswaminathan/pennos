@@ -894,7 +894,6 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     if (!process || ticks == 0) {
         return false;
     }
-    fprintf(stderr, "k_sleep process %d\n", process->pid);
     process->sleep_time = ticks; 
     // k_block_process handles removing from active queue and adding to blocked queue,
     // and sets state to PROCESS_BLOCKED.

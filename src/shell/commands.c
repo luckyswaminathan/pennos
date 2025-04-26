@@ -11,6 +11,7 @@
 #include "../scheduler/spthread.h"
 #include "src/pennfat/fat_constants.h"
 #include "jobs.h"
+#include "stress.h"
 #define BUFFER_SIZE 256
 
 // Helper function specific to ps command within this file
@@ -568,6 +569,7 @@ void* recursive_helper(void* arg) {
         recursive_helper_count++;
         snprintf(recurse_name, sizeof(recurse_name), "Gen_%c", letter);
         fprintf(stderr, "%s was spawned\n", recurse_name);
+        s_sleep(1);
         pid_t pid = s_spawn(recursive_helper, (char*[]){recurse_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
         int wstatus;
         s_waitpid(pid, &wstatus, false);
@@ -584,71 +586,71 @@ void* recurse(void* arg) {
     return NULL;
 }
 
-void* hang(void* arg) {
-    // Spawn 10 children
-    pid_t children[10];
-    for (int i = 0; i < 10; i++) {
-        char hang_name[16];
-        snprintf(hang_name, sizeof(hang_name), "child_%d", i);
-        children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
-        if (children[i] > 0) {
-            fprintf(stderr, "child_%d was spawned\n", i);
-        }
-    }
+// void* hang(void* arg) {
+//     // Spawn 10 children
+//     pid_t children[10];
+//     for (int i = 0; i < 10; i++) {
+//         char hang_name[16];
+//         snprintf(hang_name, sizeof(hang_name), "child_%d", i);
+//         children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+//         if (children[i] > 0) {
+//             fprintf(stderr, "child_%d was spawned\n", i);
+//         }
+//     }
 
-    // Wait for all children to complete in any order
-    int remaining = 10;
-    while (remaining > 0) {
-        int wstatus;
-        pid_t pid = s_waitpid(-1, &wstatus, false);
-        if (pid > 0) {
-            // Find which child this was
-            for (int i = 0; i < 10; i++) {
-                if (children[i] == pid) {
-                    fprintf(stderr, "child_%d was reaped\n", i);
-                    break;
-                }
-            }
-            remaining--;
-        }
-    }
+//     // Wait for all children to complete in any order
+//     int remaining = 10;
+//     while (remaining > 0) {
+//         int wstatus;
+//         pid_t pid = s_waitpid(-1, &wstatus, false);
+//         if (pid > 0) {
+//             // Find which child this was
+//             for (int i = 0; i < 10; i++) {
+//                 if (children[i] == pid) {
+//                     fprintf(stderr, "child_%d was reaped\n", i);
+//                     break;
+//                 }
+//             }
+//             remaining--;
+//         }
+//     }
     
-    s_exit(0);
-    return NULL;
-}
+//     s_exit(0);
+//     return NULL;
+// }
 
-void* nohang(void* arg) {
-    // Spawn 10 children
-    pid_t children[10];
-    for (int i = 0; i < 10; i++) {
-        char hang_name[16];
-        snprintf(hang_name, sizeof(hang_name), "child_%d", i);
-        children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
-        if (children[i] > 0) {
-            fprintf(stderr, "child_%d was spawned\n", i);
-        }
-    }
+// void* nohang(void* arg) {
+//     // Spawn 10 children
+//     pid_t children[10];
+//     for (int i = 0; i < 10; i++) {
+//         char hang_name[16];
+//         snprintf(hang_name, sizeof(hang_name), "child_%d", i);
+//         children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+//         if (children[i] > 0) {
+//             fprintf(stderr, "child_%d was spawned\n", i);
+//         }
+//     }
 
-    // Wait for all children to complete in any order
-    int remaining = 10;
-    while (remaining > 0) {
-        int wstatus;
-        pid_t pid = s_waitpid(-1, &wstatus, true);
-        if (pid > 0) {
-            // Find which child this was
-            for (int i = 0; i < 10; i++) {
-                if (children[i] == pid) {
-                    fprintf(stderr, "child_%d was reaped\n", i);
-                    break;
-                }
-            }
-            remaining--;
-        }
-    }
+//     // Wait for all children to complete in any order
+//     int remaining = 10;
+//     while (remaining > 0) {
+//         int wstatus;
+//         pid_t pid = s_waitpid(-1, &wstatus, true);
+//         if (pid > 0) {
+//             // Find which child this was
+//             for (int i = 0; i < 10; i++) {
+//                 if (children[i] == pid) {
+//                     fprintf(stderr, "child_%d was reaped\n", i);
+//                     break;
+//                 }
+//             }
+//             remaining--;
+//         }
+//     }
     
-    s_exit(0);
-    return NULL;
-}
+//     s_exit(0);
+//     return NULL;
+// }
 
 
 
@@ -724,7 +726,10 @@ void* execute_command(void* arg) {
         return nohang(ctx);
     }
     if (strcmp(ctx[0], "recur") == 0) {
-        return recurse(ctx);
+        return recur(ctx);
+    }
+    if (strcmp(ctx[0], "crash") == 0) {
+        return crash(ctx);
     }
     s_exit(0);
     return NULL;
