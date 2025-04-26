@@ -640,11 +640,12 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
-        k_log("Child found with pid %d\n", child->pid);
+        
         
         if (child == NULL) {
             return -1; // No such process
         }
+        k_log("Child found with pid %d\n", child->pid);
         
         // If the process is not a child of the calling process, return -1
         if (child->ppid != scheduler_state->current_process->pid) {

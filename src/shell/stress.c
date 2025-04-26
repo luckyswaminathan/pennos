@@ -17,8 +17,7 @@
 #include <string.h> // for memcpy and strlen
 #include <time.h>   // for time()
 #include "sys.h"
-
-
+#include "commands.h"
 /******************************************************************************
  *                                                                            *
  * Replace syscalls.h with your own header file(s) for s_spawn and s_waitpid. *

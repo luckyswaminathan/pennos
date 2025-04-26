@@ -7,4 +7,6 @@ struct command_context {
     int stdout_fd;       // Output file descriptor
 };
 
+void* ps(void* arg);
+
 #endif // CONTEXT_H
