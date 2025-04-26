@@ -181,6 +181,4 @@ int k_setmode(int fd, int mode);
 #define EK_GETMODE_FD_NOT_IN_USE -2
 int k_getmode(int fd);
 
-bool k_is_valid_fd(int fd);
-
 #endif // PENNFAT_FAT_H
