@@ -18,19 +18,6 @@ int find_empty_spot_in_process_fd_table(void)
     return PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL;
 }
 
-int find_global_fd_in_process_fd_table(int global_fd)
-{
-    pcb_t *current_process = k_get_current_process();
-    for (uint32_t i = 0; i < PROCESS_FD_TABLE_SIZE; i++)
-    {
-        if (current_process->process_fd_table[i].in_use && current_process->process_fd_table[i].global_fd == global_fd)
-        {
-            return i;
-        }
-    }
-    return PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL;
-}
-
 #define ES_PROCESS_FILE_TABLE_FULL -100
 
 int s_open(const char *fname, int mode)
@@ -41,13 +28,6 @@ int s_open(const char *fname, int mode)
     if (global_fd < 0)
     {
         return global_fd;
-    }
-
-    // Check if the fd is already in the process fd table
-    int process_fd = find_global_fd_in_process_fd_table(global_fd);
-    if (process_fd != PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
-    {
-        return process_fd;
     }
 
     // find an empty spot in the process fd table
