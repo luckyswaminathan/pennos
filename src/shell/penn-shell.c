@@ -96,18 +96,22 @@ static void* shell_loop(void* arg) {
     return NULL;
 }
 
+/**
+ * @brief Spawns the shell process
+ * 
+ * This process is responsible for spawning the shell process
+ * and waiting for it to exit.
+ * 
+ * @param arg 
+ * @return void* 
+ */
 static void* init_process(void* arg) {
+    // Spawn shell process
     s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
-    // k_get_all_process_info();
 
-    while (true) {
-        // // dprintf(2, "init running %d\n", i);
-        // // k_get_all_process_info();
-        //usleep(1000000);
-        int wstatus;
-        while (s_waitpid(-1, &wstatus, true) > 0) {
-        }
-    }
+    // Consume any zombies
+    int wstatus;
+    while (s_waitpid(-1, &wstatus, true) > 0) {}
 
     return NULL;
 }
@@ -128,9 +132,8 @@ int main(int argc, char **argv) {
     init_logger("scheduler.log");
     init_scheduler();
 
+    // Spawn init process
     s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
-    
-
     printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers

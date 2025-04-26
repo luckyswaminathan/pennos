@@ -286,6 +286,10 @@ void _run_next_process()
         return;
     }
 
+    if (process->pid == 1) {
+        printf("<INIT SCHEDULED>\n");
+    }
+
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
         fprintf(stderr, "Scheduler Error: No process found in selected ready queue %d\n", next_queue);

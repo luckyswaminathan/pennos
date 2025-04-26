@@ -556,14 +556,6 @@ void* mv(void* arg) {
 
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
-    printf("Command arguments:\n");
-    for (int i = 0; ctx[i] != NULL; i++) {
-        if (ctx[i] == NULL) {
-            printf("ctx[%d]: NULL\n", i);
-        } else {
-            printf("ctx[%d]: %s\n", i, ctx[i]);
-        }
-    }
     
     // We always want the first command to be the command name
     if (ctx == NULL || ctx[0] == NULL) {

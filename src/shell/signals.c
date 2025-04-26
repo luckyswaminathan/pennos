@@ -52,10 +52,7 @@ void job_control_handler(int sig) {
             
             exit(CHILD_STOPPED_EXIT_STATUS); // TODO: this is just a POC. Not sure if there's a smarter way of doing this. Maybe we don't need a signal handler at all and can just catch WIFSTOPPED
         } else if (sig == SIGINT) {
-            fprintf(stderr, "SIGINT received, killing foreground job PID: %d\n", fg_pgid);
-            
             // Use only PennOS s_kill to properly terminate PennOS processes
-
             s_kill(scheduler_state->current_process->pid, P_SIGTERM);
             
             // Make sure the terminal control is returned to the shell
