@@ -23,7 +23,6 @@ static pcb_t* create_pcb(int pid, priority_t priority) {
     pcb_t* p = malloc(sizeof(*p));
     assert(p != NULL);
     p->pid = pid; p->ppid = 0; p->pgid = 0;
-    p->fd0 = 0; p->fd1 = 0;
     p->state = PROCESS_RUNNING;
     p->priority = priority;
     p->sleep_time = 0;

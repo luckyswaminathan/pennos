@@ -30,7 +30,7 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
 
     // Directly call the kernel function to create the process.
     // k_proc_create now handles PCB setup, thread creation, and scheduling.
-    pid_t new_pid = k_proc_create(parent, func, argv, fd0, fd1);
+    pid_t new_pid = k_proc_create(parent, func, argv);
 
     // k_proc_create returns -1 on error, so we can return that directly.
     if (new_pid < 0) {

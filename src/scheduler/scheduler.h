@@ -70,10 +70,6 @@ struct pcb_st {
     pid_t pgid;          
     child_process_ll_t children;
 
-    // File descriptors (may add moree)
-    int fd0;
-    int fd1;
-
     // Process level file descriptor table
     process_fd_entry process_fd_table[PROCESS_FD_TABLE_SIZE];
 

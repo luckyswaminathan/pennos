@@ -79,11 +79,9 @@ static char** duplicate_argv(char *const argv[]) {
  *               to be an initial process (like init) with PPID 0.
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel copies this.
- * @param fd0 Input file descriptor.
- * @param fd1 Output file descriptor.
  * @return pid_t The PID of the newly created process, or -1 if any allocation or thread creation fails.
  */
-pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], int fd0, int fd1) {
+pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     if (parent == NULL && scheduler_state->init_process != NULL) {
         perror("k_proc_create: INIT process already exists");
@@ -143,8 +141,6 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
 
     // Set execution context and I/O
     proc->func = func;
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
 
     // Duplicate argv and set command
     proc->argv = duplicate_argv(argv);

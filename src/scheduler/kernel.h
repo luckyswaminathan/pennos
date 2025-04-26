@@ -9,11 +9,9 @@
  * @param parent The parent process PCB (can be NULL for initial processes).
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel will copy this.
- * @param fd0 Input file descriptor.
- * @param fd1 Output file descriptor.
  * @return pid_t The PID of the newly created process, or -1 on error.
  */
-pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], int fd0, int fd1);
+pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]);
 
 /**
  * @brief Clean up a terminated/finished process's resources.
