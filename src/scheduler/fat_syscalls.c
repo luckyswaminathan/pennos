@@ -4,6 +4,7 @@
 
 #define PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL 0xFFFF
 
+// TODO: are we allowed to do this as a syscall?
 int find_empty_spot_in_process_fd_table(void)
 {
     pcb_t *current_process = k_get_current_process();
