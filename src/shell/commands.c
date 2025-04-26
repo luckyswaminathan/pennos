@@ -200,10 +200,10 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
 
 void* nice_command(void* arg, char* priority) {
     char** command = (char**)arg;
+    //int stdout_fd = command[1];
     
-    if (priority == NULL || command[2] == NULL) {
-        fprintf(stderr, "Usage: nice <priority_level> <command> [args...]\n");
-        s_exit(1);
+    if (priority == NULL) {
+        fprintf(stderr, "Usage: nice <priority_level>\n");
         return NULL;
     }
     
@@ -213,32 +213,11 @@ void* nice_command(void* arg, char* priority) {
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
         fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
-        s_exit(1);
         return NULL;
     }
     
-    // Create new args array starting from the command (command[2])
-    char** new_args = &command[2];
-    
-    // Spawn the process with the command and its arguments
-    pid_t child_pid = s_spawn(execute_command, new_args, STDIN_FILENO, STDOUT_FILENO);
-    if (child_pid < 0) {
-        fprintf(stderr, "Failed to spawn process\n");
-        s_exit(1);
-        return NULL;
-    }
-    
-    // Set the priority of the spawned process
-    int nice_result = s_nice(child_pid, priority_level);
-    if (nice_result != 0) {
-        fprintf(stderr, "Failed to set priority of process %d\n", child_pid);
-        s_exit(1);
-        return NULL;
-    }
-    int wstatus;
-    s_waitpid(child_pid, &wstatus, false);
-    
-    fprintf(stderr, "Started process %d with priority %d\n", child_pid, priority_level);
+    char* call = command[2];
+    fprintf(stderr, "call value: %s\n", call);
     s_exit(0);
     return NULL;
 }
@@ -317,7 +296,18 @@ void* man(void* arg) {
     fprintf(stderr, "kill -term <pid> - Terminate process <pid>\n");
     fprintf(stderr, "kill -stop <pid> - Stop process <pid>\n");
     fprintf(stderr, "kill -cont <pid> - Continue process <pid>\n");
+    fprintf(stderr, "ls          - List all files in the current directory\n");
+    fprintf(stderr, "jobs        - List all jobs\n");
+    fprintf(stderr, "echo <message> - Print <message> to the shell\n");
+    fprintf(stderr, "touch <filename> - Create a new file with name <filename>\n");
+    fprintf(stderr, "rm <filename> - Delete the file <filename>\n");
+    fprintf(stderr, "cp <source> <destination> - Copy the file <source> to <destination>\n");
+    fprintf(stderr, "cat <filename> - Print the contents of the file <filename>\n");
+    fprintf(stderr, "chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n");
+    fprintf(stderr, "mv <source> <destination> - Move the file <source> to <destination>\n");
     fprintf(stderr, "man         - Show this help message\n");
+
+
     
     s_exit(0);
     return NULL;
