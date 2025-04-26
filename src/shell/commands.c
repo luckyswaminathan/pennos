@@ -499,6 +499,26 @@ void* chmod(void* arg) {
     return NULL;
 }
 
+void* mv(void* arg) {
+    char** command = (char**)arg;
+    bool has_two_args = command[1] != NULL && command[2] != NULL && command[3] == NULL;
+    if (!has_two_args) {
+        char* error_message = "mv got wrong number of arguments (expected 2 arguments)\n";
+        s_write(STDERR_FILENO, error_message, strlen(error_message));
+        s_exit(-200);
+        return NULL;
+    }
+    int mv_status = s_mv(command[1], command[2]);
+    if (mv_status < 0) {
+        char* error_message = "mv: Error - failed to move file\n";
+        s_write(STDERR_FILENO, error_message, strlen(error_message));
+        s_exit(mv_status);
+        return NULL;
+    }
+    s_exit(0);
+    return NULL;
+}
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -537,6 +557,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "cat") == 0) {
         return cat(ctx);
+    }
+    if (strcmp(ctx[0], "mv") == 0) {
+        return mv(ctx);
     }
     if (strcmp(ctx[0], "busy") == 0) {
         return busy(ctx, ctx[1]);
