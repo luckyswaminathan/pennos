@@ -38,10 +38,9 @@ static void* shell_loop(void* arg) {
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-
         if (ret == -1) {
             exit(0);
-        } else if (ret == -2) {  
+        } else if (ret == -2) {
             if (errno == EINTR) {
                 continue;
             }
@@ -53,14 +52,16 @@ static void* shell_loop(void* arg) {
         if (parsed_command == NULL) {
             continue;  // Empty command, try again
         }
+
+        fprintf(stderr, "Parsed command: ");
+        print_parsed_command(parsed_command);
+
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
-        printf("command: %s\n", parsed_command->commands[0][0]);
-        LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
-        printf("is_jobs_command: %d\n", is_jobs_command);
+        printf("!!! is_jobs_command: %d\n", is_jobs_command);
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
