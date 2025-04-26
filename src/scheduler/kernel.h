@@ -14,7 +14,7 @@
  * @param parent The parent process PCB (can be NULL for initial processes).
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel will copy this.
- * @return pid_t The PID of the newly created process, or -1 on error.
+ * @return pid_t The PID of the newly created process, or an error code, which is a negative integer.
  */
 pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]);
 
@@ -22,14 +22,16 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]);
  * @brief Clean up a terminated/finished process's resources.
  * Called internally by the kernel, typically after reaping.
  * @param proc Pointer to the PCB of the process to clean up.
+ * @return 0 on success, or an error code, which is a negative integer.
  */
-void k_proc_cleanup(pcb_t *proc);
+int k_proc_cleanup(pcb_t *proc);
 
 /**
  * @brief Adds a process to the appropriate scheduler ready queue based on its priority.
  * @param proc The process control block to add.
+ * @return 0 on success, or an error code, which is a negative integer.
  */
-void k_add_to_ready_queue(pcb_t *proc);
+int k_add_to_ready_queue(pcb_t *proc);
 
 /**
  * @brief Retrieves the Process Control Block (PCB) of the currently running process.
@@ -67,8 +69,9 @@ bool k_unblock_process(pcb_t *process);
  *        moves it to the zombie queue, and potentially unblocks a waiting parent.
  * @param process The process that is exiting.
  * @param exit_status The exit status code.
+ * @return 0 if successful, and a negative error code on failure.
  */
-void k_proc_exit(pcb_t *process, int exit_status);
+int k_proc_exit(pcb_t *process, int exit_status);
 
 /**
  * @brief Voluntarily yields the CPU to the scheduler.

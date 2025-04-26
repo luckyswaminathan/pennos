@@ -87,6 +87,7 @@ pid_t s_waitpid(pid_t pid, int *wstatus, bool nohang)
                 return proc->pid;
             }
         }
+        fprintf(stderr, "seg fault is here?\n");
         proc = proc->process_pointers.next;
     }
     return 0;
@@ -280,7 +281,6 @@ int s_cont(pid_t pid)
  */
 void s_exit(void)
 {
-    PANIC("s_exit not implemented");
 }
 
 // void s_sleep(unsigned int ticks) {

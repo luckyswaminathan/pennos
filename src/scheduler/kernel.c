@@ -7,7 +7,8 @@
 #include <string.h>
 #include "shell/commands.h"
 #include <stdlib.h> // For malloc/free
-#include <stdio.h> // For debugging
+#include "src/utils/error_codes.h"
+
 
 /**
  * @brief Duplicates the argument vector (argv).
@@ -36,7 +37,6 @@ static char** duplicate_argv(char *const argv[]) {
     // Allocate space for the array of pointers (+1 for NULL terminator)
     char** new_argv = (char**) exiting_malloc(sizeof(char*) * (argc + 1));
     if (!new_argv) {
-        perror("Failed to allocate argv array");
         return NULL;
     }
 
@@ -44,7 +44,6 @@ static char** duplicate_argv(char *const argv[]) {
     for (int i = 0; i < argc; i++) {
         new_argv[i] = strdup(argv[i]);
         if (!new_argv[i]) {
-            perror("Failed to duplicate argv string");
             // Cleanup already duplicated strings
             for (int j = 0; j < i; j++) {
                 free(new_argv[j]);
@@ -84,14 +83,12 @@ static char** duplicate_argv(char *const argv[]) {
 pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     if (parent == NULL && scheduler_state->init_process != NULL) {
-        perror("k_proc_create: INIT process already exists");
-        return -1;
+        return E_INIT_ALREADY_EXISTS;
     }
 
     pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
     if (!proc) {
-        perror("Failed to allocate PCB");
-        return -1; // Return -1 on failure as per new signature
+        return E_FAILED_TO_ALLOCATE;
     }
 
     // Increment process count
@@ -133,9 +130,8 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     // Initialize children list
     proc->children = (child_process_ll_t) exiting_malloc(sizeof(*(proc->children)));
     if (!proc->children) {
-        perror("Failed to allocate children list");
         free(proc);
-        return -1;
+        return E_FAILED_TO_ALLOCATE;
     }
     // Initialize the allocated struct's members directly
     proc->children->head = NULL;
@@ -148,16 +144,15 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     // Duplicate argv and set command
     proc->argv = duplicate_argv(argv);
     if (!proc->argv) {
-        perror("Failed to duplicate argv");
         // duplicate_argv prints perror
         free(proc->children);
         free(proc);
-        return -1;
+        // This should be the only error that causes duplicate_argv to fail
+        return E_FAILED_TO_ALLOCATE;
     }
     // Command is typically argv[0], ensure it's duplicated safely
     proc->command = (proc->argv && proc->argv[0]) ? strdup(proc->argv[0]) : NULL;
     if (proc->argv && proc->argv[0] && !proc->command) {
-         perror("Failed to duplicate command string");
          // Cleanup argv array and strings
          for (int i = 0; proc->argv[i] != NULL; i++) {
              free(proc->argv[i]);
@@ -165,13 +160,12 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
          free(proc->argv);
          free(proc->children);
          free(proc);
-         return -1;
+         return E_BAD_ARGV;
     }
 
     // Allocate and create the thread
     proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
     if (!proc->thread) {
-        perror("Failed to allocate spthread_t");
         // Cleanup command and argv
         if (proc->command) free(proc->command);
         if (proc->argv) {
@@ -182,12 +176,11 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
         }
         free(proc->children);
         free(proc);
-        return -1;
+        return E_FAILED_TO_ALLOCATE;
     }
 
     // Pass the *duplicated* argv to spthread_create
     if (spthread_create(proc->thread, NULL, proc->func, proc->argv) != 0) {
-        perror("Failed to create spthread");
         // Cleanup thread struct, command, argv
         free(proc->thread);
         if (proc->command) free(proc->command);
@@ -199,7 +192,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
         }
         free(proc->children);
         free(proc);
-        return -1;
+        return E_FAILED_TO_ALLOCATE;
     }
 
     k_log("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
@@ -207,9 +200,16 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
     if (!child_process) {
-        perror("Failed to allocate child_process_t");
+        if (proc->command) free(proc->command);
+        if (proc->argv) {
+            for (int i = 0; proc->argv[i] != NULL; i++) {
+                free(proc->argv[i]);
+            }
+            free(proc->argv);
+        }
+        free(proc->children);
         free(proc);
-        return -1;
+        return E_FAILED_TO_ALLOCATE;
     }
     child_process->process = proc;
 
@@ -249,9 +249,9 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
  *
  * @param proc Pointer to the PCB of the process to clean up.
  */
-void k_proc_cleanup(pcb_t *proc) {
+int k_proc_cleanup(pcb_t *proc) {
     if (!proc) {
-        return;
+        return 0; // No error if proc is NULL
     }
 
     // 1. Reparent children to init process
@@ -268,7 +268,6 @@ void k_proc_cleanup(pcb_t *proc) {
                 // Orphaned child and no init process to adopt it? 
                 // This is an error condition or requires a different orphan handling strategy.
                 // For now, just log and free the child (leaking resources if it had children itself?)
-                fprintf(stderr, "k_proc_cleanup Warning: Cannot reparent child PID %d (from parent PID %d) to init process.\n", child->process->pid, proc->pid);
                 // We should ideally have a robust cleanup for such orphans too.
                 // Maybe call k_proc_cleanup recursively? Risk of stack overflow?
                 // Simplest for now might be to free its basic resources.
@@ -281,6 +280,7 @@ void k_proc_cleanup(pcb_t *proc) {
                 if (child->process->children) free(child->process->children); // List struct itself
                 free(child->process); // Free the child PCB
                 free(child); // Free the child PCB
+                return E_NO_INIT_PROCESS;
             }
         }
         // Free the (now empty) children list structure of the cleaned-up process
@@ -310,4 +310,5 @@ void k_proc_cleanup(pcb_t *proc) {
 
     // 4. Free the PCB structure itself
     free(proc);
+    return 0;
 }
