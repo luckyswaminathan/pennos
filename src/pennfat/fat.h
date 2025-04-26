@@ -1,3 +1,6 @@
+#ifndef PENNFAT_FAT_H
+#define PENNFAT_FAT_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -177,3 +180,7 @@ int k_setmode(int fd, int mode);
 #define EK_GETMODE_FD_OUT_OF_RANGE -1
 #define EK_GETMODE_FD_NOT_IN_USE -2
 int k_getmode(int fd);
+
+bool k_is_valid_fd(int fd);
+
+#endif // PENNFAT_FAT_H

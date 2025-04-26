@@ -1,3 +1,6 @@
+#ifndef PENNFAT_FAT_UTILS_H
+#define PENNFAT_FAT_UTILS_H
+
 #include <stdint.h>
 
 /**
@@ -12,3 +15,4 @@ uint16_t block_size_of_config(uint8_t block_size_config);
  */
 int parse_first_fat_entry(uint16_t first_entry, uint16_t* block_size_ptr, uint8_t* blocks_in_fat_ptr);
 
+#endif // PENNFAT_FAT_UTILS_H
