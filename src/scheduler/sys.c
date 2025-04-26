@@ -27,8 +27,6 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
     // This avoids direct access to scheduler_state from the system call layer.
     pcb_t* parent = k_get_current_process();
 
-    fprintf(stderr, "s_spawn: Parent PID: %p\n", (void*)parent);
-
     // Directly call the kernel function to create the process.
     // k_proc_create now handles PCB setup, thread creation, and scheduling.
     pid_t new_pid = k_proc_create(parent, func, argv);

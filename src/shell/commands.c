@@ -558,6 +558,32 @@ void* hang_helper(void* arg) {
     return NULL;
 }
 
+int recursive_helper_count = 0;
+
+void* recursive_helper(void* arg) {
+    
+    if(recursive_helper_count < 26) {
+        char recurse_name[16];
+        char letter = 'A' + (recursive_helper_count % 26);
+        recursive_helper_count++;
+        snprintf(recurse_name, sizeof(recurse_name), "Gen_%c", letter);
+        fprintf(stderr, "%s was spawned\n", recurse_name);
+        pid_t pid = s_spawn(recursive_helper, (char*[]){recurse_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+        int wstatus;
+        s_waitpid(pid, &wstatus, false);
+        fprintf(stderr, "%s was reaped\n", recurse_name);
+    }
+    
+    s_exit(0);
+    return NULL;
+}
+
+void* recurse(void* arg) {
+    recursive_helper(arg);
+    s_exit(0);
+    return NULL;
+}
+
 void* hang(void* arg) {
     // Spawn 10 children
     pid_t children[10];
@@ -573,7 +599,6 @@ void* hang(void* arg) {
     // Wait for all children to complete in any order
     int remaining = 10;
     while (remaining > 0) {
-        fprintf(stderr, "remaining %d\n", remaining);
         int wstatus;
         pid_t pid = s_waitpid(-1, &wstatus, false);
         if (pid > 0) {
@@ -697,6 +722,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "nohang") == 0) {
         return nohang(ctx);
+    }
+    if (strcmp(ctx[0], "recur") == 0) {
+        return recurse(ctx);
     }
     s_exit(0);
     return NULL;
