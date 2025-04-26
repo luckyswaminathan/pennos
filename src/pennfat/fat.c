@@ -568,6 +568,8 @@ bool is_valid_filename(const char *fname)
     return true;
 }
 
+// TODO: these functions are extremely non-reentrant
+
 int k_open(const char *fname, int mode)
 {
     if (!is_mounted())
@@ -590,21 +592,11 @@ int k_open(const char *fname, int mode)
     if (find_file_in_global_fd_table_status == 0)
     {
         global_fd_entry *fd_entry = &global_fd_table[fd_idx];
-        fd_entry->ref_count += 1; // increment the ref count
 
         // we already have an entry in the global file table
         if (fd_entry->write_locked && (mode == F_WRITE || mode == F_APPEND))
         {
             return EK_OPEN_ALREADY_WRITE_LOCKED;
-        }
-
-        uint8_t perm = fd_entry->ptr_to_dir_entry->perm;
-        if (
-            perm == P_NO_FILE_PERMISSION ||
-            (perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ) || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
-            ((perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND)))
-        {
-            return EK_OPEN_WRONG_PERMISSIONS;
         }
     }
     else
@@ -667,13 +659,26 @@ int k_open(const char *fname, int mode)
         }
         // create an entry in the global file table
         global_fd_table[fd_idx] = (global_fd_entry){
-            .ref_count = 1,
+            .ref_count = 0,
             .dir_entry_block_num = dir_entry_block_num,
             .dir_entry_idx = dir_entry_idx,
             .ptr_to_dir_entry = ptr_to_dir_entry,
             .write_locked = mode, // 0 for read, 1 for write, 2 for append
             .offset = 0};
     }
+
+    uint8_t perm = global_fd_table[fd_idx].ptr_to_dir_entry->perm;
+    if (
+        perm == P_NO_FILE_PERMISSION ||
+        (perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ) || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
+        ((perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND)))
+    {
+        return EK_OPEN_WRONG_PERMISSIONS;
+    }
+
+    // Only increment the ref count here since we know that the file exists and has the right permissions
+    // at this point
+    global_fd_table[fd_idx].ref_count += 1; // increment the ref count
 
     // case: we need to truncate the file because we are opening it for writing
     if (mode == F_WRITE && global_fd_table[fd_idx].ptr_to_dir_entry->size > 0)
