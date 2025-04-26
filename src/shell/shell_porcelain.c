@@ -4,12 +4,13 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h>
+#include "src/utils/errno.h"
 #include "../../lib/exiting_alloc.h"
 #include "./exiting_signal.h"
 #include "./print.h"
 #include "./command_execution.h"
 #include "./parser.h"
+#include "src/scheduler/sys.h"
 
 #ifndef PROMPT
 #define PROMPT "$ "
@@ -29,24 +30,24 @@ static char cmd_buffer[MAX_LINE_LENGTH + 1]; // +1 for the null terminator
 
 int read_command(struct parsed_command **parsed_command)
 {
-    unsigned int num_bytes = read(STDIN_FILENO, cmd_buffer, MAX_LINE_LENGTH);
+    unsigned int num_bytes = s_read(STDIN_FILENO, MAX_LINE_LENGTH, cmd_buffer);
     if (num_bytes == -1)
     {
-        perror("Failed to read command from stdin");
+        u_perror("Failed to read command from stdin");
         // TODO: do we need any other cleanup here?
         exit(EXIT_FAILURE);
     }
     else if (num_bytes == 0)
     {
         // EOF
-        print_stderr("\n");
+        s_write(STDERR_FILENO, "\n", 1);
         *parsed_command = NULL;
         return -1;
     }
 
     if (cmd_buffer[num_bytes - 1] != '\n')
     {
-        print_stderr("\n");
+        s_write(STDERR_FILENO, "\n", 1);
     }
     cmd_buffer[num_bytes] = '\0';
     // cmd_buffer is now a null-terminated string that uses num_bytes + 1 bytes
@@ -55,12 +56,14 @@ int read_command(struct parsed_command **parsed_command)
     int err_code = parse_command(cmd_buffer, parsed_command);
     if (err_code > 0)
     {
-        perror("invalid");
+        char* err_msg = "Unparseable command\n";
+        s_write(STDERR_FILENO, err_msg, strlen(err_msg));
         return 1;
     }
     if (err_code == -1)
     {
-        perror("Failed to parse command due to system call error");
+        char* err_msg = "Failed to parse command due to system call error\n";
+        s_write(STDERR_FILENO, err_msg, strlen(err_msg));
         *parsed_command = NULL;
         return 1;
     }
@@ -69,7 +72,7 @@ int read_command(struct parsed_command **parsed_command)
 
 void display_prompt()
 {
-    print_stderr(PROMPT);
+    s_write(STDERR_FILENO, PROMPT, strlen(PROMPT));
 }
 
 

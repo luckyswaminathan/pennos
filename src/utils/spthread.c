@@ -207,7 +207,6 @@ int spthread_suspend(spthread_t thread) {
 
     nanosleep(&t, NULL);
 
-    // fprintf(stderr, "susp checking...\n");
     pthread_mutex_lock(&args.shutup_mutex);
 
     if (thread.meta->state == SPTHREAD_TERMINATED_STATE) {

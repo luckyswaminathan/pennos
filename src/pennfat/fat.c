@@ -1,5 +1,6 @@
 #include "src/pennfat/fat.h"
 #include "src/pennfat/fat_utils.h"
+#include "src/utils/error_codes.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -135,6 +136,22 @@ int unmount(void)
     fs.block_buf = NULL;
     fs.fd = -1;
     return 0;
+}
+
+char K_FPRINTF_SHORT_BUF[1024];
+
+int k_fprintf_short(int fd, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int status = vsnprintf(K_FPRINTF_SHORT_BUF, sizeof(K_FPRINTF_SHORT_BUF), format, args);
+    va_end(args);
+    if (status < 0) {
+        return E_STR_FORMAT_FAILED;
+    }
+    if (status >= sizeof(K_FPRINTF_SHORT_BUF)) {
+        return E_STR_TOO_LONG_FOR_FPRINTF_BUF;
+    }
+    return k_write(fd, K_FPRINTF_SHORT_BUF, strlen(K_FPRINTF_SHORT_BUF));
 }
 
 /**
@@ -777,16 +794,7 @@ int k_close(int fd)
 
 int k_read(int fd, int n, char *buf)
 {
-    if (!is_mounted())
-    {
-        return EFS_NOT_MOUNTED;
-    }
-
-    if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
-    {
-        return EK_READ_FD_OUT_OF_RANGE;
-    }
-
+    // allow reading from stdin, stdout, stderr before mounting
     if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
     {
         // special case read for stdin, stdout, stderr
@@ -799,6 +807,16 @@ int k_read(int fd, int n, char *buf)
             return EK_READ_READ_FAILED;
         };
         return bytes_read;
+    }
+
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
+    if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
+    {
+        return EK_READ_FD_OUT_OF_RANGE;
     }
 
     global_fd_entry *fd_entry = &global_fd_table[fd];
@@ -947,16 +965,7 @@ int64_t k_lseek(int fd, int offset, int whence)
 
 int k_write(int fd, const char *str, int n)
 {
-    if (!is_mounted())
-    {
-        return EFS_NOT_MOUNTED;
-    }
-
-    if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
-    {
-        return EK_WRITE_FD_OUT_OF_RANGE;
-    }
-
+    // allow writing to stdin, stdout, stderr before mounting
     if (fd == STDIN_FD || fd == STDOUT_FD || fd == STDERR_FD)
     {
         // special case write for stdin, stdout, stderr
@@ -969,6 +978,16 @@ int k_write(int fd, const char *str, int n)
             return EK_WRITE_WRITE_FAILED;
         };
         return bytes_written;
+    }
+    
+    if (!is_mounted())
+    {
+        return EFS_NOT_MOUNTED;
+    }
+
+    if (fd >= GLOBAL_FD_TABLE_SIZE || fd < 0)
+    {
+        return EK_WRITE_FD_OUT_OF_RANGE;
     }
 
     global_fd_entry *fd_entry = &global_fd_table[fd];

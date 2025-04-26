@@ -181,4 +181,6 @@ int k_setmode(int fd, int mode);
 #define EK_GETMODE_FD_NOT_IN_USE -2
 int k_getmode(int fd);
 
+int k_fprintf_short(int fd, const char *format, ...);
+
 #endif // PENNFAT_FAT_H

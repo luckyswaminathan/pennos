@@ -3,8 +3,8 @@ CFLAGS = -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -W
 CPPFLAGS = -DNDEBUG -I. -I.. -I./shell -I./scheduler
 
 # Scheduler files
-SCHED_SRCS = scheduler/scheduler.c scheduler/spthread.c scheduler/logger.c ../lib/exiting_alloc.c scheduler/kernel.c scheduler/fat_syscalls.c pennfat/fat.c pennfat/fat_utils.c scheduler/sys.c 
-SCHED_HDRS = scheduler/scheduler.h scheduler/spthread.h scheduler/logger.h ../lib/exiting_alloc.h scheduler/kernel.h ../lib/linked_list.h scheduler/sys.h scheduler/fat_syscalls.h pennfat/fat.h pennfat/fat_utils.h pennfat/fat_constants.h
+SCHED_SRCS = scheduler/scheduler.c scheduler/spthread.c scheduler/logger.c ../lib/exiting_alloc.c scheduler/kernel.c scheduler/fat_syscalls.c pennfat/fat.c pennfat/fat_utils.c scheduler/sys.c utils/errno.c
+SCHED_HDRS = scheduler/scheduler.h scheduler/spthread.h scheduler/logger.h ../lib/exiting_alloc.h scheduler/kernel.h ../lib/linked_list.h scheduler/sys.h scheduler/fat_syscalls.h pennfat/fat.h pennfat/fat_utils.h pennfat/fat_constants.h utils/errno.h utils/error_codes.h
 SCHED_OBJS = $(SCHED_SRCS:.c=.o)
 
 # Shell files

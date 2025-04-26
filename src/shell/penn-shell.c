@@ -19,21 +19,7 @@ jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
     while (true) {
-        display_prompt();  
-
-        // while (true) {
-        //     pid_t dead_pid = s_waitpid(-1, NULL, true);
-        //     if (dead_pid == -1 && errno != ECHILD) {
-        //         perror("Failed to wait for background jobs");
-        //         exit(EXIT_FAILURE);
-        //     }
-
-        //     if (dead_pid == 0 || (dead_pid == -1 && errno == ECHILD)) {
-        //         break;
-        //     }
-
-        //     remove_job_by_pid(dead_pid);
-        // }
+        display_prompt();
      
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
@@ -57,10 +43,8 @@ static void* shell_loop(void* arg) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
-        printf("command: %s\n", parsed_command->commands[0][0]);
         LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
-        printf("is_jobs_command: %d\n", is_jobs_command);
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
@@ -69,7 +53,6 @@ static void* shell_loop(void* arg) {
 
         job* job_ptr = (job*) exiting_malloc(sizeof(job));
         job_ptr->id = ++job_id;
-        fprintf(stderr, "job_id: %lu\n", job_ptr->id);
         job_ptr->pids = NULL;
         job_ptr->status = J_RUNNING_FG;
         job_ptr->cmd = parsed_command;
@@ -134,12 +117,8 @@ int main(int argc, char **argv) {
     s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
     
 
-    printf("Scheduler initialized\n");
-    
     // Finally set up the job control handlers
     setup_job_control_handlers();
-
-    printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
 
     run_scheduler();
 
