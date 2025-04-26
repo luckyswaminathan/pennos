@@ -87,6 +87,7 @@ pid_t s_waitpid(pid_t pid, int *wstatus, bool nohang)
                 return proc->pid;
             }
         }
+        fprintf(stderr, "seg fault is here?\n");
         proc = proc->process_pointers.next;
     }
     return 0;
