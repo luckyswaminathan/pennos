@@ -553,6 +553,82 @@ void* mv(void* arg) {
     return NULL;
 }
 
+void* hang_helper(void* arg) {
+    s_exit(0);
+    return NULL;
+}
+
+void* hang(void* arg) {
+    // Spawn 10 children
+    pid_t children[10];
+    for (int i = 0; i < 10; i++) {
+        char hang_name[16];
+        snprintf(hang_name, sizeof(hang_name), "child_%d", i);
+        children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+        if (children[i] > 0) {
+            fprintf(stderr, "child_%d was spawned\n", i);
+        }
+    }
+
+    // Wait for all children to complete in any order
+    int remaining = 10;
+    while (remaining > 0) {
+        fprintf(stderr, "remaining %d\n", remaining);
+        int wstatus;
+        pid_t pid = s_waitpid(-1, &wstatus, false);
+        if (pid > 0) {
+            // Find which child this was
+            for (int i = 0; i < 10; i++) {
+                if (children[i] == pid) {
+                    fprintf(stderr, "child_%d was reaped\n", i);
+                    break;
+                }
+            }
+            remaining--;
+        }
+    }
+    
+    s_exit(0);
+    return NULL;
+}
+
+void* nohang(void* arg) {
+    // Spawn 10 children
+    pid_t children[10];
+    for (int i = 0; i < 10; i++) {
+        char hang_name[16];
+        snprintf(hang_name, sizeof(hang_name), "child_%d", i);
+        children[i] = s_spawn(hang_helper, (char*[]){hang_name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+        if (children[i] > 0) {
+            fprintf(stderr, "child_%d was spawned\n", i);
+        }
+    }
+
+    // Wait for all children to complete in any order
+    int remaining = 10;
+    while (remaining > 0) {
+        int wstatus;
+        pid_t pid = s_waitpid(-1, &wstatus, true);
+        if (pid > 0) {
+            // Find which child this was
+            for (int i = 0; i < 10; i++) {
+                if (children[i] == pid) {
+                    fprintf(stderr, "child_%d was reaped\n", i);
+                    break;
+                }
+            }
+            remaining--;
+        }
+    }
+    
+    s_exit(0);
+    return NULL;
+}
+
+
+
+
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     // We always want the first command to be the command name
@@ -615,6 +691,12 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "jobs") == 0) {
         return jobs_command(ctx);
+    }
+    if (strcmp(ctx[0], "hang") == 0) {
+        return hang(ctx);
+    }
+    if (strcmp(ctx[0], "nohang") == 0) {
+        return nohang(ctx);
     }
     s_exit(0);
     return NULL;

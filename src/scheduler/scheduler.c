@@ -437,7 +437,6 @@ void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
     k_log("Blocking process with pid %d\n", process->pid);
-    fprintf(stderr, "Blocking process with pid %d\n", process->pid);
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -445,11 +444,10 @@ void block_process(pcb_t *process)
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
     k_log("Post push tail\n");
-    fprintf(stderr, "Post push tail\n");
 
     pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
     while (curr != NULL) {
-        fprintf(stderr, "Blocked process PID %d\n", curr->pid);
+        k_log("Blocked process PID %d\n", curr->pid);
         curr = curr->next;
     }
 }
@@ -596,7 +594,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         scheduler_state->current_process->waited_child = -1;
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
-        
+
         // First pass: look for zombies
         while (child != NULL) {
             child_process_t* next = child->next; // Save next pointer as we might remove child
