@@ -1,4 +1,9 @@
 #include "scheduler.h"
+#include "src/pennfat/fat.h" // TODO: this exposes mount and unmount to the kernel (unsure if that's OK)
+#include "src/pennfat/fat_constants.h"
+
+
+// TODO: add header guards across all header files
 
 #define P_SIGTERM 1
 #define P_SIGSTOP 2
