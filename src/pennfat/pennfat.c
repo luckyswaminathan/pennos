@@ -1,6 +1,6 @@
 #include "src/pennfat/mkfs.h"
 #include "src/pennfat/fat.h"
-
+#include "src/pennfat/fat_constants.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -278,7 +278,6 @@ int main(void)
 			}
 
 			// Remove the file
-			// TODO: Check w/ Aagam if unlink is complete in fat.c
 			int unlink_status = k_unlink(tokens[1]);
 			if (unlink_status < 0)
 			{
@@ -515,7 +514,7 @@ int main(void)
 					goto cleanup_tokens;
 				}
 
-				// Create destination file
+    			// Open destination file (overwrite, or create if it doesn't exist)
 				int dest_fd = k_open(tokens[2], F_WRITE);
 				if (dest_fd < 0)
 				{
@@ -549,6 +548,7 @@ int main(void)
 		}
 		else if (strcmp(tokens[0], "chmod") == 0)
 		{
+			// TODO: this is technically not correct since this doesn't match chmod(1)
 			if (!is_mounted())
 			{
 				fprintf(stderr, "chmod: there is no filesystem mounted\n");
@@ -570,7 +570,7 @@ int main(void)
 
 			uint8_t perm = tokens[1][0] - '0';
 
-			int chmod_status = k_chmod(tokens[2], perm);
+			int chmod_status = k_chmod(tokens[2], perm, F_CHMOD_SET);
 			if (chmod_status != 0)
 			{
 				fprintf(stderr, "chmod: failed with error code %d\n", chmod_status);

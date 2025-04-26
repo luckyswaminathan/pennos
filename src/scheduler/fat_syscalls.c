@@ -144,9 +144,9 @@ int s_ls(const char *filename)
     return k_ls(filename);
 }
 
-int s_chmod(const char *fname, uint8_t perm)
+int s_chmod(const char *fname, uint8_t perm, int mode)
 {
-    return k_chmod(fname, perm);
+    return k_chmod(fname, perm, mode);
 }
 
 int s_mv(const char *src, const char *dest)

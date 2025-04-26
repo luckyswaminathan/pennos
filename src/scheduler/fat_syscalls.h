@@ -16,6 +16,6 @@ int s_unlink(const char *fname);
 
 int s_ls(const char *filename);
 
-int s_chmod(const char *fname, uint8_t perm);
+int s_chmod(const char *fname, uint8_t perm, int mode);
 
 int s_mv(const char *src, const char *dest);

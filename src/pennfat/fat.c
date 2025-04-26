@@ -1374,7 +1374,7 @@ cleanup:
     return status;
 }
 
-int k_chmod(const char *fname, uint8_t perm)
+int k_chmod(const char *fname, uint8_t perm, int mode)
 {
     if (!is_mounted())
     {
@@ -1401,7 +1401,15 @@ int k_chmod(const char *fname, uint8_t perm)
         return EK_CHMOD_WRONG_PERMISSIONS;
     }
 
-    dir_entry.perm = perm;
+    if (mode == F_CHMOD_SET) {
+        dir_entry.perm = perm;
+    } else if (mode == F_CHMOD_ADD) {
+        dir_entry.perm |= perm;
+    } else if (mode == F_CHMOD_REMOVE) {
+        dir_entry.perm &= ~perm;
+    } else {
+        return EK_CHMOD_INVALID_MODE;
+    }
     if (write_root_dir_entry(&dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
     {
         return EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED;
