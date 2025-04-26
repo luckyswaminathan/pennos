@@ -2,7 +2,6 @@
 #include "src/pennfat/fat.h"
 #include "src/pennfat/fat_constants.h"
 #include <string.h>
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -60,25 +59,31 @@ long int safe_strtol(char *string, char *prefix, bool *ok)
 	*ok = true;
 	if (*endptr != '\0')
 	{
-		fprintf(stderr, "%s: expected string to be entirely numeric\n", prefix);
+		char* err_msg = "%s: expected string to be entirely numeric\n";
+		k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 		*ok = false;
 		return 0;
 	}
 	if (errno == ERANGE)
 	{
-		fprintf(stderr, "%s: underflow or overflow occured while parsing string to number\n", prefix);
+		char* err_msg = "%s: underflow or overflow occured while parsing string to number\n";
+		k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 		*ok = false;
 		return 0;
 	}
 	if (errno != 0)
 	{
-		fprintf(stderr, "%s: unspecified error parsing string to number\n", prefix);
+		char* err_msg = "%s: unspecified error parsing string to number\n";
+		k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 		*ok = false;
 		return 0;
 	}
 
 	return val;
 }
+
+#define MAX_LINE_SIZE 1024
+char line[MAX_LINE_SIZE];
 
 int main(void)
 {
@@ -92,36 +97,30 @@ int main(void)
 
 	while (true)
 	{
-		fprintf(stderr, "PENNFAT> ");
-		char *line = NULL;
-		size_t line_size;
+		char* prompt = "PENNFAT> ";
+		k_write(STDERR_FILENO, prompt, strlen(prompt));
+		
+		ssize_t nread = k_read(STDIN_FD, MAX_LINE_SIZE-1, line);
+		line[nread] = '\0';
 
-		errno = 0; // clear errno
-		ssize_t nread = getline(&line, &line_size, stdin);
-
-		if (nread == -1)
+		
+		if (nread == 0)
 		{
-			if (errno != 0)
-			{
-				perror("Failed to read line");
-				goto cleanup_line;
-			}
-			else
-			{
-				// EOF sent by user -- exit the shell
-				// Note an EOF sent anywhere is treated as a signal to kill the shell (even if there is a full command before the EOF is sent
-				fprintf(stderr, "\n");
-				// NOTE: we can exit safely here because fat16_fs and the mmap in it etc will be cleaned up on exit!
-				exit(EXIT_SUCCESS);
-			}
+			// EOF sent by user -- exit the shell
+			// Note an EOF sent anywhere is treated as a signal to kill the shell (even if there is a full command before the EOF is sent)
+			char* eof_msg = "\n";
+			k_write(STDERR_FILENO, eof_msg, strlen(eof_msg));
+			// NOTE: we can exit safely here because fat16_fs and the mmap in it etc will be cleaned up on exit!
+			exit(EXIT_SUCCESS);
 		}
 
 		size_t n_tokens;
 		char **tokens = whitespace_tokenize(line, &n_tokens);
 		if (tokens == NULL)
 		{
-			fprintf(stderr, "Failed to tokenize by whitespace\n");
-			goto cleanup_line;
+			char* err_msg = "Failed to tokenize by whitespace\n";
+			k_write(STDERR_FILENO, err_msg, strlen(err_msg));
+			continue;
 		}
 
 		if (n_tokens == 0)
@@ -133,7 +132,8 @@ int main(void)
 		{
 			if (n_tokens != 4)
 			{
-				fprintf(stderr, "mkfs got an incorrect number of arguments\n");
+				char* err_msg = "mkfs got an incorrect number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -149,7 +149,8 @@ int main(void)
 				}
 				if (long_blocks_in_fat < 1 || long_blocks_in_fat > 32)
 				{
-					fprintf(stderr, "mkfs BLOCKS_IN_FAT arg: must be between 1 and 32 inclusive\n");
+					char* err_msg = "mkfs BLOCKS_IN_FAT arg: must be between 1 and 32 inclusive\n";
+					k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 					goto cleanup_tokens;
 				}
 				blocks_in_fat = (uint8_t)long_blocks_in_fat;
@@ -166,7 +167,8 @@ int main(void)
 				}
 				if (long_block_size_config < 0 || long_block_size_config > 4)
 				{
-					fprintf(stderr, "mkfs BLOCK_SIZE_CONFIG arg: must be between 0 and 4 inclusive\n");
+					char* err_msg = "mkfs BLOCK_SIZE_CONFIG arg: must be between 0 and 4 inclusive\n";
+					k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 					goto cleanup_tokens;
 				}
 				block_size_config = (uint8_t)long_block_size_config;
@@ -175,8 +177,7 @@ int main(void)
 			int mkfs_err = mkfs(fs_name, blocks_in_fat, block_size_config);
 			if (mkfs_err != 0)
 			{
-				// TODO: add error prints here
-				fprintf(stderr, "Failed to mkfs with error code %d\n", mkfs_err);
+				k_fprintf_short(STDERR_FILENO, "Failed to mkfs with error code %d\n", mkfs_err);
 				goto cleanup_tokens;
 			}
 		}
@@ -184,14 +185,16 @@ int main(void)
 		{
 			if (n_tokens != 2)
 			{
-				fprintf(stderr, "mount got wrong number of arguments\n");
+				char* err_msg = "mount got wrong number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
 			int mount_err = mount(tokens[1]);
 			if (mount_err != 0)
 			{
-				fprintf(stderr, "Failed to mount with error code %d\n", mount_err);
+				char* err_msg = "Failed to mount with error code %d\n";
+				k_fprintf_short(STDERR_FILENO, err_msg, mount_err);
 				goto cleanup_tokens;
 			}
 		}
@@ -199,19 +202,22 @@ int main(void)
 		{
 			if (n_tokens != 1)
 			{
-				fprintf(stderr, "unmount got wrong number of arguments (expected no arguments)\n");
+				char* err_msg = "unmount got wrong number of arguments (expected no arguments)\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 			if (!is_mounted())
 			{
-				fprintf(stderr, "unmount: there is no filesystem mounted\n");
+				char* err_msg = "unmount: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
 			int unmount_err = unmount();
 			if (unmount_err != 0)
 			{
-				fprintf(stderr, "Failed to unmount with error code %d\n", unmount_err);
+				char* err_msg = "Failed to unmount with error code %d\n";
+				k_fprintf_short(STDERR_FILENO, err_msg, unmount_err);
 				goto cleanup_tokens;
 			}
 		}
@@ -219,12 +225,14 @@ int main(void)
 		{
 			if (n_tokens < 2)
 			{
-				fprintf(stderr, "touch got wrong number of arguments (expected at least 1 argument)\n");
+				char* err_msg = "touch got wrong number of arguments (expected at least 1 argument)\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 			if (!is_mounted())
 			{
-				fprintf(stderr, "touch: there is no filesystem mounted\n");
+				char* err_msg = "touch: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -233,12 +241,14 @@ int main(void)
 				int fd = k_open(tokens[i], F_APPEND);
 				if (fd < 0)
 				{
-					fprintf(stderr, "touch: failed to open file with error code %d\n", fd);
+					char* err_msg = "touch: failed to open file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, fd);
 					goto cleanup_tokens;
 				}
 				if (k_write(fd, NULL, 0) < 0)
 				{
-					fprintf(stderr, "touch: failed to write to file with error code %d\n", fd);
+					char* err_msg = "touch: failed to write to file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, fd);
 					goto cleanup_tokens;
 				}
 				k_close(fd);
@@ -248,19 +258,22 @@ int main(void)
 		{
 			if (n_tokens != 3)
 			{
-				fprintf(stderr, "mv got wrong number of arguments\n");
+				char* err_msg = "mv got wrong number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 			if (!is_mounted())
 			{
-				fprintf(stderr, "mv: there is no filesystem mounted\n");
+				char* err_msg = "mv: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
 			int mv_status = k_mv(tokens[1], tokens[2]);
 			if (mv_status != 0)
 			{
-				fprintf(stderr, "mv: failed with error code %d\n", mv_status);
+				char* err_msg = "mv: failed with error code %d\n";
+				k_fprintf_short(STDERR_FILENO, err_msg, mv_status);
 				goto cleanup_tokens;
 			}
 		}
@@ -268,12 +281,14 @@ int main(void)
 		{
 			if (n_tokens != 2)
 			{
-				fprintf(stderr, "rm got wrong number of arguments\n");
+				char* err_msg = "rm got wrong number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 			if (!is_mounted())
 			{
-				fprintf(stderr, "rm: there is no filesystem mounted\n");
+				char* err_msg = "rm: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -281,7 +296,8 @@ int main(void)
 			int unlink_status = k_unlink(tokens[1]);
 			if (unlink_status < 0)
 			{
-				fprintf(stderr, "rm: Error - failed to remove file with error code %d\n", unlink_status);
+				char* err_msg = "rm: Error - failed to remove file with error code %d\n";
+				k_fprintf_short(STDERR_FILENO, err_msg, unlink_status);
 				goto cleanup_tokens;
 			}
 		}
@@ -289,7 +305,8 @@ int main(void)
 		{
 			if (!is_mounted())
 			{
-				fprintf(stderr, "cat: there is no filesystem mounted\n");
+				char* err_msg = "cat: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -322,7 +339,8 @@ int main(void)
 				int fd = k_open(output_file, mode);
 				if (fd < 0)
 				{
-					fprintf(stderr, "cat: Error - failed to open output file with error code %d\n", fd);
+					char* err_msg = "cat: Error - failed to open output file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, fd);
 					goto cleanup_tokens;
 				}
 
@@ -334,7 +352,8 @@ int main(void)
 				{
 					if (k_write(fd, buffer, bytes_read) < 0)
 					{
-						fprintf(stderr, "cat: Error - failed to write to file\n");
+						char* err_msg = "cat: Error - failed to write to file\n";
+						k_fprintf_short(STDERR_FILENO, err_msg, fd);
 						k_close(fd);
 						goto cleanup_tokens;
 					}
@@ -357,7 +376,7 @@ int main(void)
 					out_fd = k_open(output_file, mode);
 					if (out_fd < 0)
 					{
-						fprintf(stderr, "cat: Error - failed to open output file with error code %d\n", out_fd);
+						k_fprintf_short(STDERR_FILENO, "cat: Error - failed to open output file with error code %d\n", out_fd);
 						goto cleanup_tokens;
 					}
 				}
@@ -376,7 +395,7 @@ int main(void)
 					int in_fd = k_open(tokens[i], F_READ);
 					if (in_fd < 0)
 					{
-						fprintf(stderr, "cat: Error - failed to open input file %s with error code %d\n",
+						k_fprintf_short(STDERR_FILENO, "cat: Error - failed to open input file %s with error code %d\n",
 								tokens[i], in_fd);
 						if (out_fd >= 0)
 						{
@@ -395,7 +414,7 @@ int main(void)
 						int k_write_status = k_write(write_fd, buffer, bytes_read);
 						if (k_write_status < 0)
 						{
-							fprintf(stderr, "cat: Error - write failed with error code %d\n", k_write_status);
+							k_fprintf_short(STDERR_FILENO, "cat: Error - write failed with error code %d\n", k_write_status);
 							k_close(in_fd);
 							if (out_fd >= 0)
 							{
@@ -415,7 +434,8 @@ int main(void)
 			}
 			else
 			{
-				fprintf(stderr, "cat: invalid arguments\n");
+				char* err_msg = "cat: invalid arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 		}
@@ -423,8 +443,8 @@ int main(void)
 		{
 			if (!is_mounted())
 			{
-
-				fprintf(stderr, "cp: there is no filesystem mounted\n");
+				char* err_msg = "cp: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -435,7 +455,8 @@ int main(void)
 				int host_fd = open(tokens[2], O_RDONLY);
 				if (host_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to open host file: %s\n", tokens[2]);
+					char* err_msg = "cp: Error - failed to open host file: %s\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, tokens[2]);
 					goto cleanup_tokens;
 				}
 
@@ -443,7 +464,8 @@ int main(void)
 				int pennfat_fd = k_open(tokens[3], F_WRITE);
 				if (pennfat_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to create PennFAT file with error code %d\n", pennfat_fd);
+					char* err_msg = "cp: Error - failed to create PennFAT file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, pennfat_fd);
 					close(host_fd);
 					goto cleanup_tokens;
 				}
@@ -456,7 +478,8 @@ int main(void)
 					int k_write_status = k_write(pennfat_fd, buffer, bytes_read);
 					if (k_write_status < 0)
 					{
-						fprintf(stderr, "cp: Error - failed to write to PennFAT file with error code %d\n", k_write_status);
+						char* err_msg = "cp: Error - failed to write to PennFAT file with error code %d\n";
+						k_fprintf_short(STDERR_FILENO, err_msg, k_write_status);
 						close(host_fd);
 						k_close(pennfat_fd);
 						goto cleanup_tokens;
@@ -473,7 +496,8 @@ int main(void)
 				int pennfat_fd = k_open(tokens[1], F_READ);
 				if (pennfat_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to open PennFAT file with error code %d\n", pennfat_fd);
+					char* err_msg = "cp: Error - failed to open PennFAT file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, pennfat_fd);
 					goto cleanup_tokens;
 				}
 
@@ -481,7 +505,8 @@ int main(void)
 				int host_fd = open(tokens[3], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 				if (host_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to create host file: %s\n", tokens[3]);
+					char* err_msg = "cp: Error - failed to create host file: %s\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, tokens[3]);
 					k_close(pennfat_fd);
 					goto cleanup_tokens;
 				}
@@ -493,7 +518,8 @@ int main(void)
 				{
 					if (write(host_fd, buffer, bytes_read) < 0)
 					{
-						fprintf(stderr, "cp: Error - failed to write to host file\n");
+						char* err_msg = "cp: Error - failed to write to host file\n";
+						k_fprintf_short(STDERR_FILENO, err_msg);
 						k_close(pennfat_fd);
 						close(host_fd);
 						goto cleanup_tokens;
@@ -510,7 +536,8 @@ int main(void)
 				int src_fd = k_open(tokens[1], F_READ);
 				if (src_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to open source file with error code %d\n", src_fd);
+					char* err_msg = "cp: Error - failed to open source file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, src_fd);
 					goto cleanup_tokens;
 				}
 
@@ -518,7 +545,8 @@ int main(void)
 				int dest_fd = k_open(tokens[2], F_WRITE);
 				if (dest_fd < 0)
 				{
-					fprintf(stderr, "cp: Error - failed to create destination file with error code %d\n", dest_fd);
+					char* err_msg = "cp: Error - failed to create destination file with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, dest_fd);
 					k_close(src_fd);
 					goto cleanup_tokens;
 				}
@@ -530,7 +558,8 @@ int main(void)
 				{
 					if (k_write(dest_fd, buffer, bytes_read) < 0)
 					{
-						fprintf(stderr, "cp: Error - failed to write to destination file\n");
+						char* err_msg = "cp: Error - failed to write to destination file\n";
+						k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 						k_close(src_fd);
 						k_close(dest_fd);
 						goto cleanup_tokens;
@@ -542,7 +571,8 @@ int main(void)
 			}
 			else
 			{
-				fprintf(stderr, "cp: invalid arguments\n");
+				char* err_msg = "cp: invalid arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 		}
@@ -551,20 +581,23 @@ int main(void)
 			// TODO: this is technically not correct since this doesn't match chmod(1)
 			if (!is_mounted())
 			{
-				fprintf(stderr, "chmod: there is no filesystem mounted\n");
+				char* err_msg = "chmod: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
 			if (n_tokens != 3)
 			{
-				fprintf(stderr, "chmod: got wrong number of arguments\n");
+				char* err_msg = "chmod: got wrong number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
 			// Parse permission mode
 			if (strlen(tokens[1]) != 1 || tokens[1][0] < '0' || tokens[1][0] > '7')
 			{
-				fprintf(stderr, "chmod: invalid permission mode (must be 0-7)\n");
+				char* err_msg = "chmod: invalid permission mode (must be 0-7)\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -573,7 +606,8 @@ int main(void)
 			int chmod_status = k_chmod(tokens[2], perm, F_CHMOD_SET);
 			if (chmod_status != 0)
 			{
-				fprintf(stderr, "chmod: failed with error code %d\n", chmod_status);
+				char* err_msg = "chmod: failed with error code %d\n";
+				k_fprintf_short(STDERR_FILENO, err_msg, chmod_status);
 				goto cleanup_tokens;
 			}
 		}
@@ -581,7 +615,8 @@ int main(void)
 		{
 			if (!is_mounted())
 			{
-				fprintf(stderr, "ls: there is no filesystem mounted\n");
+				char* err_msg = "ls: there is no filesystem mounted\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 
@@ -591,7 +626,8 @@ int main(void)
 				int ls_status = k_ls(NULL);
 				if (ls_status < 0)
 				{
-					fprintf(stderr, "ls: failed with error code %d\n", ls_status);
+					char* err_msg = "ls: failed with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, ls_status);
 					goto cleanup_tokens;
 				}
 			}
@@ -601,27 +637,27 @@ int main(void)
 				int ls_status = k_ls(tokens[1]);
 				if (ls_status < 0)
 				{
-					fprintf(stderr, "ls: failed to list file %s with error code %d\n",
-							tokens[1], ls_status);
+					char* err_msg = "ls: failed to list file %s with error code %d\n";
+					k_fprintf_short(STDERR_FILENO, err_msg, tokens[1], ls_status);
 					goto cleanup_tokens;
 				}
 			}
 			else
 			{
-				fprintf(stderr, "ls: got wrong number of arguments\n");
+				char* err_msg = "ls: got wrong number of arguments\n";
+				k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 				goto cleanup_tokens;
 			}
 		}
 		else
 		{
-			fprintf(stderr, "Unrecognized command\n");
+			char* err_msg = "Unrecognized command\n";
+			k_write(STDERR_FILENO, err_msg, strlen(err_msg));
 			goto cleanup_tokens;
 		}
 
 	// Last thing: free line and tokenized version
 	cleanup_tokens:
 		free(tokens);
-	cleanup_line:
-		free(line);
 	}
 }
