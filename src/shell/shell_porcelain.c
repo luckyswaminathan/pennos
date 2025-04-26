@@ -7,7 +7,6 @@
 #include "src/utils/errno.h"
 #include "../../lib/exiting_alloc.h"
 #include "./exiting_signal.h"
-#include "./print.h"
 #include "./command_execution.h"
 #include "./parser.h"
 #include "src/scheduler/sys.h"
