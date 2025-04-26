@@ -535,6 +535,9 @@ void* execute_command(void* arg) {
     if (strcmp(ctx[0], "chmod") == 0) {
         return chmod(ctx);
     }
+    if (strcmp(ctx[0], "cat") == 0) {
+        return cat(ctx);
+    }
     if (strcmp(ctx[0], "busy") == 0) {
         return busy(ctx, ctx[1]);
     }
