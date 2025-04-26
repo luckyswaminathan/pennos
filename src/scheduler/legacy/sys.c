@@ -280,7 +280,6 @@ int s_cont(pid_t pid)
  */
 void s_exit(void)
 {
-    PANIC("s_exit not implemented");
 }
 
 // void s_sleep(unsigned int ticks) {

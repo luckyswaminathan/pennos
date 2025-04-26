@@ -2,17 +2,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-int main(void) {
-    bool running = true;
-    
-    printf("PennOS starting...\n");
-    
-    while (running) {
-        printf("pennos> ");
-        fflush(stdout);
-        sleep(1);  // Just to prevent busy-waiting
-    }
-    
+int main(void) { 
     return 0;
 }
 
