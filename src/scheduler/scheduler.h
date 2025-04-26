@@ -144,10 +144,14 @@ bool k_continue_process(pcb_t* process);
 bool k_set_priority(pcb_t* process, int priority);
 bool k_sleep(pcb_t* process, unsigned int ticks);
 void k_get_processes_from_queue(pcb_ll_t queue);
-void k_get_all_process_info(void);
+void k_get_all_process_info();
 pcb_t* k_get_current_process(void);
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang);
 
 pcb_t* get_process_by_pid(pid_t pid);
+
+void k_toggle_logging();
+void k_print_ps_output();
+void k_log(const char *format, ...);
 
 #endif

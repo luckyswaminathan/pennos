@@ -10,9 +10,21 @@
 #include "../../lib/exiting_alloc.h"
 #include "../scheduler/spthread.h"
 #include "src/pennfat/fat_constants.h"
-
+#include "jobs.h"
 #define BUFFER_SIZE 256
-#define BUSY_LOOP_ITERATIONS 100000000
+
+// Helper function specific to ps command within this file
+static void print_process_line(pcb_t* proc, char state_char) {
+     if (!proc) return;
+     // Print process info directly using printf
+     printf("%3d %4d %3d %c    %s\n", 
+            proc->pid, 
+            proc->ppid, 
+            proc->priority, 
+            state_char, 
+            proc->command ? proc->command : "<?>" // Use command name
+     );
+}
 
 // static void print_header(int output_fd) {
 //     const char* header = "PID PPID PRI STAT CMD\n";
@@ -33,12 +45,58 @@
 
 // Implementation of ps command
 void* ps(void* arg) {
-    
-    s_get_process_info();
-    printf("ps called\n");
-    s_exit(0);
+    // Directly access kernel state (assuming this is allowed by the project structure)
+    if (!scheduler_state) {
+        printf("Scheduler not initialized.\n");
+        s_exit(1); // Exit with an error code
+        return NULL; 
+    }
+
+    // Print header
+    printf("PID PPID PRI STAT CMD\n");
+
+    // Get current process - careful, this is the 'ps' process itself
+    // pcb_t *ps_process = scheduler_state->current_process; 
+    // pid_t ps_pid = (ps_process) ? ps_process->pid : -1;
+
+
+    // --- Iterate through all queues ---
+
+    // Ready Queues (excluding the ps process itself)
+    // TODO: Maintain abstraction here
+    for (int i = 0; i < 3; i++) {
+        pcb_t* current = scheduler_state->ready_queues[i].head;
+        while (current != NULL) {
+            print_process_line(current, 'R');
+            current = current->next;
+        }
+    }
+
+    // Blocked Queue
+    pcb_t* current = scheduler_state->blocked_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'B');
+        current = current->next;
+    }
+
+    // Stopped Queue
+    current = scheduler_state->stopped_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'S');
+        current = current->next;
+    }
+
+    // Zombie Queue
+    current = scheduler_state->zombie_queue.head;
+    while (current != NULL) {
+        print_process_line(current, 'Z');
+        current = current->next;
+    }
+
+    s_exit(0); // Exit the ps process itself cleanly
     return NULL;
 }
+
 void* zombie_child(void* arg) {
     // Child process exits normally
     LOG_INFO("Child process running, will exit soon");
@@ -73,85 +131,54 @@ void* orphanify(void* arg) {
     return NULL;
 }
 
+/**
+ * @brief This function is used to busy wait a process.
+ * 
+ * It removes the current process from the ready queue and adds it to the ready queue with the new priority.
+ * It then busy waits.
+ * 
+ * @param arg The command context.
+ * @param priority The priority to set the process to.
+ * @return NULL.
+ */
+void* busy(void* arg, char* priority) {
+    // Get the command context
+    struct command_context* ctx = (struct command_context*)arg;
+    int priority_level = atoi(priority);
 
-// /**
-//  * @brief Busy wait indefinitely.
-//  * It can only be interrupted via signals.
-//  *
-//  * Example Usage: busy
-//  */
-// void* busy(void* arg) {
-//     LOG_INFO("Starting busy process");
-//     struct command_context* ctx = (struct command_context*)arg;
-    
-//     // Set up signal handling for SIGINT
-//     struct sigaction sig_action;
-//     sig_action.sa_handler = busy_sigint_handler;  // Use our custom handler
-//     sigemptyset(&sig_action.sa_mask);
-//     sig_action.sa_flags = 0;
-    
-//     // Install signal handler for SIGINT (Ctrl-C)
-//     sigaction(SIGINT, &sig_action, NULL);
-    
-//     // Reset the global flag
-//     busy_running = 1;
-    
-//     // Check if a priority level was specified
-//     if (ctx->command[1] != NULL) {
-//         int priority_level = atoi(ctx->command[1]);
+    // Validate the priority level
+    if (priority_level < 0 || priority_level > 2) {
+        dprintf(ctx->stdout_fd, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_exit(1);
+        return NULL;
+    }
 
-//         printf("priority_level: %d\n", priority_level);
-        
-//         // Update the priority of the current process
-//         pcb_t* proc = scheduler_state->curr;
-        
-//         // Remove from current priority queue
-//         if (proc->priority == PRIORITY_HIGH) {
-//             linked_list_remove(&scheduler_state->priority_high, proc, priority_pointers.prev, priority_pointers.next);
-//         } else if (proc->priority == PRIORITY_MEDIUM) {
-//             linked_list_remove(&scheduler_state->priority_medium, proc, priority_pointers.prev, priority_pointers.next);
-//         } else {
-//             linked_list_remove(&scheduler_state->priority_low, proc, priority_pointers.prev, priority_pointers.next);
-//         }
-        
-//         // Update priority based on requested level
-//         if (priority_level == 0) {
-//             proc->priority = PRIORITY_HIGH;
-//         } else if (priority_level == 1) {
-//             proc->priority = PRIORITY_MEDIUM;
-//         } else {
-//             proc->priority = PRIORITY_LOW;
-//         }
-        
-//         // Add back to the appropriate queue
-//         add_process_to_queue(proc);
-        
-//         LOG_INFO("Set busy process priority to %d", priority_level);
-//     }
-    
-//     // Create a CPU intensive workload
-//     while(busy_running) {
-//         // This is a tight loop that consumes CPU
-//         for(int i = 0; i < BUSY_LOOP_ITERATIONS && busy_running; i++) {
-//             // Do nothing, just burn CPU cycles
-//         }
-//     }
-//     return NULL;
-// }
+    // Remove the current process from the ready queue and add it to the ready queue with the new priority
+    pcb_t* proc = scheduler_state->current_process;
+    linked_list_remove(&scheduler_state->ready_queues[proc->priority], proc);
+    proc->priority = priority_level;
+    linked_list_push_tail(&scheduler_state->ready_queues[priority_level], proc);
+
+    // Busy wait
+    while (1) {}
+
+    s_exit(0);
+    return NULL;
+}
 
 // Implementation of nice command to use the system s_nice function
-void* nice_command(void* arg) {
+void* nice_pid_command(void* arg, char* pid, char* priority) {
     struct command_context* ctx = (struct command_context*)arg;
     int stdout_fd = ctx->stdout_fd;
     
-    if (ctx->command[1] == NULL || ctx->command[2] == NULL) {
+    if (pid == NULL || priority == NULL) {
         dprintf(stdout_fd, "Usage: nice <pid> <priority_level>\n");
         return NULL;
     }
     
     // Parse PID and priority level
-    pid_t target_pid = atoi(ctx->command[1]);
-    int priority_level = atoi(ctx->command[2]);
+    pid_t target_pid = atoi(pid);
+    int priority_level = atoi(priority);
     
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
@@ -167,7 +194,94 @@ void* nice_command(void* arg) {
     } else {
         dprintf(stdout_fd, "Failed to change priority of process %d\n", target_pid);
     }
+    s_exit(0);
+    return NULL;
+}
+
+void* sleep_command(void* arg, char* time) {
+    //struct command_context* ctx = (struct command_context*)arg;
+    fprintf(stderr, "sleep command called\n");
+    if (time == NULL) {
+        fprintf(stderr, "Error: sleep command requires a number of ticks\n");
+        s_exit(1);
+        return NULL;
+    }
+    int ticks = atoi(time);
+    fprintf(stderr, "sleep ticks: %d\n", ticks);
+    s_sleep(ticks);
+    s_exit(0);
+    return NULL;
+}
+
+void* kill_process_shell(void* arg, char* first_term) {
+    char** args = (char**)arg;
+    if (args == NULL || first_term == NULL) {
+        fprintf(stderr, "Error: kill command requires a process ID\n");
+        s_exit(1);
+        return NULL;
+    }
+    int signal = P_SIGTERM; // Default signal
+    int start_idx = 1; // Default to first argument as PID
+
+    // Check if we have a signal flag
+    if (first_term != NULL && first_term[0] == '-') {
+        if (strcmp(first_term, "-term") == 0) {
+            signal = P_SIGTERM;
+        } else if (strcmp(first_term, "-stop") == 0) {
+            signal = P_SIGSTOP;
+        } else if (strcmp(first_term, "-cont") == 0) {
+            signal = P_SIGCONT;
+        } else {
+            fprintf(stderr, "Unknown signal flag: %s\n", first_term);
+            fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+            s_exit(1);
+            return NULL;
+        }
+        start_idx = 2; // Skip the flag argument
+    }
+
+    // Check if we have any PIDs
+    if (args[start_idx] == NULL) {  
+        fprintf(stderr, "Error: kill command requires at least one PID\n");
+        fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+        s_exit(1);
+        return NULL;
+    }
+
+    // Process all PIDs
+    for (int i = start_idx; args[i] != NULL; i++) {
+        int pid = atoi(args[i]);
+        s_kill(pid, signal);
+    }
+    fprintf(stderr, "killed correctly\n");
+    s_exit(0);
+    return NULL;
+}
+
+
+void* man(void* arg) {
+    struct command_context* ctx = (struct command_context*)arg;
+    int stdout_fd = ctx->stdout_fd;
     
+    dprintf(stdout_fd, "Available commands:\n\n");
+    dprintf(stdout_fd, "ps          - List all running processes and their states\n");
+    dprintf(stdout_fd, "zombify     - Create a zombie process\n");
+    dprintf(stdout_fd, "orphanify   - Create an orphan process\n");
+    dprintf(stdout_fd, "busy        - Start a CPU-intensive process\n");
+    dprintf(stdout_fd, "sleep <n>   - Sleep for n ticks\n");
+    dprintf(stdout_fd, "nice_pid <pid> <priority>\n            - Change priority of process <pid> to <priority> (0-2)\n");
+    dprintf(stdout_fd, "kill -term <pid> - Terminate process <pid>\n");
+    dprintf(stdout_fd, "kill -stop <pid> - Stop process <pid>\n");
+    dprintf(stdout_fd, "kill -cont <pid> - Continue process <pid>\n");
+    dprintf(stdout_fd, "man         - Show this help message\n");
+    
+    s_exit(0);
+    return NULL;
+}
+
+void* jobs_command(void* arg) {
+    print_all_jobs();
+    s_exit(0);
     return NULL;
 }
 
@@ -420,6 +534,23 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "chmod") == 0) {
         return chmod(ctx);
+    if (strcmp(ctx[0], "busy") == 0) {
+        return busy(ctx, ctx[1]);
+    }
+    if (strcmp(ctx[0], "sleep") == 0) {
+        return sleep_command(ctx, ctx[1]);
+    }
+    if (strcmp(ctx[0], "nice_pid") == 0) {
+        return nice_pid_command(ctx, ctx[1], ctx[2]);
+    }
+    if (strcmp(ctx[0], "man") == 0) {
+        return man(ctx);
+    }
+    if (strcmp(ctx[0], "kill") == 0) {
+        return kill_process_shell(ctx, ctx[1]);
+    }
+    if (strcmp(ctx[0], "jobs") == 0) {
+        return jobs_command(ctx);
     }
     s_exit(0);
     return NULL;

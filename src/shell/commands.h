@@ -12,7 +12,8 @@ void* execute_command(void* arg);
 void* ps(void* arg);
 void* zombify(void* arg);
 void* orphanify(void* arg);
-void* busy(void* arg);
-void* nice_command(void* arg);
+void* busy(void* arg, char* priority);
+void* sleep_command(void* arg, char* time);
+void* nice_command(void* arg, char* pid, char* priority);
 
 #endif // CONTEXT_H

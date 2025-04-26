@@ -48,6 +48,17 @@ void handle_jobs() {
   }
 }
 
+void print_all_jobs() {
+  job_ll_node* node = linked_list_head(jobs);
+  while (node != NULL) {
+    fprintf(stderr, "[%lu] ", node->job->id);
+    print_job_command(node->job);
+    fprintf(stderr, "\n");
+    node = linked_list_next(node);
+  }
+}
+
+
 void handle_fg(struct parsed_command* cmd) {
   LOG_INFO("FOREGROUND");
   char* target_id_str = cmd->commands[0][1];

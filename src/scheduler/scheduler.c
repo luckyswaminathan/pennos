@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h> // Needed for va_list, etc.
 #include "scheduler.h"
 #include "logger.h"
 #include "../../lib/exiting_alloc.h"
@@ -15,6 +16,7 @@ scheduler_t *scheduler_state = NULL;
 static const int centisecond = 10000;
 static int quantum = 0;
 static sigset_t suspend_set;
+static bool extra_logging_enabled = false; // Added global toggle
 
 /**
  * @brief The process to run at each quantum. Randomly disperesed array of 0s, 1s, and 2s (priority levels).
@@ -24,6 +26,23 @@ static sigset_t suspend_set;
  *
  */
 static int process_to_run[19] = {0, 0, 1, 0, 0, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 2, 1, 0, 2};
+
+/**
+ * @brief General kernel logger function.
+ * Prints messages to stderr only if extra_logging_enabled is true.
+ * Uses printf-style formatting.
+ * @param format The format string.
+ * @param ... Variable arguments for the format string.
+ */
+void k_log(const char *format, ...) {
+    if (!extra_logging_enabled) {
+        return;
+    }
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
 /**
  * @brief PCB destructor function for linked lists
@@ -169,7 +188,7 @@ void k_add_to_ready_queue(pcb_t *process)
     }
     
     // Use the linked list macro to add to the tail of the correct priority queue
-    fprintf(stderr, "Adding process PID %d to priority queue %d\n", process->pid, process->priority);
+    k_log("Adding process PID %d to priority queue %d\n", process->pid, process->priority);
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
 }
@@ -214,13 +233,15 @@ int _select_next_queue(scheduler_t *scheduler_state)
 void _update_blocked_processes()
 {
     pcb_t *process = scheduler_state->blocked_queue.head;
+    
     while (process != NULL)
     {
         // Case 1: Process was sleeping and has now woken up
         if (process->sleep_time > 0)
         {
-            process->sleep_time--;
-            if (process->sleep_time == 0)
+           
+            process->sleep_time -= 0.1;
+            if (process->sleep_time <= 0)
             {
                 unblock_process(process);
             }
@@ -266,7 +287,6 @@ void _run_next_process()
     //k_get_all_process_info();
     _update_blocked_processes();
     //printf("after updating blocked processes\n");
-    //k_get_all_process_info();
 
 
     // Select the next queue to run a process from
@@ -320,10 +340,10 @@ void _run_next_process()
         
         pcb_t* blocked_ptr = linked_list_head(&scheduler_state->blocked_queue);
         while (blocked_ptr != NULL) {
-            fprintf(stderr, "BLOCKED PTR PID %d\n", blocked_ptr->pid);
+            k_log("BLOCKED PTR PID %d\n", blocked_ptr->pid);
             if (blocked_ptr->waited_child == process->pid) {
                 //TODO: might need to refactor logic
-                fprintf(stderr, "unblocking process IN RUN NEXT PROCESS %d\n", blocked_ptr->pid);
+                k_log("unblocking process IN RUN NEXT PROCESS %d\n", blocked_ptr->pid);
                 unblock_process(blocked_ptr);
                 k_get_all_process_info();
                 break;
@@ -336,7 +356,7 @@ void _run_next_process()
 
         child_process_t* children_ptr = linked_list_head(process->children);
         while (children_ptr != NULL) {
-            children_ptr->process->ppid = 0;
+            children_ptr->process->ppid = 1;
             child_process_t* next_children_ptr = children_ptr->next;
             linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
             children_ptr = next_children_ptr;
@@ -475,15 +495,23 @@ static bool k_remove_from_active_queue(pcb_t *process) {
 void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
-    printf("Blocking process with pid %d\n", process->pid);
+    k_log("Blocking process with pid %d\n", process->pid);
+    fprintf(stderr, "Blocking process with pid %d\n", process->pid);
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
     process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
-    printf("Post push tail\n");
+    k_log("Post push tail\n");
+    fprintf(stderr, "Post push tail\n");
+
     //k_get_all_process_info();
+    pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
+    while (curr != NULL) {
+        fprintf(stderr, "Blocked process PID %d\n", curr->pid);
+        curr = curr->next;
+    }
 }
 
 /**
@@ -697,16 +725,16 @@ pcb_t *k_get_process_by_pid(pid_t pid)
  * @param wstatus The status of the child process
  */
 void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, int *wstatus) {
-    printf("Blocking and waiting for child with pid %d\n", child->pid);
+    k_log("Blocking and waiting for child with pid %d\n", child->pid);
 
     // this is unintuitive but works for blocking and waiting
     block_process(scheduler_state->current_process);
     spthread_suspend_self();
-    printf("Blocked\n");
-    printf("Status %d\n", *wstatus);
+    k_log("Blocked\n");
+    k_log("Status %d\n", *wstatus);
 
     // Wait for the child to finish
-    printf("Child finished\n");
+    k_log("Child finished\n");
     k_get_all_process_info();
 
     // Remove the child from its current queue
@@ -729,6 +757,16 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     // unblock_process(scheduler_state->current_process);
 }
 
+/**
+ * @brief Remove a child from the children list of a process
+ * 
+ * This function searches through the children list of a process and removes
+ * a child process from it. It compares the process pointer of each child in
+ * the list to find the child process to remove.
+ * 
+ * @param process The process to remove the child from
+ * @param child The child process to remove
+ */
 void remove_from_children_list(pcb_t *process, pcb_t *child) {
     for (child_process_t* child_process = process->children->head; child_process != NULL; child_process = child_process->next) {
         if (child_process->process == child) {
@@ -798,11 +836,11 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // After unblocking, recursively call waitpid to find and reap the zombie
         return k_waitpid(-1, wstatus, false);
     } else {
-        printf("Waiting for specific child with pid %d\n", pid);
+        k_log("Waiting for specific child with pid %d\n", pid);
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
-        printf("Child found with pid %d\n", child->pid);
+        k_log("Child found with pid %d\n", child->pid);
         
         if (child == NULL) {
             return -1; // No such process
@@ -834,10 +872,10 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         
         // Need to wait for specific child to terminate
 
-        printf("current process pid: %d\n", scheduler_state->current_process->pid);
-        printf("waiting for %lu for %s\n", child->thread->thread, child->command);
+        k_log("current process pid: %d\n", scheduler_state->current_process->pid);
+        k_log("waiting for %lu for %s\n", child->thread->thread, child->command);
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
-        printf("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
+        k_log("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
         k_get_all_process_info();
         
         // After child terminates, it should be a zombie
@@ -868,20 +906,14 @@ void k_proc_exit(pcb_t *process, int exit_status) {
      // 1. Set state and exit status
      process->state = PROCESS_ZOMBIED;
      process->exit_status = exit_status;
+   
 
      // 2. Remove from any active queue it might be in (ready/blocked/stopped/current)
      // If it's the current process, the scheduler loop needs to handle not running it again.
-     if (scheduler_state->current_process == process) {
-         // Mark it so the scheduler loop knows not to requeue it
-         // Maybe set scheduler_state->current_process = NULL; here? Or handle in scheduler loop.
-         // Let's assume scheduler loop checks state after sigsuspend.
-     } else {
-        fprintf(stderr, "SHOULD NOT HAVE A NON CURRENT PROCESS");
-     }
      k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
-     fprintf(stderr, "all processes after zombie push, %d\n", process->pid);
+     k_log("all processes after zombie push, %d\n", process->pid);
      k_get_all_process_info();
 
 
@@ -909,7 +941,11 @@ void k_proc_exit(pcb_t *process, int exit_status) {
     // Using spthread_exit is appropriate here if available and intended.
     // Alternatively, an infinite loop prevents return, relying on the scheduler 
     // to never schedule this zombie process again.
-    spthread_exit(NULL); // Use spthread library's exit mechanism
+
+    // todo - when we call s_kill, the process is a bit weird
+    if (process->pid == scheduler_state->current_process->pid) {
+        spthread_exit(NULL); // Use spthread library's exit mechanism
+    }
 }
 
 /**
@@ -938,6 +974,7 @@ void k_yield(void) {
     // switching logic.
     // Here, we mimic yielding by suspending until the next SIGALRM, 
     // which triggers the scheduler loop externally.
+    fprintf(stderr, "current process id: %d\n", scheduler_state->current_process->pid);
     extern sigset_t suspend_set; // Defined static in scheduler.c
     sigsuspend(&suspend_set);
     // Execution resumes here after SIGALRM is handled
@@ -1019,6 +1056,7 @@ bool k_set_priority(pcb_t* process, int priority) {
 
     int old_priority = process->priority;
     process->priority = (priority_t)priority;
+    fprintf(stderr, "Changed priority of process %d from %d to %d\n", process->pid, old_priority, priority);
 
     // Only move queues if the process is currently in a ready queue
     if (process->state == PROCESS_RUNNING && old_priority != priority) {
@@ -1027,6 +1065,7 @@ bool k_set_priority(pcb_t* process, int priority) {
         pcb_t* current = scheduler_state->ready_queues[old_priority].head;
         while (current != NULL) {
             if (current == process) {
+                fprintf(stderr, "Removing process %d from ready queue %d\n", process->pid, old_priority);
                 if (current->prev) current->prev->next = current->next;
                 else scheduler_state->ready_queues[old_priority].head = current->next;
                 if (current->next) current->next->prev = current->prev;
@@ -1039,6 +1078,7 @@ bool k_set_priority(pcb_t* process, int priority) {
         }
 
         if (removed) {
+            fprintf(stderr, "Adding process %d to ready queue %d\n", process->pid, priority);
             // Add to the new ready queue
             k_add_to_ready_queue(process); 
         } else {
@@ -1065,37 +1105,94 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     if (!process || ticks == 0) {
         return false;
     }
-
+    fprintf(stderr, "k_sleep process %d\n", process->pid);
     process->sleep_time = ticks; 
     // k_block_process handles removing from active queue and adding to blocked queue,
     // and sets state to PROCESS_BLOCKED.
     block_process(process); 
+    //k_proc_exit(process, 0);
     return true;
 }
 
 void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
     while (current != NULL) {
-        printf("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
+        k_log("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
         current = current->next;
     }
 }
 
-// get info for running, blocked, and stopped processes
+/**
+ * @brief Helper function to print processes from a queue in ps format.
+ *
+ * @param queue The queue to iterate over.
+ * @param state_char The character representing the process state ('R', 'B', 'S', 'Z').
+ */
+void k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
+    pcb_t* current = queue->head;
+    while (current != NULL) {
+        // Don't print the currently executing process here, it's handled separately
+        if (current != scheduler_state->current_process) { 
+             // Adjusted format string for alignment, assuming reasonable PID/PPID width
+            k_log("%3d %4d %3d %c    %s\n", 
+                  current->pid, 
+                  current->ppid, 
+                  current->priority, 
+                  state_char, 
+                  current->command ? current->command : "<?>" // Use command name
+            );
+        }
+        current = current->next;
+    }
+}
+
+/**
+ * @brief List all processes on PennOS, displaying PID, PPID, priority, status, 
+ * and command name, similar to `ps`.
+ *
+ * Prints only if extra logging i s enabled via k_toggle_logging().
+ * Status codes: R (Running), B (Blocked), S (Stopped), Z (Zombie).
+ */
 void k_get_all_process_info() {
-    // Cast to the correct type to avoid incompatible pointer types
-    printf("----------\n");
-    printf("priority high\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_HIGH]);
-    printf("priority medium\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_MEDIUM]);
-    printf("priority low\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_LOW]);
-    printf("blocked\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->blocked_queue);
-    printf("stopped\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue);
-    printf("zombie\n");
-    k_get_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue);
-    printf("----------\n");
+    if (!extra_logging_enabled || !scheduler_state) {
+        return;
+    }
+
+    // Print header once
+    k_log("PID PPID PRI STAT CMD\n");
+
+    // Print current running process first (if any)
+    pcb_t *current_proc = scheduler_state->current_process;
+    if (current_proc && current_proc->state != PROCESS_ZOMBIED) { // Don't list as R if exiting
+         k_log("%3d %4d %3d %c    %s\n", 
+                  current_proc->pid, 
+                  current_proc->ppid, 
+                  current_proc->priority, 
+                  'R', // Always 'R' for the current process
+                  current_proc->command ? current_proc->command : "<?>"
+            );
+    }
+
+
+    // Print ready queues (excluding current)
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_HIGH], 'R');
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_MEDIUM], 'R');
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->ready_queues[PRIORITY_LOW], 'R');
+    
+    // Print blocked queue
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->blocked_queue, 'B');
+    
+    // Print stopped queue
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->stopped_queue, 'S');
+    
+    // Print zombie queue
+    k_print_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue, 'Z');
+}
+
+/**
+ * @brief Toggles the extra logging feature on or off.
+ */
+void k_toggle_logging() {
+    extra_logging_enabled = !extra_logging_enabled;
+    printf("Extra logging %s.\n", extra_logging_enabled ? "enabled" : "disabled");
 }

@@ -44,7 +44,6 @@ void execute_job(job* job)
     }
 
     struct command_context* context = exiting_malloc(sizeof(struct command_context));
-    printf("Executing command: %s\n", parsed_command->commands[0][0]);
     context->command = parsed_command->commands[0];
     context->stdin_fd = STDIN_FILENO;
     context->stdout_fd = STDOUT_FILENO;
@@ -68,17 +67,12 @@ void execute_job(job* job)
 
     if (job->status == J_RUNNING_FG) {   
         int status;
-        printf("Waiting for foreground job %ld\n", job->id);
-        //s_get_process_info();
-        printf("waitpid is hanging?");
         s_waitpid(pid, &status, false);
-        printf("finished waitpid");
         
         // TODO: don't love putting this logic here
         // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel
         // status code from the child.
         if (WIFEXITED(status) && WEXITSTATUS(status) == CHILD_STOPPED_EXIT_STATUS) {
-            printf("Child was stopped in execute_command");
             job->status = J_STOPPED;
             remove_foreground_job(job);
             enqueue_job(job);

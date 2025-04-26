@@ -68,6 +68,9 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 int s_kill(pid_t pid, int signal) {
     // Find the target process using the kernel helper
     pcb_t* target = k_get_process_by_pid(pid);
+    fprintf(stderr,"pid: %d\n", pid);
+    fprintf(stderr,"signal: %d\n", signal);
+    fprintf(stderr, "current process pid %d\n", scheduler_state->current_process->pid);
     if (!target) {
         fprintf(stderr, "s_kill: Process PID %d not found.\n", pid);
         return -1; // ESRCH (No such process)
@@ -78,21 +81,29 @@ int s_kill(pid_t pid, int signal) {
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
-            fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
-            k_proc_exit(target, 1); // Using status 1 for killed by signal
+            
+            if (target->pid != 1) {
+                fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
+                k_proc_exit(target, 1); // Using status 1 for killed by signal
+            }
             success = true; // k_proc_exit doesn't return status, assume success if target found
             break;
 
         case P_SIGSTOP:
             // Stop the process
             fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
-            success = k_stop_process(target);
+            if (target->pid != 1) {
+                fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
+                success = k_stop_process(target);
+            }
             break;
 
         case P_SIGCONT:
             // Continue a stopped process
-             fprintf(stdout, "s_kill: Sending SIGCONT to PID %d\n", pid);
-            success = k_continue_process(target);
+            fprintf(stdout, "s_kill: Sending SIGCONT to PID %d\n", pid);
+            if (target->pid != 1) {
+                success = k_continue_process(target);
+            }
             break;
 
         // Add cases for other signals as needed (SIGINT, SIGHUP, etc.)
@@ -178,7 +189,7 @@ void s_sleep(unsigned int ticks) {
     // Call kernel sleep function
     if (k_sleep(current, ticks)) {
         // If kernel successfully put process to sleep, yield the CPU
-        k_yield(); 
+        spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
          fprintf(stderr, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
