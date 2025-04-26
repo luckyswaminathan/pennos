@@ -295,6 +295,39 @@ void* cp(void* arg) {
     return NULL;
 }
 
+void *cat(void *arg) {
+    char** command = (char**)arg;
+
+    const int buf_size = 1024;
+    char buffer[buf_size];
+    int bytes_read;
+    if (command[1] == NULL) {
+        // cat with no arguments reads from stdin and prints to stdout
+        while ((bytes_read = s_read(STDIN_FILENO, buf_size, buffer)) > 0) {
+            s_write(STDOUT_FILENO, buffer, bytes_read);
+        }
+        s_exit(0);
+        return NULL;
+    }
+
+    // otherwise read from each file and print to stdout
+    for (int i = 1; command[i] != NULL; i++) {
+        int fd = s_open(command[i], F_READ);
+        if (fd < 0) {
+            char* error_message = "cat: Error - failed to open file\n";
+            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            s_exit(fd);
+            return NULL;
+        }
+        while ((bytes_read = s_read(fd, buf_size, buffer)) > 0) {
+            s_write(STDOUT_FILENO, buffer, bytes_read);
+        }
+        s_close(fd);
+    }
+    s_exit(0);
+    return NULL;
+}
+
 void* chmod(void* arg) {
     char** command = (char**)arg;
     bool has_two_args = command[1] != NULL && command[2] != NULL && command[3] == NULL;
