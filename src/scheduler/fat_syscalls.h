@@ -1,3 +1,5 @@
+#include "src/pennfat/fat_constants.h"
+
 #define ES_PROCESS_FILE_TABLE_FULL -100
 int s_open(const char *fname, int mode);
 

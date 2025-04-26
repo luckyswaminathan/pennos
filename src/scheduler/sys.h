@@ -9,6 +9,8 @@
 #define P_SIGSTOP 2
 #define P_SIGCONT 3
 
+#define S_SPAWN_INVALID_FD_ERROR -100
+
 /**
  * @brief Create a child process that executes the function `func`.
  * The child will retain some attributes of the parent.

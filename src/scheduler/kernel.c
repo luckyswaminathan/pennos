@@ -1,3 +1,4 @@
+#include "src/scheduler/kernel.h"
 #include "scheduler.h"
 #include "logger.h"
 #include "../../lib/exiting_alloc.h"
@@ -7,7 +8,6 @@
 #include "shell/commands.h"
 #include <stdlib.h> // For malloc/free
 #include <stdio.h> // For debugging
-#include "pennfat/fat_constants.h"
 
 /**
  * @brief Duplicates the argument vector (argv).
@@ -111,16 +111,19 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     for (int i = 0; i < PROCESS_FD_TABLE_SIZE; i++) {
         proc->process_fd_table[i].in_use = false;
     }
-    proc->process_fd_table[0].in_use = true;
-    proc->process_fd_table[0].mode = F_WRITE;
-    proc->process_fd_table[0].global_fd = STDIN_FD;
-    proc->process_fd_table[1].in_use = true;
-    proc->process_fd_table[1].mode = F_READ;
-    proc->process_fd_table[1].global_fd = STDOUT_FD;
-    proc->process_fd_table[2].in_use = true;
-    proc->process_fd_table[2].mode = F_READ;
-    proc->process_fd_table[2].global_fd = STDERR_FD;
-    proc->process_fd_table[2].offset = 0;
+
+    proc->process_fd_table[STDIN_FD].in_use = true;
+    proc->process_fd_table[STDIN_FD].mode = F_WRITE;
+    proc->process_fd_table[STDIN_FD].global_fd = STDIN_FD;
+    proc->process_fd_table[STDIN_FD].offset = 0;
+    proc->process_fd_table[STDOUT_FD].in_use = true;
+    proc->process_fd_table[STDOUT_FD].mode = F_READ;
+    proc->process_fd_table[STDOUT_FD].global_fd = STDOUT_FD;
+    proc->process_fd_table[STDOUT_FD].offset = 0;
+    proc->process_fd_table[STDERR_FD].in_use = true;
+    proc->process_fd_table[STDERR_FD].mode = F_READ;
+    proc->process_fd_table[STDERR_FD].global_fd = STDERR_FD;
+    proc->process_fd_table[STDERR_FD].offset = 0;
 
     // this is the init process
     if (parent == NULL) {
@@ -213,6 +216,12 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     if (parent && parent->children) {
         linked_list_push_tail(parent->children, child_process);
     }
+
+    if (parent != NULL) {
+        // copy the process file descriptor table to the child
+        memcpy(proc->process_fd_table, parent->process_fd_table, sizeof(proc->process_fd_table));
+    }
+
 
     // Add to scheduler ready queue (assuming k_add_to_ready_queue exists and is declared)
     // This function should likely reside in scheduler.c but be declared in kernel.h or scheduler.h (included by kernel.c)
