@@ -5,6 +5,7 @@
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include <stdio.h>
 #include <stdlib.h> // For NULL
 #include <string.h> // For strcmp etc. if needed
 #include <signal.h> // For signal definitions (SIGTERM, SIGSTOP, SIGCONT)

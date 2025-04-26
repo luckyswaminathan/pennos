@@ -741,6 +741,8 @@ int k_proc_exit(pcb_t *process, int exit_status) {
     if (process->pid == scheduler_state->current_process->pid) {
         spthread_exit(NULL); // Use spthread library's exit mechanism
     }
+
+    return 0;
 }
 
 /**
