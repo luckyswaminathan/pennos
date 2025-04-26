@@ -95,7 +95,8 @@ int s_write(int fd, const char *str, int n)
     }
 
     // set the offset in the global fd table
-    if (k_lseek(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].offset, F_SEEK_SET) < 0)
+    int seek_status = k_lseek(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].offset, F_SEEK_SET);
+    if (seek_status != EK_LSEEK_SPECIAL_FD && seek_status < 0) // it's OK if the fd is a special fd
     {
         return ES_SEEK_ERROR;
     }
