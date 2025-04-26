@@ -135,7 +135,7 @@ void s_exit(int status) {
         k_proc_exit(current, status);
     } else {
         // Should not happen from a running process
-        fprintf(stderr, "s_exit Error: Could not get current process!\n");
+        k_fprintf_short(STDERR_FILENO, "s_exit Error: Could not get current process!\n");
     }
 
     
@@ -154,13 +154,13 @@ void s_exit(int status) {
 int s_nice(pid_t pid, int priority) {
     pcb_t* target = k_get_process_by_pid(pid);
     if (!target) {
-        fprintf(stderr, "s_nice: Process PID %d not found.\n", pid);
+        k_fprintf_short(STDERR_FILENO, "s_nice: Process PID %d not found.\n", pid);
         return -1;
     }
 
     // Validate priority (assuming enum values 0, 1, 2)
     if (priority < PRIORITY_HIGH || priority > PRIORITY_LOW) {
-         fprintf(stderr, "s_nice: Invalid priority value %d for PID %d.\n", priority, pid);
+         k_fprintf_short(STDERR_FILENO, "s_nice: Invalid priority value %d for PID %d.\n", priority, pid);
          return -1;
     }
 
@@ -168,7 +168,7 @@ int s_nice(pid_t pid, int priority) {
         return 0;
     } else {
         // k_set_priority might fail if internal state is inconsistent
-        fprintf(stderr, "s_nice: Kernel failed to set priority for PID %d.\n", pid);
+        k_fprintf_short(STDERR_FILENO, "s_nice: Kernel failed to set priority for PID %d.\n", pid);
         return -1;
     }
 }
@@ -187,7 +187,7 @@ void s_sleep(unsigned int ticks) {
 
     pcb_t* current = k_get_current_process();
     if (!current) {
-        fprintf(stderr, "s_sleep Error: Could not get current process!\n");
+        k_fprintf_short(STDERR_FILENO, "s_sleep Error: Could not get current process!\n");
         return; // Cannot sleep if not a process
     }
 
@@ -197,7 +197,7 @@ void s_sleep(unsigned int ticks) {
         spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
-         fprintf(stderr, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
+         k_fprintf_short(STDERR_FILENO, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
          // Kernel function failed, maybe log error? Proceed without yielding.
     }
 }

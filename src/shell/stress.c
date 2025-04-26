@@ -17,7 +17,6 @@
 #include <string.h> // for memcpy and strlen
 #include <time.h>   // for time()
 #include "sys.h"
-#include "commands.h"
 /******************************************************************************
  *                                                                            *
  * Replace syscalls.h with your own header file(s) for s_spawn and s_waitpid. *
@@ -29,6 +28,7 @@
 
 // You can tweak the function signature to make it work.
 static void* nap(void* arg) {
+  fprintf(stderr, "Napping\n");
   s_sleep(1);  // sleep for 1 tick
   s_exit(0);
   return NULL;
@@ -53,7 +53,7 @@ static void* spawn(bool nohang) {
 
     // you may need to change the args to
     // s_spawn for this to work.
-    const int id = s_spawn(nap, argv, STDIN_FILENO, STDOUT_FILENO);
+    const int id = s_spawn(nap, (char*[]) {name, NULL}, STDIN_FILENO, STDOUT_FILENO);
 
     if (i == 0)
       pid = id;
@@ -70,6 +70,7 @@ static void* spawn(bool nohang) {
   // Wait on all children.
   while (1) {
     int wstatus;
+    fprintf(stderr, "before waitpid\n");
     const int cpid = s_waitpid(-1, &wstatus, nohang);
 
     if (cpid < 0)  // no more waitable children (if block-waiting) or error

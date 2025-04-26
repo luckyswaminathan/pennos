@@ -96,7 +96,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     // Initialize core fields
     proc->pid = scheduler_state->process_count;
-    proc->ppid = parent ? parent->pid : 0;
+    proc->ppid = parent ? parent->pid : 1;
     proc->pgid = proc->pid; // New process starts a new process group
     proc->state = PROCESS_RUNNING; // Initial state
     proc->priority = parent == NULL ? PRIORITY_HIGH : PRIORITY_MEDIUM; // Default priority
@@ -235,7 +235,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
  * @brief Cleans up resources associated with a terminated or finished process.
  *
  * This function performs the necessary cleanup steps when a process is destroyed:
- * 1. Reparents any orphaned children of the process to the init process (PID 0).
+ * 1. Reparents any orphaned children of the process to the init process (PID 1).
  *    It assumes `scheduler_state` and `scheduler_state->init_process` are accessible.
  * 2. Removes the process from its parent's list of children.
  * 3. Frees allocated resources within the PCB, including the thread structure (if any),
