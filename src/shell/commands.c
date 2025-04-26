@@ -99,7 +99,7 @@ void* ps(void* arg) {
 
 void* zombie_child(void* arg) {
     // Child process exits normally
-    LOG_INFO("Child process running, will exit soon");
+    // LOG_INFO("Child process running, will exit soon");
     s_exit(0);
     return NULL;
 }
@@ -108,9 +108,8 @@ void* zombie_child(void* arg) {
 void* zombify(void* arg) {
     
     // Spawn the child process
-    pid_t child = s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
     s_get_process_info();
-    LOG_INFO("Spawned child process with PID %d", child);
     while(1) {  
     };
     s_exit(0);

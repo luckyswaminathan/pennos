@@ -203,6 +203,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     }
 
     k_log("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
+    log_create(proc->pid, proc->priority, proc->command);
 
     child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
     if (!child_process) {

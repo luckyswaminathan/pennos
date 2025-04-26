@@ -7,12 +7,12 @@
 
 static FILE* log_file = NULL;
 static unsigned long current_ticks = 0;
-static const char* level_strings[] = {
-    "DEBUG",
-    "INFO",
-    "WARN",
-    "ERROR"
-};
+// static const char* level_strings[] = {
+//     "DEBUG",
+//     "INFO",
+//     "WARN",
+//     "ERROR"
+// };
 
 void init_logger(const char* file_path) {
     if (log_file && log_file != stderr) {
@@ -86,8 +86,8 @@ void log_waited(pid_t pid, int nice_value, const char* process_name) {
     if (!log_file) {
         log_file = stderr;
     }
-    fprintf(log_file, "[%lu]\tWAITED\t%d\t%d\t%s\n", 
-            current_ticks, pid, nice_value, process_name);
+    // fprintf(log_file, "[%lu]\tWAITED\t%d\t%d\t%s\n", 
+    //         current_ticks, pid, nice_value, process_name);
 }
 
 void log_nice(pid_t pid, int old_nice, int new_nice, const char* process_name) {
@@ -153,8 +153,8 @@ void log_message(log_level_t level, const char* format, ...) {
     }
     
     // Use INTERNAL as the operation for legacy log messages
-    fprintf(log_file, "[%lu]\tINTERNAL\t[%s] ", 
-            current_ticks, level_strings[level]);
+    // fprintf(log_file, "[%lu]\tINTERNAL\t[%s] ", 
+    //         current_ticks, level_strings[level]);
     
     va_list args;
     va_start(args, format);

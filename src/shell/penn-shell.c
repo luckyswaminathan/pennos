@@ -49,7 +49,6 @@ static void* shell_loop(void* arg) {
             exit(1);
         }
 
-        LOG_INFO("Read command");
         if (parsed_command == NULL) {
             continue;  // Empty command, try again
         }
@@ -58,7 +57,6 @@ static void* shell_loop(void* arg) {
             continue; // do nothing and try reading again
         }
         printf("command: %s\n", parsed_command->commands[0][0]);
-        LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
         printf("is_jobs_command: %d\n", is_jobs_command);
         if (is_jobs_command) {
@@ -87,7 +85,6 @@ static void* shell_loop(void* arg) {
             handle_jobs();
 
             execute_job(job_ptr); 
-            LOG_INFO("execute_job returned");
             // Only destroy the job if it wasn't stopped
             if (job_ptr->status != J_STOPPED) {
                 remove_foreground_job(job_ptr);
