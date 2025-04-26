@@ -143,12 +143,12 @@ void* orphanify(void* arg) {
  */
 void* busy(void* arg, char* priority) {
     // Get the command context
-    struct command_context* ctx = (struct command_context*)arg;
+    //char** command = (char**)arg;
     int priority_level = atoi(priority);
 
     // Validate the priority level
     if (priority_level < 0 || priority_level > 2) {
-        dprintf(ctx->stdout_fd, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
         s_exit(1);
         return NULL;
     }
@@ -168,11 +168,11 @@ void* busy(void* arg, char* priority) {
 
 // Implementation of nice command to use the system s_nice function
 void* nice_pid_command(void* arg, char* pid, char* priority) {
-    struct command_context* ctx = (struct command_context*)arg;
-    int stdout_fd = ctx->stdout_fd;
+    //char** command = (char**)arg;
+    //int stdout_fd = command[1];
     
     if (pid == NULL || priority == NULL) {
-        dprintf(stdout_fd, "Usage: nice <pid> <priority_level>\n");
+        fprintf(stderr, "Usage: nice <pid> <priority_level>\n");
         return NULL;
     }
     
@@ -182,7 +182,7 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
     
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
-        dprintf(stdout_fd, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
         return NULL;
     }
     
@@ -190,16 +190,60 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
     int result = s_nice(target_pid, priority_level);
     
     if (result == 0) {
-        dprintf(stdout_fd, "Changed priority of process %d to %d\n", target_pid, priority_level);
+        fprintf(stderr, "Changed priority of process %d to %d\n", target_pid, priority_level);
     } else {
-        dprintf(stdout_fd, "Failed to change priority of process %d\n", target_pid);
+        fprintf(stderr, "Failed to change priority of process %d\n", target_pid);
     }
     s_exit(0);
     return NULL;
 }
 
+void* nice_command(void* arg, char* priority) {
+    char** command = (char**)arg;
+    
+    if (priority == NULL || command[2] == NULL) {
+        fprintf(stderr, "Usage: nice <priority_level> <command> [args...]\n");
+        s_exit(1);
+        return NULL;
+    }
+    
+    // Parse priority level
+    int priority_level = atoi(priority);
+    
+    // Validate priority level
+    if (priority_level < 0 || priority_level > 2) {
+        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_exit(1);
+        return NULL;
+    }
+    
+    // Create new args array starting from the command (command[2])
+    char** new_args = &command[2];
+    
+    // Spawn the process with the command and its arguments
+    pid_t child_pid = s_spawn(execute_command, new_args, STDIN_FILENO, STDOUT_FILENO);
+    if (child_pid < 0) {
+        fprintf(stderr, "Failed to spawn process\n");
+        s_exit(1);
+        return NULL;
+    }
+    
+    // Set the priority of the spawned process
+    int nice_result = s_nice(child_pid, priority_level);
+    if (nice_result != 0) {
+        fprintf(stderr, "Failed to set priority of process %d\n", child_pid);
+        s_exit(1);
+        return NULL;
+    }
+    int wstatus;
+    s_waitpid(child_pid, &wstatus, false);
+    
+    fprintf(stderr, "Started process %d with priority %d\n", child_pid, priority_level);
+    s_exit(0);
+    return NULL;
+}
+
 void* sleep_command(void* arg, char* time) {
-    //struct command_context* ctx = (struct command_context*)arg;
     fprintf(stderr, "sleep command called\n");
     if (time == NULL) {
         fprintf(stderr, "Error: sleep command requires a number of ticks\n");
@@ -260,20 +304,20 @@ void* kill_process_shell(void* arg, char* first_term) {
 
 
 void* man(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    int stdout_fd = ctx->stdout_fd;
-    
-    dprintf(stdout_fd, "Available commands:\n\n");
-    dprintf(stdout_fd, "ps          - List all running processes and their states\n");
-    dprintf(stdout_fd, "zombify     - Create a zombie process\n");
-    dprintf(stdout_fd, "orphanify   - Create an orphan process\n");
-    dprintf(stdout_fd, "busy        - Start a CPU-intensive process\n");
-    dprintf(stdout_fd, "sleep <n>   - Sleep for n ticks\n");
-    dprintf(stdout_fd, "nice_pid <pid> <priority>\n            - Change priority of process <pid> to <priority> (0-2)\n");
-    dprintf(stdout_fd, "kill -term <pid> - Terminate process <pid>\n");
-    dprintf(stdout_fd, "kill -stop <pid> - Stop process <pid>\n");
-    dprintf(stdout_fd, "kill -cont <pid> - Continue process <pid>\n");
-    dprintf(stdout_fd, "man         - Show this help message\n");
+    //char** command = (char**)arg;
+ 
+    fprintf(stderr, "Available commands:\n\n");
+    fprintf(stderr, "ps          - List all running processes and their states\n");
+    fprintf(stderr, "zombify     - Create a zombie process\n");
+    fprintf(stderr, "orphanify   - Create an orphan process\n");
+    fprintf(stderr, "busy        - Start a CPU-intensive process\n");
+    fprintf(stderr, "sleep <n>   - Sleep for n ticks\n");
+    fprintf(stderr, "nice_pid <pid> <priority>            - Change priority of process <pid> to <priority> (0-2)\n");
+    fprintf(stderr, "nice <priority> <command>   - spawns a process <command> with priority <priority>\n");
+    fprintf(stderr, "kill -term <pid> - Terminate process <pid>\n");
+    fprintf(stderr, "kill -stop <pid> - Stop process <pid>\n");
+    fprintf(stderr, "kill -cont <pid> - Continue process <pid>\n");
+    fprintf(stderr, "man         - Show this help message\n");
     
     s_exit(0);
     return NULL;
@@ -288,8 +332,8 @@ void* jobs_command(void* arg) {
 // TODO: make sure we s_exit() in every single case for all commands
 
 void* ls(void* arg) {
-    struct command_context* ctx = (struct command_context*)arg;
-    s_ls(ctx->command[1]); // will be NULL if no argument is provided
+    char** command = (char**)arg;
+    s_ls(command[1]); // will be NULL if no argument is provided
     s_exit(0);
     return NULL;
 }
@@ -569,6 +613,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "nice_pid") == 0) {
         return nice_pid_command(ctx, ctx[1], ctx[2]);
+    }
+    if (strcmp(ctx[0], "nice") == 0) {
+        return nice_command(ctx, ctx[1]);
     }
     if (strcmp(ctx[0], "man") == 0) {
         return man(ctx);
