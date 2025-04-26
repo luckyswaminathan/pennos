@@ -43,15 +43,33 @@ void execute_job(job* job)
         return;
     }
 
-    struct command_context* context = exiting_malloc(sizeof(struct command_context));
-    context->command = parsed_command->commands[0];
-    context->stdin_fd = STDIN_FILENO;
-    context->stdout_fd = STDOUT_FILENO;
+    char** argv = parsed_command->commands[0];
+    int stdin_fd;
+    if (parsed_command->stdin_file != NULL) {
+        stdin_fd = s_open(parsed_command->stdin_file, F_READ);
+        if (stdin_fd < 0) {
+            perror("Failed to open stdin file");
+            return;
+        }
+    } else {
+        stdin_fd = STDIN_FILENO;
+    }
+
+    int stdout_fd;
+    if (parsed_command->stdout_file != NULL) {
+        stdout_fd = s_open(parsed_command->stdout_file, F_WRITE);
+        if (stdout_fd < 0) {
+            perror("Failed to open stdout file");
+            return;
+        }
+    } else {
+        stdout_fd = STDOUT_FILENO;
+    }
 
     pid_t pid = s_spawn((void* (*)(void*))execute_command,
-                          context->command,  // argv
-                          context->stdin_fd, // fd0
-                          context->stdout_fd // fd1
+                          argv,
+                          stdin_fd, // fd0
+                          stdout_fd // fd1
                          );
     if (pid == -1)
     {
@@ -83,5 +101,13 @@ void execute_job(job* job)
     } else if (job->status == J_RUNNING_BG) {
         printf("job %lu is running in the background\n", job->id);
         return;
+    }
+    
+    // close the file descriptors
+    if (parsed_command->stdin_file != NULL) {
+        s_close(stdin_fd);
+    }
+    if (parsed_command->stdout_file != NULL) {
+        s_close(stdout_fd);
     }
 }

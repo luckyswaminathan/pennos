@@ -118,8 +118,6 @@ void init_scheduler() {
     init->ppid = 0;
     init->pid = scheduler_state->process_count++;
     init->pgid = init->pid;
-    init->fd0 = -1;
-    init->fd1 = -1;
     init->is_leader = true;
     init->sleep_time = 0;
     init->priority = PRIORITY_HIGH;

@@ -1,3 +1,4 @@
+#include "src/scheduler/kernel.h"
 #include "scheduler.h"
 #include "logger.h"
 #include "../../lib/exiting_alloc.h"
@@ -78,11 +79,9 @@ static char** duplicate_argv(char *const argv[]) {
  *               to be an initial process (like init) with PPID 0.
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel copies this.
- * @param fd0 Input file descriptor.
- * @param fd1 Output file descriptor.
  * @return pid_t The PID of the newly created process, or -1 if any allocation or thread creation fails.
  */
-pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], int fd0, int fd1) {
+pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     if (parent == NULL && scheduler_state->init_process != NULL) {
         perror("k_proc_create: INIT process already exists");
@@ -109,6 +108,22 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     proc->prev = NULL;
     proc->next = NULL;
     proc->waited_child = -2;
+    for (int i = 0; i < PROCESS_FD_TABLE_SIZE; i++) {
+        proc->process_fd_table[i].in_use = false;
+    }
+
+    proc->process_fd_table[STDIN_FD].in_use = true;
+    proc->process_fd_table[STDIN_FD].mode = F_WRITE;
+    proc->process_fd_table[STDIN_FD].global_fd = STDIN_FD;
+    proc->process_fd_table[STDIN_FD].offset = 0;
+    proc->process_fd_table[STDOUT_FD].in_use = true;
+    proc->process_fd_table[STDOUT_FD].mode = F_READ;
+    proc->process_fd_table[STDOUT_FD].global_fd = STDOUT_FD;
+    proc->process_fd_table[STDOUT_FD].offset = 0;
+    proc->process_fd_table[STDERR_FD].in_use = true;
+    proc->process_fd_table[STDERR_FD].mode = F_READ;
+    proc->process_fd_table[STDERR_FD].global_fd = STDERR_FD;
+    proc->process_fd_table[STDERR_FD].offset = 0;
 
     // this is the init process
     if (parent == NULL) {
@@ -129,8 +144,6 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
 
     // Set execution context and I/O
     proc->func = func;
-    proc->fd0 = fd0;
-    proc->fd1 = fd1;
 
     // Duplicate argv and set command
     proc->argv = duplicate_argv(argv);
@@ -203,6 +216,12 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], in
     if (parent && parent->children) {
         linked_list_push_tail(parent->children, child_process);
     }
+
+    if (parent != NULL) {
+        // copy the process file descriptor table to the child
+        memcpy(proc->process_fd_table, parent->process_fd_table, sizeof(proc->process_fd_table));
+    }
+
 
     // Add to scheduler ready queue (assuming k_add_to_ready_queue exists and is declared)
     // This function should likely reside in scheduler.c but be declared in kernel.h or scheduler.h (included by kernel.c)

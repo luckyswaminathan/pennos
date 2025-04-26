@@ -568,6 +568,8 @@ bool is_valid_filename(const char *fname)
     return true;
 }
 
+// TODO: these functions are extremely non-reentrant
+
 int k_open(const char *fname, int mode)
 {
     if (!is_mounted())
@@ -595,15 +597,6 @@ int k_open(const char *fname, int mode)
         if (fd_entry->write_locked && (mode == F_WRITE || mode == F_APPEND))
         {
             return EK_OPEN_ALREADY_WRITE_LOCKED;
-        }
-
-        uint8_t perm = fd_entry->ptr_to_dir_entry->perm;
-        if (
-            perm == P_NO_FILE_PERMISSION ||
-            (perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ) || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
-            ((perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND)))
-        {
-            return EK_OPEN_WRONG_PERMISSIONS;
         }
     }
     else
@@ -666,13 +659,26 @@ int k_open(const char *fname, int mode)
         }
         // create an entry in the global file table
         global_fd_table[fd_idx] = (global_fd_entry){
-            .ref_count = 1,
+            .ref_count = 0,
             .dir_entry_block_num = dir_entry_block_num,
             .dir_entry_idx = dir_entry_idx,
             .ptr_to_dir_entry = ptr_to_dir_entry,
             .write_locked = mode, // 0 for read, 1 for write, 2 for append
             .offset = 0};
     }
+
+    uint8_t perm = global_fd_table[fd_idx].ptr_to_dir_entry->perm;
+    if (
+        perm == P_NO_FILE_PERMISSION ||
+        (perm == P_WRITE_ONLY_FILE_PERMISSION && mode == F_READ) || // NOTE: F_WRITE also allows reading, but we only gate this on the f_write function
+        ((perm == P_READ_ONLY_FILE_PERMISSION || perm == P_READ_AND_EXECUTABLE_FILE_PERMISSION) && (mode == F_WRITE || mode == F_APPEND)))
+    {
+        return EK_OPEN_WRONG_PERMISSIONS;
+    }
+
+    // Only increment the ref count here since we know that the file exists and has the right permissions
+    // at this point
+    global_fd_table[fd_idx].ref_count += 1; // increment the ref count
 
     // case: we need to truncate the file because we are opening it for writing
     if (mode == F_WRITE && global_fd_table[fd_idx].ptr_to_dir_entry->size > 0)
@@ -1271,9 +1277,9 @@ int ls_dir_entry(directory_entry *ptr_to_dir_entry)
     // construct the permission string
     char perm_str[5];
     perm_str[0] = (ptr_to_dir_entry->type == 2) ? 'd' : '-';
-    perm_str[1] = (ptr_to_dir_entry->perm & 0b100) ? 'r' : '-';
-    perm_str[2] = (ptr_to_dir_entry->perm & 0b010) ? 'w' : '-';
-    perm_str[3] = (ptr_to_dir_entry->perm & 0b001) ? 'x' : '-';
+    perm_str[1] = (ptr_to_dir_entry->perm & 4) ? 'r' : '-'; // 0b100 = 4
+    perm_str[2] = (ptr_to_dir_entry->perm & 2) ? 'w' : '-'; // 0b010 = 2
+    perm_str[3] = (ptr_to_dir_entry->perm & 1) ? 'x' : '-'; // 0b001 = 1
     perm_str[4] = '\0';
 
     n_bytes_written = sprintf(buf + n_bytes_written, " %s", perm_str);
@@ -1373,7 +1379,7 @@ cleanup:
     return status;
 }
 
-int k_chmod(const char *fname, uint8_t perm)
+int k_chmod(const char *fname, uint8_t perm, int mode)
 {
     if (!is_mounted())
     {
@@ -1400,7 +1406,15 @@ int k_chmod(const char *fname, uint8_t perm)
         return EK_CHMOD_WRONG_PERMISSIONS;
     }
 
-    dir_entry.perm = perm;
+    if (mode == F_CHMOD_SET) {
+        dir_entry.perm = perm;
+    } else if (mode == F_CHMOD_ADD) {
+        dir_entry.perm |= perm;
+    } else if (mode == F_CHMOD_REMOVE) {
+        dir_entry.perm &= ~perm;
+    } else {
+        return EK_CHMOD_INVALID_MODE;
+    }
     if (write_root_dir_entry(&dir_entry, dir_entry_block_num, dir_entry_idx) != 0)
     {
         return EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED;
@@ -1428,6 +1442,7 @@ int k_mv(const char *src, const char *dest)
         return EK_MV_UNLINK_FAILED;
     }
 
+    // TODO: do we need read perms to mv?
     int src_fd = k_open(src, F_READ); // we only need to check read permissions here
                                       // since the actual contents will not change and
                                       // so we don't need to make sure there are no simultaneous
@@ -1457,4 +1472,39 @@ cleanup:
         status = EK_MV_CLOSE_FAILED;
     }
     return status;
+}
+
+int k_setmode(int fd, int mode)
+{
+    if (fd >= GLOBAL_FD_TABLE_SIZE)
+    {
+        return EK_SETMODE_FD_OUT_OF_RANGE;
+    }
+
+    if (global_fd_table[fd].ref_count <= 0)
+    {
+        return EK_SETMODE_FD_NOT_IN_USE;
+    }
+
+    if (mode != F_READ && mode != F_WRITE && mode != F_APPEND)
+    {
+        return EK_SETMODE_BAD_MODE;
+    }
+
+    global_fd_entry *fd_entry = &global_fd_table[fd];
+    fd_entry->write_locked = mode;
+
+    return 0;
+}
+
+int k_getmode(int fd) {
+    if (fd >= GLOBAL_FD_TABLE_SIZE) {
+        return EK_GETMODE_FD_OUT_OF_RANGE;
+    }
+    
+    if (global_fd_table[fd].ref_count <= 0) {
+        return EK_GETMODE_FD_NOT_IN_USE;
+    }
+
+    return global_fd_table[fd].write_locked;
 }

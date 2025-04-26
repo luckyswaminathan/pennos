@@ -1,3 +1,4 @@
+#include "src/scheduler/sys.h"
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
@@ -30,12 +31,29 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
 
     // Directly call the kernel function to create the process.
     // k_proc_create now handles PCB setup, thread creation, and scheduling.
-    pid_t new_pid = k_proc_create(parent, func, argv, fd0, fd1);
+    pid_t new_pid = k_proc_create(parent, func, argv);
 
     // k_proc_create returns -1 on error, so we can return that directly.
     if (new_pid < 0) {
         // Optionally log the error at the syscall level if desired
         fprintf(stderr, "s_spawn: Failed to create process.\n");
+    }
+    
+    if (parent != NULL) { // TODO: ideally we should handle this more gracefully so we don't have duplicate checks in k_proc_create and s_spawn
+        if (fd0 < 0 || fd0 >= PROCESS_FD_TABLE_SIZE || fd1 < 0 || fd1 >= PROCESS_FD_TABLE_SIZE) {
+            return S_SPAWN_INVALID_FD_ERROR;
+        }
+        process_fd_entry stdin_fd_entry = parent->process_fd_table[fd0];
+        process_fd_entry stdout_fd_entry = parent->process_fd_table[fd1];
+        if (stdin_fd_entry.in_use == false || stdout_fd_entry.in_use == false) {
+            return S_SPAWN_INVALID_FD_ERROR;
+        }
+
+        // TODO: is this the right behavior? or is the intended behavior that the child process should inherit only the
+        // *global* file descriptor that fd0 and fd1 (process level fds) point to?
+        // The current implementation means that the child process will also inherit the mode and offset of the parent process
+        k_get_process_by_pid(new_pid)->process_fd_table[STDIN_FD] = stdin_fd_entry;
+        k_get_process_by_pid(new_pid)->process_fd_table[STDOUT_FD] = stdout_fd_entry; 
     }
 
     return new_pid;

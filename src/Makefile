@@ -1,10 +1,10 @@
 CC = clang
 CFLAGS = -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -Wno-language-extension-token --std=gnu2x
-CPPFLAGS = -DNDEBUG -I. -I./shell -I./scheduler
+CPPFLAGS = -DNDEBUG -I. -I.. -I./shell -I./scheduler
 
 # Scheduler files
-SCHED_SRCS = scheduler/scheduler.c scheduler/spthread.c scheduler/logger.c ../lib/exiting_alloc.c scheduler/kernel.c scheduler/sys.c
-SCHED_HDRS = scheduler/scheduler.h scheduler/spthread.h scheduler/logger.h ../lib/exiting_alloc.h scheduler/kernel.h ../lib/linked_list.h scheduler/sys.h
+SCHED_SRCS = scheduler/scheduler.c scheduler/spthread.c scheduler/logger.c ../lib/exiting_alloc.c scheduler/kernel.c scheduler/fat_syscalls.c pennfat/fat.c pennfat/fat_utils.c scheduler/sys.c 
+SCHED_HDRS = scheduler/scheduler.h scheduler/spthread.h scheduler/logger.h ../lib/exiting_alloc.h scheduler/kernel.h ../lib/linked_list.h scheduler/sys.h scheduler/fat_syscalls.h pennfat/fat.h pennfat/fat_utils.h pennfat/fat_constants.h
 SCHED_OBJS = $(SCHED_SRCS:.c=.o)
 
 # Shell files

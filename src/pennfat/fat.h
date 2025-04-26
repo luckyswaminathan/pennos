@@ -1,7 +1,11 @@
+#ifndef PENNFAT_FAT_H
+#define PENNFAT_FAT_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <time.h>
+#include "src/pennfat/fat_constants.h"
 
 #define EFS_NOT_MOUNTED 99
 
@@ -14,10 +18,6 @@
 
 #define EUNMOUNT_MUNMAP_FAILED 1
 #define EUNMOUNT_CLOSE_FAILED 2
-
-#define F_WRITE 1
-#define F_READ 0
-#define F_APPEND 2
 
 #define F_SEEK_SET 1
 #define F_SEEK_CUR 2
@@ -160,7 +160,8 @@ int k_ls(const char *filename);
 #define EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED -2
 #define EK_CHMOD_WRONG_PERMISSIONS -3
 #define EK_CHMOD_INVALID_FILENAME -4
-int k_chmod(const char *fname, uint8_t perm);
+#define EK_CHMOD_INVALID_MODE -5
+int k_chmod(const char *fname, uint8_t perm, int mode);
 
 #define EK_MV_FILE_NOT_FOUND -1
 #define EK_MV_WRONG_PERMISSIONS -2
@@ -170,3 +171,14 @@ int k_chmod(const char *fname, uint8_t perm);
 #define EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED -6
 #define EK_MV_CLOSE_FAILED -7
 int k_mv(const char *src, const char *dest);
+
+#define EK_SETMODE_FD_OUT_OF_RANGE -1
+#define EK_SETMODE_BAD_MODE -2
+#define EK_SETMODE_FD_NOT_IN_USE -3
+int k_setmode(int fd, int mode);
+
+#define EK_GETMODE_FD_OUT_OF_RANGE -1
+#define EK_GETMODE_FD_NOT_IN_USE -2
+int k_getmode(int fd);
+
+#endif // PENNFAT_FAT_H
