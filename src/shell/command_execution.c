@@ -102,4 +102,12 @@ void execute_job(job* job)
         printf("job %lu is running in the background\n", job->id);
         return;
     }
+    
+    // close the file descriptors
+    if (parsed_command->stdin_file != NULL) {
+        s_close(stdin_fd);
+    }
+    if (parsed_command->stdout_file != NULL) {
+        s_close(stdout_fd);
+    }
 }
