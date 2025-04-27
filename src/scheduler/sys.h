@@ -88,3 +88,10 @@ int s_tcsetpid(pid_t pid);
 
 int s_ignore_sigint(bool ignore);
 int s_ignore_sigtstp(bool ignore);
+
+/**
+ * @brief Sets a flag to indicate that the logout command has been issued
+ * and the scheduler should exit. Since this only signals the scheduler to exit,
+ * it is not guaranteed to exit immediately.
+ */
+void s_logout();

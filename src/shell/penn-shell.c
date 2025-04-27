@@ -29,6 +29,7 @@ static void* shell_loop(void* arg) {
 
 
         if (ret < 0) {
+            s_logout();
             continue;
         } else if (ret == -2) {  
             if (errno == EINTR) {

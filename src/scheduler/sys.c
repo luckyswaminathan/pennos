@@ -257,3 +257,7 @@ int s_ignore_sigtstp(bool ignore) {
     current->ignore_sigtstp = ignore;
     return 0;
 }
+
+void s_logout() {
+    k_logout();
+}

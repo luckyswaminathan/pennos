@@ -382,6 +382,11 @@ void run_scheduler()
     {
         _run_next_process();
     }
+
+    // cleanup
+    unmount(); // unmount the file system
+    // TODO: need a lot more freeing here
+    free(scheduler_state); // free the scheduler state
 }
 
 // ================================ Process Management API ================================
@@ -1042,4 +1047,9 @@ void k_tcsetpid(pid_t pid) {
 
 pid_t k_tcgetpid() {
     return scheduler_state->terminal_controlling_pid;
+}
+
+void k_logout() {
+    // set a flag to indicate that the logout command has been issued
+    logout_issued = true;
 }
