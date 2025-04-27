@@ -319,7 +319,21 @@ void _run_next_process()
         pcb_t* blocked_ptr = linked_list_head(&scheduler_state->blocked_queue);
         while (blocked_ptr != NULL) {
             k_log("BLOCKED PTR PID %d\n", blocked_ptr->pid);
+
+            bool is_unblocked = false;
             if (blocked_ptr->waited_child == process->pid) {
+                is_unblocked = true;
+            } else if (blocked_ptr->waited_child == -1) {
+                child_process_t* child_ptr = linked_list_head(blocked_ptr->children);
+                while (child_ptr != NULL) {
+                    if (child_ptr->process->pid == process->pid) {
+                        is_unblocked = true;
+                        break;
+                    }
+                    child_ptr = child_ptr->next;
+                }
+            }
+            if (is_unblocked) {
                 //TODO: might need to refactor logic
                 k_log("unblocking process IN RUN NEXT PROCESS %d\n", blocked_ptr->pid);
                 unblock_process(blocked_ptr);
