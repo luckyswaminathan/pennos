@@ -297,7 +297,6 @@ void reparent_children(pcb_t *process) {
     child_process_t* children_ptr = linked_list_head(process->children);
     while (children_ptr != NULL) {
         children_ptr->process->ppid = 1;
-        log_orphan(children_ptr->process->pid, children_ptr->process->priority, children_ptr->process->command);
         child_process_t* next_children_ptr = children_ptr->next;
         linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
         children_ptr = next_children_ptr;
@@ -683,6 +682,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // No zombies found
         if (scheduler_state->current_process->children->head == NULL) {
             // No children at all
+            fprintf(stderr, "current process head is null\n");
             return -1;
         }
         
@@ -694,7 +694,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Need to wait for any child to terminate
         // Block parent until a child terminate
         block_process(scheduler_state->current_process);
-        spthread_suspend_self();
         
         // Parent will be unblocked when a child terminates and becomes zombie
         // After unblocking, recursively call waitpid to find and reap the zombie
@@ -1069,6 +1068,10 @@ void k_get_all_process_info() {
     
     // Print zombie queue
     k_print_processes_from_queue((pcb_ll_t)&scheduler_state->zombie_queue, 'Z');
+}
+
+int k_get_quantum() {
+    return quantum;
 }
 
 /**
