@@ -29,8 +29,8 @@ static char cmd_buffer[MAX_LINE_LENGTH + 1]; // +1 for the null terminator
 
 int read_command(struct parsed_command **parsed_command)
 {
-    unsigned int num_bytes = s_read(STDIN_FILENO, MAX_LINE_LENGTH, cmd_buffer);
-    if (num_bytes == -1)
+    int num_bytes = s_read(STDIN_FILENO, MAX_LINE_LENGTH, cmd_buffer);
+    if (num_bytes < 0)
     {
         u_perror("Failed to read command from stdin");
         // TODO: do we need any other cleanup here?
