@@ -60,7 +60,6 @@ void print_all_jobs() {
 
 
 void handle_fg(struct parsed_command* cmd) {
-  LOG_INFO("FOREGROUND");
   char* target_id_str = cmd->commands[0][1];
   job_ll_node* node = linked_list_tail(jobs);
 
@@ -110,7 +109,6 @@ void handle_fg(struct parsed_command* cmd) {
   if (job->status == J_STOPPED) {
     kill(-job->pids[0], SIGCONT);
   }
-  LOG_INFO("Waiting for foreground job %ld", job->id);
   s_waitpid(job->pids[0], NULL, true);
 
   // Give terminal control back to the shell
@@ -245,7 +243,6 @@ void print_job_list() {
 }
 
 void remove_job_by_pid(pid_t pid) {
-  LOG_INFO("Removing job with PID %d", pid);
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
@@ -267,7 +264,6 @@ void remove_job_by_pid(pid_t pid) {
     free(node);
   } else {
     // Job not found - this is expected for foreground jobs that were already cleaned up
-    LOG_INFO("No job found for PID %d - may have been already removed", pid);
   }
 }
 

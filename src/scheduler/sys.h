@@ -21,7 +21,7 @@
  * @param fd1 Output file descriptor.
  * @return pid_t The process ID of the created child process.
  */
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1, priority_t priority);
 
 /**
  * @brief Wait on a child of the calling process, until it changes state.
@@ -72,4 +72,6 @@ int s_nice(pid_t pid, int priority);
 void s_sleep(unsigned int ticks);
 
 void s_get_process_info();
+
+pcb_t* s_get_current_process();
 
