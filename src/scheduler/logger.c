@@ -30,7 +30,7 @@ void log_schedule(pid_t pid, int queue, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSCHEDULE\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSCHEDULE \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, queue, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -43,7 +43,7 @@ void log_create(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tCREATE\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tCREATE   \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -56,7 +56,7 @@ void log_signaled(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSIGNALED\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSIGNALED \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -69,7 +69,7 @@ void log_exited(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tEXITED\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tEXITED   \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -82,7 +82,7 @@ void log_zombie(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tZOMBIE\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tZOMBIE   \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -95,7 +95,7 @@ void log_orphan(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tORPHAN\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tORPHAN   \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -108,7 +108,7 @@ void log_waited(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tWAITED\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tWAITED   \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -121,7 +121,7 @@ void log_nice(pid_t pid, int old_nice, int new_nice, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tNICE\t%d\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tNICE     \t%d\t%d\t%d\t%s\n",
                        k_get_quantum(), pid, old_nice, new_nice, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -134,7 +134,7 @@ void log_blocked(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tBLOCKED\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tBLOCKED  \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
@@ -160,7 +160,7 @@ void log_stopped(pid_t pid, int nice_value, const char* process_name) {
     }
     char buf[LOG_BUF_SIZE];
     int fd = fileno(log_file);
-    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSTOPPED\t%d\t%d\t%s\n",
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSTOPPED  \t%d\t%d\t%s\n",
                        k_get_quantum(), pid, nice_value, process_name);
     if (len > 0) {
         write(fd, buf, len);
