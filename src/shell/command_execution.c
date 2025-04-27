@@ -59,7 +59,8 @@ void execute_job(job* job)
 
     int stdout_fd;
     if (parsed_command->stdout_file != NULL) {
-        stdout_fd = s_open(parsed_command->stdout_file, F_WRITE);
+        int mode = parsed_command->is_file_append ? F_APPEND : F_WRITE;
+        stdout_fd = s_open(parsed_command->stdout_file, mode);
         if (stdout_fd < 0) {
             char* error_message = "Failed to open stdout file\n";
             s_write(STDERR_FILENO, error_message, strlen(error_message));
