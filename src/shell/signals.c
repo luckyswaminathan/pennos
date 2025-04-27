@@ -11,6 +11,8 @@
 #include "../../lib/linked_list.h"
 #include "./command_execution.h"
 #include "../scheduler/sys.h"
+#include <bits/sigaction.h>
+#include <asm-generic/signal-defs.h>
 
 /**
  * Signal handler for PennOS to accept host OS signals and 

@@ -43,12 +43,13 @@ static void* shell_loop(void* arg) {
         if (parsed_command == NULL) {
             continue;  // Empty command, try again
         }
+
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
-        LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
+
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
@@ -83,16 +84,23 @@ static void* shell_loop(void* arg) {
     return NULL;
 }
 
+/**
+ * @brief Spawns the shell process
+ * 
+ * This process is responsible for spawning the shell process
+ * and waiting for it to exit.
+ * 
+ * @param arg 
+ * @return void* 
+ */
 static void* init_process(void* arg) {
-    pid_t pid = s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    // Spawn shell process
+    pid_t pid =s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
     s_tcsetpid(pid);
-    // k_get_all_process_info();
 
-    while (true) {
-        int wstatus;
-        while (s_waitpid(-1, &wstatus, true) > 0) {
-        }
-    }
+    // Consume any zombies
+    int wstatus;
+    while (s_waitpid(-1, &wstatus, true) > 0) {}
 
     return NULL;
 }
@@ -110,11 +118,10 @@ int main(int argc, char **argv) {
     init_logger("scheduler.log");
     init_scheduler();
 
-    pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
-
-    // use k_ function here because we need to set the tc pid for the first time and in the
-    // s_ function only the controlling process can do this
+    // Spawn init process
+    pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
     k_tcsetpid(pid);
+    printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers
     setup_job_control_handlers();

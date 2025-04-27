@@ -78,9 +78,10 @@ static char** duplicate_argv(char *const argv[]) {
  *               to be an initial process (like init) with PPID 0.
  * @param func The function the new process should execute.
  * @param argv Null-terminated argument vector for the new process. The kernel copies this.
+ * @param priority The priority of the new process.
  * @return pid_t The PID of the newly created process, or -1 if any allocation or thread creation fails.
  */
-pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
+pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], priority_t priority) {
 
     if (parent == NULL && scheduler_state->init_process != NULL) {
         return E_INIT_ALREADY_EXISTS;
@@ -96,14 +97,14 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
 
     // Initialize core fields
     proc->pid = scheduler_state->process_count;
-    proc->ppid = parent ? parent->pid : 0;
+    proc->ppid = parent ? parent->pid : 1;
     if (proc->ppid == 0) { // If the parent is the init process, the new process starts a new process group
         proc->pgid = proc->pid;
     } else {// Otherwise, the new process belongs to the same process group as its parent
         proc->pgid = parent->pgid;
     }
     proc->state = PROCESS_RUNNING; // Initial state
-    proc->priority = parent == NULL ? PRIORITY_HIGH : PRIORITY_MEDIUM; // Default priority
+    proc->priority = priority;
     proc->sleep_time = 0.0;
     proc->exit_status = 0;
     proc->prev = NULL;
@@ -241,7 +242,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
  * @brief Cleans up resources associated with a terminated or finished process.
  *
  * This function performs the necessary cleanup steps when a process is destroyed:
- * 1. Reparents any orphaned children of the process to the init process (PID 0).
+ * 1. Reparents any orphaned children of the process to the init process (PID 1).
  *    It assumes `scheduler_state` and `scheduler_state->init_process` are accessible.
  * 2. Removes the process from its parent's list of children.
  * 3. Frees allocated resources within the PCB, including the thread structure (if any),
