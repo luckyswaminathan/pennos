@@ -105,7 +105,6 @@ static void* init_process(void* arg) {
     pid_t result;
     while (true) {
         while ((result = s_waitpid(-1, &wstatus, true)) > 0) {
-            fprintf(stderr, "result = %d\n", result);
         }
     }
 

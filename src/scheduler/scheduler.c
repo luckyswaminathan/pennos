@@ -571,7 +571,6 @@ pcb_t* k_get_process_by_pid(pid_t pid)
         process = process->next;
     }
 
-    fprintf(stderr, "k_get_process_by_pid: pid = %d not found\n", pid);
     // NOTE: Intentionally not checking zombie queue here. 
     // Use k_get_process_by_pid_including_zombies if needed.
     return NULL; 
