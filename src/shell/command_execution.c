@@ -18,6 +18,7 @@
 #include "commands.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
+#include <string.h>
 
 #define DEFAULT_FILE_PERMISSIONS 0644  // User: read/write, Group: read, Others: read
 #define FORK_SETUP_DELAY_USEC 500     // Microseconds to wait for child process setup
@@ -38,7 +39,8 @@ void execute_job(job* job)
     // Allocate space for PIDs
     job->pids = malloc(sizeof(pid_t) * parsed_command->num_commands);
     if (!job->pids) {
-        perror("Failed to allocate PIDs array");
+        char* error_message = "Failed to allocate PIDs array\n";
+        s_write(STDERR_FILENO, error_message, strlen(error_message));
         return;
     }
 
@@ -47,7 +49,8 @@ void execute_job(job* job)
     if (parsed_command->stdin_file != NULL) {
         stdin_fd = s_open(parsed_command->stdin_file, F_READ);
         if (stdin_fd < 0) {
-            perror("Failed to open stdin file");
+            char* error_message = "Failed to open stdin file\n";
+            s_write(STDERR_FILENO, error_message, strlen(error_message));
             return;
         }
     } else {
@@ -58,7 +61,8 @@ void execute_job(job* job)
     if (parsed_command->stdout_file != NULL) {
         stdout_fd = s_open(parsed_command->stdout_file, F_WRITE);
         if (stdout_fd < 0) {
-            perror("Failed to open stdout file");
+            char* error_message = "Failed to open stdout file\n";
+            s_write(STDERR_FILENO, error_message, strlen(error_message));
             return;
         }
     } else {
@@ -72,15 +76,13 @@ void execute_job(job* job)
                          );
     if (pid == -1)
     {
-        perror("Failed to spawn command");
-        exit(EXIT_FAILURE);
+        char* error_message = "Failed to spawn command\n";
+        s_write(STDERR_FILENO, error_message, strlen(error_message));
     }
     
     // Store the lead process ID
     // job->pids[0] = pid;
     // job->num_processes = parsed_command->num_commands;
-
-
 
     if (job->status == J_RUNNING_FG) {   
         int status;
@@ -98,7 +100,6 @@ void execute_job(job* job)
         // Use global shell_pgid
         // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
     } else if (job->status == J_RUNNING_BG) {
-        printf("job %lu is running in the background\n", job->id);
         return;
     }
     

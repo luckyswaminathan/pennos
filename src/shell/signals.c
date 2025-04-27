@@ -69,7 +69,7 @@ int setup_job_control_handlers(void) {
     }
 
     if (sigaction(SIGTSTP, &act, NULL) < 0) {
-        perror("sigaction for SIGTSTP failed");
+        k_log("sigaction for SIGTSTP failed");
         return -1;
     }
 

@@ -14,6 +14,7 @@
 #include "../scheduler/sys.h"
 #include "commands.h"
 #include "src/pennfat/fat.h"
+#include <string.h>
 
 jid_t job_id = 0;
 
@@ -25,14 +26,15 @@ static void* shell_loop(void* arg) {
         int ret = read_command(&parsed_command);
 
 
-        if (ret == -1) {
-            exit(0);
+        if (ret < 0) {
+            continue;
         } else if (ret == -2) {  
             if (errno == EINTR) {
                 continue;
             }
-            perror("Error reading command");
-            exit(1);
+            char* error_message = "Error reading command\n";
+            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            continue;
         }
 
         LOG_INFO("Read command");
@@ -66,9 +68,6 @@ static void* shell_loop(void* arg) {
             // status is already J_RUNNING_FG
             add_foreground_job(job_ptr);
 
-            // TODO: remove
-            handle_jobs();
-
             execute_job(job_ptr); 
             LOG_INFO("execute_job returned");
             // Only destroy the job if it wasn't stopped
@@ -87,9 +86,6 @@ static void* init_process(void* arg) {
     // k_get_all_process_info();
 
     while (true) {
-        // // dprintf(2, "init running %d\n", i);
-        // // k_get_all_process_info();
-        //usleep(1000000);
         int wstatus;
         while (s_waitpid(-1, &wstatus, true) > 0) {
         }
@@ -106,9 +102,6 @@ int main(int argc, char **argv) {
 
     // First ignore signals
     ignore_signals();
-    
-    // Initialize shell's process group
-    init_shell_pgid();
 
     // Initialize logger and scheduler
     init_logger("scheduler.log");
