@@ -53,7 +53,7 @@ static void* spawn(bool nohang) {
 
     // you may need to change the args to
     // s_spawn for this to work.
-    const int id = s_spawn(nap, (char*[]) {name, NULL}, STDIN_FILENO, STDOUT_FILENO);
+    const int id = s_spawn(nap, (char*[]) {name, NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
 
     if (i == 0)
       pid = id;
@@ -70,8 +70,7 @@ static void* spawn(bool nohang) {
   // Wait on all children.
   while (1) {
     int wstatus;
-    fprintf(stderr, "before waitpid\n");
-    const int cpid = s_waitpid(-1, &wstatus, nohang);
+    pid_t cpid = s_waitpid(-1, &wstatus, nohang);
 
     if (cpid < 0)  // no more waitable children (if block-waiting) or error
       break;
@@ -119,7 +118,7 @@ static void* spawn_r(void* arg) {
 
     // may need to change the arg of the function to make it work
     // that is ok
-    pid = s_spawn(spawn_r, argv, STDIN_FILENO, STDOUT_FILENO);
+    pid = s_spawn(spawn_r, argv, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_write(STDERR_FILENO, argv[0], strlen(argv[0]));
     s_write(STDERR_FILENO, " was spawned\n", strlen(" was spawned\n"));
 
