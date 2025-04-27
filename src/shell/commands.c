@@ -303,6 +303,8 @@ void* man(void* arg) {
     s_write(STDERR_FILENO, "kill -stop <pid> - Stop process <pid>\n", strlen("kill -stop <pid> - Stop process <pid>\n"));
     s_write(STDERR_FILENO, "kill -cont <pid> - Continue process <pid>\n", strlen("kill -cont <pid> - Continue process <pid>\n"));
     s_write(STDERR_FILENO, "ls          - List all files in the current directory\n", strlen("ls          - List all files in the current directory\n"));
+    s_write(STDERR_FILENO, "bg <job_id> - brings job id to the background\n  ", strlen("bg <job_id> - brings job id to the background\n"));
+    s_write(STDERR_FILENO, "fg <job_id> - brings job id to the foreground\n  ", strlen("fg <job_id> - brings job id to the foreground\n"));
     s_write(STDERR_FILENO, "jobs        - List all jobs\n", strlen("jobs        - List all jobs\n"));
     s_write(STDERR_FILENO, "echo <message> - Print <message> to the shell\n", strlen("echo <message> - Print <message> to the shell\n"));
     s_write(STDERR_FILENO, "touch <filename> - Create a new file with name <filename>\n", strlen("touch <filename> - Create a new file with name <filename>\n"));
@@ -311,6 +313,7 @@ void* man(void* arg) {
     s_write(STDERR_FILENO, "cat <filename> - Print the contents of the file <filename>\n", strlen("cat <filename> - Print the contents of the file <filename>\n"));
     s_write(STDERR_FILENO, "chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n", strlen("chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n"));
     s_write(STDERR_FILENO, "mv <source> <destination> - Move the file <source> to <destination>\n", strlen("mv <source> <destination> - Move the file <source> to <destination>\n"));
+    s_write(STDERR_FILENO, "logout - logs the user out of pennos\n", strlen("logout - logs the user out of pennos\n"));
     s_write(STDERR_FILENO, "man         - Show this help message\n", strlen("man         - Show this help message\n"));
 
 
