@@ -5,6 +5,7 @@
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include <stdio.h>
 #include <stdlib.h> // For NULL
 #include <string.h> // For strcmp etc. if needed
 #include <signal.h> // For signal definitions (SIGTERM, SIGSTOP, SIGCONT)
@@ -21,14 +22,14 @@ void run_scheduler();
  * @param arg Argument to be passed to the function.
  * @return pid_t The process ID of the created child process, or -1 on error.
  */
-pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
+pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1, priority_t priority) {
     // Get the parent process PCB using the kernel helper function.
     // This avoids direct access to scheduler_state from the system call layer.
     pcb_t* parent = k_get_current_process();
 
     // Directly call the kernel function to create the process.
     // k_proc_create now handles PCB setup, thread creation, and scheduling.
-    pid_t new_pid = k_proc_create(parent, func, argv);
+    pid_t new_pid = k_proc_create(parent, func, argv, priority);
 
     // k_proc_create returns -1 on error, so we can return that directly.
     if (new_pid < 0) {
