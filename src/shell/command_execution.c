@@ -75,7 +75,7 @@ void execute_job(job* job)
         char* error_message = "Failed to spawn command\n";
         s_write(STDERR_FILENO, error_message, strlen(error_message));
     }
-    
+    job->pids[0] = pid;
     // Store the lead process ID
     // job->pids[0] = pid;
     // job->num_processes = parsed_command->num_commands;
