@@ -11,6 +11,7 @@
 #include "../scheduler/spthread.h"
 #include "src/pennfat/fat_constants.h"
 #include "jobs.h"
+#include "stress.h"
 #define BUFFER_SIZE 256
 
 // Helper function specific to ps command within this file
@@ -112,7 +113,7 @@ void* zombify(void* arg) {
     }
 
     // Spawn the child process
-    s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_get_process_info();
     while(1) {  
     };
@@ -133,7 +134,7 @@ void* orphanify(void* arg) {
     if (current_process) { // Check if the call succeeded
         log_orphan(current_process->pid, current_process->priority, current_process->command ? current_process->command : "<?>");
     }
-    s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_exit(0);
     return NULL;
 }
@@ -151,11 +152,14 @@ void* orphanify(void* arg) {
 void* busy(void* arg, char* priority) {
     // Get the command context
     //char** command = (char**)arg;
+
+    printf("priority: %s\n", priority);
+
     int priority_level = atoi(priority);
 
     // Validate the priority level
     if (priority_level < 0 || priority_level > 2) {
-        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_write(STDERR_FILENO, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n", strlen("Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n"));
         s_exit(1);
         return NULL;
     }
@@ -179,7 +183,7 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
     //int stdout_fd = command[1];
     
     if (pid == NULL || priority == NULL) {
-        fprintf(stderr, "Usage: nice <pid> <priority_level>\n");
+        s_write(STDERR_FILENO, "Usage: nice <pid> <priority_level>\n", strlen("Usage: nice <pid> <priority_level>\n"));
         return NULL;
     }
     
@@ -189,7 +193,7 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
     
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
-        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_write(STDERR_FILENO, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n", strlen("Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n"));
         return NULL;
     }
     
@@ -197,9 +201,13 @@ void* nice_pid_command(void* arg, char* pid, char* priority) {
     int result = s_nice(target_pid, priority_level);
     
     if (result == 0) {
-        fprintf(stderr, "Changed priority of process %d to %d\n", target_pid, priority_level);
+        char output_string[100];
+        sprintf(output_string, "Changed priority of process %d to %d\n", target_pid, priority_level);
+        s_write(STDERR_FILENO, output_string, strlen(output_string));
     } else {
-        fprintf(stderr, "Failed to change priority of process %d\n", target_pid);
+        char output_string[100];
+        sprintf(output_string, "Failed to change priority of process %d\n", target_pid);
+        s_write(STDERR_FILENO, output_string, strlen(output_string));
     }
     s_exit(0);
     return NULL;
@@ -210,7 +218,7 @@ void* nice_command(void* arg, char* priority) {
     //int stdout_fd = command[1];
     
     if (priority == NULL) {
-        fprintf(stderr, "Usage: nice <priority_level>\n");
+        s_write(STDERR_FILENO, "Usage: nice <priority_level>\n", strlen("Usage: nice <priority_level>\n"));
         return NULL;
     }
     
@@ -219,25 +227,25 @@ void* nice_command(void* arg, char* priority) {
     
     // Validate priority level
     if (priority_level < 0 || priority_level > 2) {
-        fprintf(stderr, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n");
+        s_write(STDERR_FILENO, "Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n", strlen("Invalid priority level. Use 0 (high), 1 (medium), or 2 (low)\n"));
         return NULL;
     }
     
     char* call = command[2];
-    fprintf(stderr, "call value: %s\n", call);
+    char output_string[100];
+    sprintf(output_string, "call value: %s\n", call);
+    s_write(STDERR_FILENO, output_string, strlen(output_string));
     s_exit(0);
     return NULL;
 }
 
 void* sleep_command(void* arg, char* time) {
-    fprintf(stderr, "sleep command called\n");
     if (time == NULL) {
-        fprintf(stderr, "Error: sleep command requires a number of ticks\n");
+        s_write(STDERR_FILENO, "Error: sleep command requires a number of ticks\n", strlen("Error: sleep command requires a number of ticks\n"));
         s_exit(1);
         return NULL;
     }
     int ticks = atoi(time);
-    fprintf(stderr, "sleep ticks: %d\n", ticks);
     s_sleep(ticks);
     s_exit(0);
     return NULL;
@@ -246,7 +254,7 @@ void* sleep_command(void* arg, char* time) {
 void* kill_process_shell(void* arg, char* first_term) {
     char** args = (char**)arg;
     if (args == NULL || first_term == NULL) {
-        fprintf(stderr, "Error: kill command requires a process ID\n");
+        s_write(STDERR_FILENO, "Error: kill command requires a process ID\n", strlen("Error: kill command requires a process ID\n"));
         s_exit(1);
         return NULL;
     }
@@ -262,8 +270,8 @@ void* kill_process_shell(void* arg, char* first_term) {
         } else if (strcmp(first_term, "-cont") == 0) {
             signal = P_SIGCONT;
         } else {
-            fprintf(stderr, "Unknown signal flag: %s\n", first_term);
-            fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+            s_write(STDERR_FILENO, "Unknown signal flag\n", strlen("Unknown signal flag\n"));
+            s_write(STDERR_FILENO, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n", strlen("Usage: kill [-term|-stop|-cont] <pid> [pid...]\n"));
             s_exit(1);
             return NULL;
         }
@@ -272,8 +280,8 @@ void* kill_process_shell(void* arg, char* first_term) {
 
     // Check if we have any PIDs
     if (args[start_idx] == NULL) {  
-        fprintf(stderr, "Error: kill command requires at least one PID\n");
-        fprintf(stderr, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n");
+        s_write(STDERR_FILENO, "Error: kill command requires at least one PID\n", strlen("Error: kill command requires at least one PID\n"));
+        s_write(STDERR_FILENO, "Usage: kill [-term|-stop|-cont] <pid> [pid...]\n", strlen("Usage: kill [-term|-stop|-cont] <pid> [pid...]\n"));
         s_exit(1);
         return NULL;
     }
@@ -283,7 +291,6 @@ void* kill_process_shell(void* arg, char* first_term) {
         int pid = atoi(args[i]);
         s_kill(pid, signal);
     }
-    fprintf(stderr, "killed correctly\n");
     s_exit(0);
     return NULL;
 }
@@ -292,27 +299,27 @@ void* kill_process_shell(void* arg, char* first_term) {
 void* man(void* arg) {
     //char** command = (char**)arg;
  
-    fprintf(stderr, "Available commands:\n\n");
-    fprintf(stderr, "ps          - List all running processes and their states\n");
-    fprintf(stderr, "zombify     - Create a zombie process\n");
-    fprintf(stderr, "orphanify   - Create an orphan process\n");
-    fprintf(stderr, "busy        - Start a CPU-intensive process\n");
-    fprintf(stderr, "sleep <n>   - Sleep for n ticks\n");
-    fprintf(stderr, "nice_pid <pid> <priority>            - Change priority of process <pid> to <priority> (0-2)\n");
-    fprintf(stderr, "nice <priority> <command>   - spawns a process <command> with priority <priority>\n");
-    fprintf(stderr, "kill -term <pid> - Terminate process <pid>\n");
-    fprintf(stderr, "kill -stop <pid> - Stop process <pid>\n");
-    fprintf(stderr, "kill -cont <pid> - Continue process <pid>\n");
-    fprintf(stderr, "ls          - List all files in the current directory\n");
-    fprintf(stderr, "jobs        - List all jobs\n");
-    fprintf(stderr, "echo <message> - Print <message> to the shell\n");
-    fprintf(stderr, "touch <filename> - Create a new file with name <filename>\n");
-    fprintf(stderr, "rm <filename> - Delete the file <filename>\n");
-    fprintf(stderr, "cp <source> <destination> - Copy the file <source> to <destination>\n");
-    fprintf(stderr, "cat <filename> - Print the contents of the file <filename>\n");
-    fprintf(stderr, "chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n");
-    fprintf(stderr, "mv <source> <destination> - Move the file <source> to <destination>\n");
-    fprintf(stderr, "man         - Show this help message\n");
+    s_write(STDERR_FILENO, "Available commands:\n\n", strlen("Available commands:\n\n"));
+    s_write(STDERR_FILENO, "ps          - List all running processes and their states\n", strlen("ps          - List all running processes and their states\n"));
+    s_write(STDERR_FILENO, "zombify     - Create a zombie process\n", strlen("zombify     - Create a zombie process\n"));
+    s_write(STDERR_FILENO, "orphanify   - Create an orphan process\n", strlen("orphanify   - Create an orphan process\n"));
+    s_write(STDERR_FILENO, "busy        - Start a CPU-intensive process\n", strlen("busy        - Start a CPU-intensive process\n"));
+    s_write(STDERR_FILENO, "sleep <n>   - Sleep for n ticks\n", strlen("sleep <n>   - Sleep for n ticks\n"));
+    s_write(STDERR_FILENO, "nice_pid <pid> <priority>            - Change priority of process <pid> to <priority> (0-2)\n", strlen("nice_pid <pid> <priority>            - Change priority of process <pid> to <priority> (0-2)\n"));
+    s_write(STDERR_FILENO, "nice <priority> <command>   - spawns a process <command> with priority <priority>\n", strlen("nice <priority> <command>   - spawns a process <command> with priority <priority>\n"));
+    s_write(STDERR_FILENO, "kill -term <pid> - Terminate process <pid>\n", strlen("kill -term <pid> - Terminate process <pid>\n"));
+    s_write(STDERR_FILENO, "kill -stop <pid> - Stop process <pid>\n", strlen("kill -stop <pid> - Stop process <pid>\n"));
+    s_write(STDERR_FILENO, "kill -cont <pid> - Continue process <pid>\n", strlen("kill -cont <pid> - Continue process <pid>\n"));
+    s_write(STDERR_FILENO, "ls          - List all files in the current directory\n", strlen("ls          - List all files in the current directory\n"));
+    s_write(STDERR_FILENO, "jobs        - List all jobs\n", strlen("jobs        - List all jobs\n"));
+    s_write(STDERR_FILENO, "echo <message> - Print <message> to the shell\n", strlen("echo <message> - Print <message> to the shell\n"));
+    s_write(STDERR_FILENO, "touch <filename> - Create a new file with name <filename>\n", strlen("touch <filename> - Create a new file with name <filename>\n"));
+    s_write(STDERR_FILENO, "rm <filename> - Delete the file <filename>\n", strlen("rm <filename> - Delete the file <filename>\n"));
+    s_write(STDERR_FILENO, "cp <source> <destination> - Copy the file <source> to <destination>\n", strlen("cp <source> <destination> - Copy the file <source> to <destination>\n"));
+    s_write(STDERR_FILENO, "cat <filename> - Print the contents of the file <filename>\n", strlen("cat <filename> - Print the contents of the file <filename>\n"));
+    s_write(STDERR_FILENO, "chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n", strlen("chmod <mode> <filename> - Change the permissions of <filename> to <mode>\n"));
+    s_write(STDERR_FILENO, "mv <source> <destination> - Move the file <source> to <destination>\n", strlen("mv <source> <destination> - Move the file <source> to <destination>\n"));
+    s_write(STDERR_FILENO, "man         - Show this help message\n", strlen("man         - Show this help message\n"));
 
 
     
@@ -560,8 +567,15 @@ void* mv(void* arg) {
     return NULL;
 }
 
+void* hang_helper(void* arg) {
+    s_exit(0);
+    return NULL;
+}
+
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
+    
     // We always want the first command to be the command name
     if (ctx == NULL || ctx[0] == NULL) {
         return NULL;
@@ -603,7 +617,8 @@ void* execute_command(void* arg) {
         return mv(ctx);
     }
     if (strcmp(ctx[0], "busy") == 0) {
-        return busy(ctx, ctx[1]);
+        char* priority_level = ctx[1] == NULL ? "1" : ctx[1];
+        return busy(ctx, priority_level);
     }
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);
@@ -622,6 +637,18 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "jobs") == 0) {
         return jobs_command(ctx);
+    }
+    if (strcmp(ctx[0], "hang") == 0) {
+        return hang(ctx);
+    }
+    if (strcmp(ctx[0], "nohang") == 0) {
+        return nohang(ctx);
+    }
+    if (strcmp(ctx[0], "recur") == 0) {
+        return recur(ctx);
+    }
+    if (strcmp(ctx[0], "crash") == 0) {
+        return crash(ctx);
     }
     s_exit(0);
     return NULL;
