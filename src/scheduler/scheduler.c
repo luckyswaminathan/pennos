@@ -663,13 +663,9 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 pid_t result = zombie_child->process->pid;
                 return result;
             } else if (child->process->state == PROCESS_STOPPED) {
-                if (wstatus != NULL) {
-                    *wstatus = W_STOPPED;
-                }
-
-                log_waited(child->process->pid, child->process->priority, child->process->command ? child->process->command : "<?>");
-                // do nothing else because it should already be in the stopped queue
-                return child->process->pid;
+                // Do nothing: this child was stopped even before the waitpid was called!
+                // and since there was no status change, waitpid doesn't need to do anything
+                return 0;
             }
             child = next;
         }
@@ -725,11 +721,9 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             pid_t result = child->pid;
             return result;
         } else if (child->state == PROCESS_STOPPED) {
-            if (wstatus != NULL) {
-                *wstatus = W_STOPPED;
-            }
-            // do nothing else because it should already be in the stopped queue
-            return child->pid;
+            // Do nothing: this child was stopped even before the waitpid was called!
+            // and since there was no status change, waitpid doesn't need to do anything
+            return 0;
         }
         
         if (nohang) {
