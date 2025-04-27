@@ -28,7 +28,6 @@
 
 // You can tweak the function signature to make it work.
 static void* nap(void* arg) {
-  fprintf(stderr, "Napping\n");
   s_sleep(1);  // sleep for 1 tick
   s_exit(0);
   return NULL;
