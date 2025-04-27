@@ -494,11 +494,6 @@ void block_process(pcb_t *process)
     process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
-
-    pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
-    while (curr != NULL) {
-        curr = curr->next;
-    }
 }
 
 /**
@@ -648,8 +643,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
 
-
-
         // First pass: look for zombies and stopped children
         while (child != NULL) {
             child_process_t* next = child->next; // Save next pointer as we might remove child
@@ -665,13 +658,16 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
                 linked_list_remove(scheduler_state->current_process->children, zombie_child);
                 linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
-                
+
+                log_waited(zombie_child->process->pid, zombie_child->process->priority, zombie_child->process->command ? zombie_child->process->command : "<?>");
                 pid_t result = zombie_child->process->pid;
                 return result;
             } else if (child->process->state == PROCESS_STOPPED) {
                 if (wstatus != NULL) {
                     *wstatus = W_STOPPED;
                 }
+
+                log_waited(child->process->pid, child->process->priority, child->process->command ? child->process->command : "<?>");
                 // do nothing else because it should already be in the stopped queue
                 return child->process->pid;
             }
@@ -687,6 +683,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         
         if (nohang) {
             // Have children, but none are zombies and nohang is true
+            log_waited(scheduler_state->current_process->pid, scheduler_state->current_process->priority, scheduler_state->current_process->command ? scheduler_state->current_process->command : "<?>");
             return 0;
         }
         
@@ -701,6 +698,8 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
+
+        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         
         if (child == NULL) {
             return -1; // No such process
@@ -739,7 +738,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
-        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
         k_get_all_process_info();
         
