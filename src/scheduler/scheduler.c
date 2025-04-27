@@ -276,18 +276,14 @@ void _run_next_process()
         return;
     }
 
-    // Consume a quantum
-    quantum++;
-
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
 
+    // Only schedule init if there are zombies to consume or if the shell has not spawned yet
     if (process->pid == 1 && scheduler_state->zombie_queue.head == NULL && shell_spawned) {
-        return;
-    }
-
-    if (process->pid == 1) {
-        printf("<INIT SCHEDULED>\n");
+        linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+        linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
+        process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
     }
 
     if (!process) {
@@ -314,6 +310,9 @@ void _run_next_process()
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
+
+    // Consume a quantum
+    quantum++;
 
     // Add the process back to the queue
     if (process->state == PROCESS_ZOMBIED) {
@@ -484,7 +483,7 @@ void unblock_process(pcb_t *process)
  * @param pid The PID of the process to find.
  * @return pcb_t* Pointer to the PCB if found, NULL otherwise.
  */
-pcb_t *k_get_process_by_pid(pid_t pid)
+pcb_t* k_get_process_by_pid(pid_t pid)
 {
      if (!scheduler_state) return NULL;
 
@@ -915,7 +914,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
 void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
     while (current != NULL) {
-        k_log("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
+        printf("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
         current = current->next;
     }
 }
@@ -932,7 +931,7 @@ void k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
         // Don't print the currently executing process here, it's handled separately
         if (current != scheduler_state->current_process) { 
              // Adjusted format string for alignment, assuming reasonable PID/PPID width
-            k_log("%3d %4d %3d %c    %s\n", 
+            printf("%3d %4d %3d %c    %s\n", 
                   current->pid, 
                   current->ppid, 
                   current->priority, 
@@ -952,17 +951,18 @@ void k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
  * Status codes: R (Running), B (Blocked), S (Stopped), Z (Zombie).
  */
 void k_get_all_process_info() {
+
     if (!extra_logging_enabled || !scheduler_state) {
         return;
     }
 
     // Print header once
-    k_log("PID PPID PRI STAT CMD\n");
+    printf("PID PPID PRI STAT CMD\n");
 
     // Print current running process first (if any)
     pcb_t *current_proc = scheduler_state->current_process;
     if (current_proc && current_proc->state != PROCESS_ZOMBIED) { // Don't list as R if exiting
-         k_log("%3d %4d %3d %c    %s\n", 
+         printf("%3d %4d %3d %c    %s\n", 
                   current_proc->pid, 
                   current_proc->ppid, 
                   current_proc->priority, 

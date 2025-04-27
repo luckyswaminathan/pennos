@@ -16,7 +16,7 @@
  * @param argv Null-terminated argument vector for the new process. The kernel will copy this.
  * @return pid_t The PID of the newly created process, or -1 on error.
  */
-pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]);
+pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], priority_t priority);
 
 /**
  * @brief Clean up a terminated/finished process's resources.

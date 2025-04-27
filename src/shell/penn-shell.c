@@ -107,7 +107,7 @@ static void* shell_loop(void* arg) {
  */
 static void* init_process(void* arg) {
     // Spawn shell process
-    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
 
     // Consume any zombies
     int wstatus;
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     init_scheduler();
 
     // Spawn init process
-    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
     printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers
