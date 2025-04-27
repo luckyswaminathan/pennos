@@ -97,7 +97,11 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     // Initialize core fields
     proc->pid = scheduler_state->process_count;
     proc->ppid = parent ? parent->pid : 0;
-    proc->pgid = proc->pid; // New process starts a new process group
+    if (proc->ppid == 0) { // If the parent is the init process, the new process starts a new process group
+        proc->pgid = proc->pid;
+    } else {// Otherwise, the new process belongs to the same process group as its parent
+        proc->pgid = parent->pgid;
+    }
     proc->state = PROCESS_RUNNING; // Initial state
     proc->priority = parent == NULL ? PRIORITY_HIGH : PRIORITY_MEDIUM; // Default priority
     proc->sleep_time = 0.0;
