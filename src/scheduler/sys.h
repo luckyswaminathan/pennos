@@ -73,3 +73,4 @@ void s_sleep(unsigned int ticks);
 
 void s_get_process_info();
 
+int s_tcsetpid(pid_t pid); 

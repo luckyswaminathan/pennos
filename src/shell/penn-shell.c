@@ -82,7 +82,8 @@ static void* shell_loop(void* arg) {
 }
 
 static void* init_process(void* arg) {
-    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    pid_t pid = s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_tcsetpid(pid);
     // k_get_all_process_info();
 
     while (true) {
@@ -107,9 +108,12 @@ int main(int argc, char **argv) {
     init_logger("scheduler.log");
     init_scheduler();
 
-    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
-    
+    pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
 
+    // use k_ function here because we need to set the tc pid for the first time and in the
+    // s_ function only the controlling process can do this
+    k_tcsetpid(pid);
+    
     // Finally set up the job control handlers
     setup_job_control_handlers();
 

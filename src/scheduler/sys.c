@@ -71,6 +71,9 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    if (pid != -1 && !nohang) {
+        s_tcsetpid(pid); // try to pass the terminal control to the child process we will be blocked on
+    }
     return k_waitpid(pid, wstatus, nohang);
 }
 
@@ -211,4 +214,13 @@ void s_sleep(unsigned int ticks) {
 */
 void s_get_process_info() {
     k_get_all_process_info();
+}
+
+int s_tcsetpid(pid_t pid) {
+    if (k_tcgetpid() == k_get_current_process()->pid) {
+        k_tcsetpid(pid);
+    } else {
+        return E_TCSET_NO_TERMINAL_CONTROL;
+    }
+    return 0;
 }

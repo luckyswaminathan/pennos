@@ -111,6 +111,9 @@ typedef struct scheduler {
 
     // Process count
     unsigned int process_count;
+
+    // Process with terminal control
+    pid_t terminal_controlling_pid;
 } scheduler_t;
 
 extern scheduler_t* scheduler_state;
@@ -142,6 +145,8 @@ bool k_sleep(pcb_t* process, unsigned int ticks);
 void k_get_processes_from_queue(pcb_ll_t queue);
 void k_get_all_process_info();
 pcb_t* k_get_current_process(void);
+#define W_EXITED 0
+#define W_STOPPED 1
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang);
 
 pcb_t* get_process_by_pid(pid_t pid);
@@ -149,5 +154,7 @@ pcb_t* get_process_by_pid(pid_t pid);
 void k_toggle_logging();
 void k_print_ps_output();
 void k_log(const char *format, ...);
+void k_tcsetpid(pid_t pid);
+pid_t k_tcgetpid();
 
 #endif

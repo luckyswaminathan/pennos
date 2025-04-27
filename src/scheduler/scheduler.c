@@ -161,6 +161,8 @@ void init_scheduler()
     scheduler_state->stopped_queue.tail = NULL;
     scheduler_state->stopped_queue.ele_dtor = pcb_destructor;
 
+    scheduler_state->terminal_controlling_pid = 0; // No foreground process by default
+
     // Initialize ticks
     scheduler_state->ticks = 0;
 
@@ -321,6 +323,9 @@ void _run_next_process()
                 //TODO: might need to refactor logic
                 k_log("unblocking process IN RUN NEXT PROCESS %d\n", blocked_ptr->pid);
                 unblock_process(blocked_ptr);
+                if (k_tcgetpid() == process->pid) {
+                    k_tcsetpid(blocked_ptr->pid);
+                }
                 k_get_all_process_info();
                 break;
             } else if (blocked_ptr->waited_child == -1) {
@@ -1000,4 +1005,12 @@ void k_get_all_process_info() {
 void k_toggle_logging() {
     extra_logging_enabled = !extra_logging_enabled;
     k_fprintf_short(STDERR_FILENO, "Extra logging %s.\n", extra_logging_enabled ? "enabled" : "disabled");
+}
+
+void k_tcsetpid(pid_t pid) {
+    scheduler_state->terminal_controlling_pid = pid;
+}
+
+pid_t k_tcgetpid() {
+    return scheduler_state->terminal_controlling_pid;
 }
