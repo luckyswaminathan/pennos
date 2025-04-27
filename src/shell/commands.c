@@ -110,7 +110,6 @@ void* zombify(void* arg) {
 
     // Spawn the child process
     s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
-    s_get_process_info();
     while(1) {  
     };
     s_exit(0);
