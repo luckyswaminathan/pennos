@@ -220,14 +220,21 @@ void s_sleep(unsigned int ticks) {
         return; // Cannot sleep if not a process
     }
 
-    // Call kernel sleep function
     if (k_sleep(current, ticks)) {
         // If kernel successfully put process to sleep, yield the CPU
         spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
-         k_fprintf_short(STDERR_FILENO, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
-         // Kernel function failed, maybe log error? Proceed without yielding.
+        k_fprintf_short(STDERR_FILENO, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
+        // Kernel function failed, maybe log error? Proceed without yielding.
+    }
+
+
+
+    // Call kernel sleep function
+    // support re-entrancy
+    while (k_resume_sleep(current)) {
+        spthread_suspend_self();
     }
 }
 

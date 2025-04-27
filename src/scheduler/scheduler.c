@@ -248,10 +248,10 @@ void _update_blocked_processes()
         // Case 1: Process was sleeping and has now woken up
         if (process->sleep_time > 0)
         {
-           
             process->sleep_time -= 0.1;
             if (process->sleep_time <= 0)
             {
+                printf("Process %d is sleeping for %f ticks\n", process->pid, process->sleep_time);
                 unblock_process(process);
             }
         }
@@ -593,7 +593,9 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
     block_process(scheduler_state->current_process);
     spthread_suspend_self();
     k_log("Blocked\n");
-    k_log("Status %d\n", *wstatus);
+    if (wstatus != NULL) {
+        k_log("Status %d\n", *wstatus);
+    }
 
     // Wait for the child to finish
     k_log("Child finished\n");
@@ -601,7 +603,9 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
 
     // TODO: actually cleanup/free the child
 
-    *wstatus = child->exit_status;
+    if (wstatus != NULL) {
+        *wstatus = child->exit_status;
+    }
     // Unblock the parent process
     // unblock_process(scheduler_state->current_process);
 }
@@ -706,7 +710,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         scheduler_state->current_process->waited_child = pid;
 
         if (child == NULL) {
-            return -1; // No such process
+            return E_PID_NOT_FOUND; // No such process
         }
         k_log("Child found with pid %d\n", child->pid);
         
@@ -989,6 +993,29 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     //k_proc_exit(process, 0);
     return true;
 }
+
+/**
+ * @brief Puts the calling process to sleep for a specified number of ticks.
+ * The process is blocked, and sleep_time is set.
+ * Caller should likely call k_yield() after this.
+ * @param process The process to put to sleep.
+ * @param ticks The number of ticks to sleep (must be > 0).
+ * @return true on success, false if process is NULL or sleep time left is 0
+ */
+bool k_resume_sleep(pcb_t* process) {
+    if (!process) {
+        return false;
+    }
+    if (process->sleep_time <= 0) {
+        return false;
+    } 
+    // k_block_process handles removing from active queue and adding to blocked queue,
+    // and sets state to PROCESS_BLOCKED.
+    block_process(process); 
+    //k_proc_exit(process, 0);
+    return true;
+}
+
 
 void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
