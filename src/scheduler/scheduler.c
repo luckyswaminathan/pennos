@@ -695,6 +695,8 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Need to wait for any child to terminate
         // Block parent until a child terminate
         block_process(scheduler_state->current_process);
+
+        spthread_suspend_self();
         
         // Parent will be unblocked when a child terminates and becomes zombie
         // After unblocking, recursively call waitpid to find and reap the zombie
