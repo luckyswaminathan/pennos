@@ -14,25 +14,30 @@
 #include "../scheduler/sys.h"
 #include "commands.h"
 #include "src/pennfat/fat.h"
+#include <string.h>
 
 jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
+    s_ignore_sigint(true);
+    s_ignore_sigtstp(true);
     while (true) {
         display_prompt();
      
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-        // Error handling
-        if (ret == -1) {
-            exit(0);
-        } else if (ret == -2) {
+
+        if (ret < 0) {
+            s_logout();
+            continue;
+        } else if (ret == -2) {  
             if (errno == EINTR) {
                 continue;
             }
-            perror("Error reading command");
-            exit(1);
+            char* error_message = "Error reading command\n";
+            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            continue;
         }
 
         // Empty command, try again
@@ -67,9 +72,6 @@ static void* shell_loop(void* arg) {
             // status is already J_RUNNING_FG
             add_foreground_job(job_ptr);
 
-            // TODO: remove
-            handle_jobs();
-
             execute_job(job_ptr); 
             // Only destroy the job if it wasn't stopped
             if (job_ptr->status != J_STOPPED) {
@@ -93,7 +95,8 @@ static void* shell_loop(void* arg) {
  */
 static void* init_process(void* arg) {
     // Spawn shell process
-    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    pid_t pid =s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    s_tcsetpid(pid);
 
     // Consume any zombies
     int wstatus;
@@ -110,16 +113,14 @@ int main(int argc, char **argv) {
 
     // First ignore signals
     ignore_signals();
-    
-    // Initialize shell's process group
-    init_shell_pgid();
 
     // Initialize logger and scheduler
     init_logger("scheduler.log");
     init_scheduler();
 
     // Spawn init process
-    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    k_tcsetpid(pid);
     printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers

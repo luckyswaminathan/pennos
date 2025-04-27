@@ -11,9 +11,6 @@
 // Global shell PID/PGID
 extern pid_t shell_pgid;
 
-// Add initialization function
-void init_shell_pgid(void);
-
 /**
  * @brief Handler for SIGSTOP signals
  * When a SIGALRM is received and there's a child process,
@@ -32,7 +29,7 @@ int setup_alarm_handler(void);
  * When a signal is received and there's a foreground job,
  * stops the job and adds it to the background jobs list
  */
-void job_control_handler(int sig);
+void pennos_signal_handler(int sig);
 
 /**
  * @brief Sets up handlers for SIGINT (Ctrl-C) and SIGTSTP (Ctrl-Z)

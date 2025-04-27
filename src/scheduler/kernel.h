@@ -114,3 +114,10 @@ bool k_set_priority(pcb_t* process, int priority);
  * @return true on success, false if process is NULL or ticks is 0.
  */
 bool k_sleep(pcb_t* process, unsigned int ticks);
+
+/**
+ * @brief Sets a flag to indicate that the logout command has been issued
+ * and the scheduler should exit. Since this only signals the scheduler to exit,
+ * it is not guaranteed to exit immediately.
+ */
+void k_logout();

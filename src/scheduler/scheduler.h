@@ -77,6 +77,11 @@ struct pcb_st {
     process_state state;
     pid_t waited_child;
 
+    // Signal handling
+    bool ignore_sigint;
+    bool ignore_sigtstp;
+
+
     // Process priority
     priority_t priority;
     double sleep_time;
@@ -111,6 +116,9 @@ typedef struct scheduler {
 
     // Process count
     unsigned int process_count;
+
+    // Process with terminal control
+    pid_t terminal_controlling_pid;
 } scheduler_t;
 
 extern scheduler_t* scheduler_state;
@@ -149,5 +157,7 @@ pcb_t* get_process_by_pid(pid_t pid);
 void k_toggle_logging();
 void k_print_ps_output();
 void k_log(const char *format, ...);
+void k_tcsetpid(pid_t pid);
+pid_t k_tcgetpid();
 
 #endif

@@ -41,9 +41,9 @@ void handle_jobs() {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
-    fprintf(stderr, "[%lu] ", node->job->id);
+    s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
     print_job_command(node->job);
-    fprintf(stderr, "\n");
+    s_fprintf_short(STDERR_FILENO, "\n");
     node = linked_list_next(node);
   }
 }
