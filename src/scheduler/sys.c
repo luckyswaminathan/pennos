@@ -110,6 +110,7 @@ int s_kill(pid_t pid, int signal) {
     bool success = false;
     switch (signal) {
         case P_SIGINT:
+            log_signaled(target->pid, target->priority, target->command);
             if (target->ignore_sigint) {
                 return 0;
             }

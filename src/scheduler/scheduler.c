@@ -197,7 +197,6 @@ int k_add_to_ready_queue(pcb_t *process)
     
     // Use the linked list macro to add to the tail of the correct priority queue
     k_log("Adding process PID %d to priority queue %d\n", process->pid, process->priority);
-    log_schedule(process->pid, process->priority, process->command ? process->command : "<?>");
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
     return 0;
@@ -358,11 +357,10 @@ void _run_next_process()
     scheduler_state->current_process = process;
 
     // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
-    log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
+    log_schedule(process->pid, process->priority, process->command ? process->command : "<?>");
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
-    log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
 
     // Consume a quantum
     quantum++;
@@ -719,7 +717,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             if (wstatus != NULL) {
                 *wstatus = W_EXITED;
             }
-            
+            log_zombie(child->pid, child->priority, child->command ? child->command : "<?>");
             // Remove from zombie queue and children list
             remove_from_children_list(scheduler_state->current_process, child);
             linked_list_remove(&scheduler_state->zombie_queue, child);
@@ -797,6 +795,7 @@ int k_proc_exit(pcb_t *process, int exit_status) {
      // If it's the current process, the scheduler loop needs to handle not running it again.
      k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
+     log_zombie(process->pid, process->priority, process->command);
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
 
      // NOTE: The actual thread *must* have exited its main function before this is called.
@@ -866,6 +865,7 @@ bool k_stop_process(pcb_t *process) {
     }
     // Remove from active queue (or current)
     bool removed = false;
+    log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
 
     removed = k_remove_from_active_queue(process); 
     if (removed) {
@@ -887,7 +887,7 @@ bool k_continue_process(pcb_t *process) {
     if (!process || process->state != PROCESS_STOPPED) {
         return false;
     }
-
+    log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
     // Manual removal from stopped queue
     bool removed = false;
     pcb_t* current = scheduler_state->stopped_queue.head;
