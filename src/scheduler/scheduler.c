@@ -495,11 +495,6 @@ void block_process(pcb_t *process)
     process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
-
-    pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
-    while (curr != NULL) {
-        curr = curr->next;
-    }
 }
 
 /**
@@ -628,6 +623,59 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
 #define W_EXITED 1
 #define W_STOPPED 2
 
+pid_t k_wait_for_any_child(pcb_t* process, int* wstatus, bool nohang) {
+    scheduler_state->current_process->waited_child = -1;
+    child_process_t* child = scheduler_state->current_process->children->head;
+    child_process_t* zombie_child = NULL;
+
+    // First pass: look for zombies and stopped children
+    while (child != NULL) {
+        child_process_t* next = child->next; // Save next pointer as we might remove child
+        
+        // TODO: this is a bit duplicated
+        if (child->process->state == PROCESS_ZOMBIED) {
+            // Found a zombie, collect its status
+            zombie_child = child;
+            if (wstatus != NULL) {
+                *wstatus = W_EXITED;
+            }
+            
+            // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
+            linked_list_remove(scheduler_state->current_process->children, zombie_child);
+            linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
+            
+            pid_t result = zombie_child->process->pid;
+            return result;
+        } else if (child->process->state == PROCESS_STOPPED) {
+            if (wstatus != NULL) {
+                *wstatus = W_STOPPED;
+            }
+            // do nothing else because it should already be in the stopped queue
+            return child->process->pid;
+        }
+        child = next;
+    }
+    
+    // No zombies found
+    if (scheduler_state->current_process->children->head == NULL) {
+        // No children at all
+        fprintf(stderr, "current process head is null\n");
+        return -1;
+    }
+    
+    if (nohang) {
+        // Have children, but none are zombies and nohang is true
+        return 0;
+    }
+    
+    // Need to wait for any child to terminate
+    // Block parent until a child terminate
+    if (scheduler_state->current_process->state != PROCESS_BLOCKED) {
+        block_process(scheduler_state->current_process);
+    }
+    return -1;
+}
+
 /**
  * @brief Wait on a child of the calling process, until it changes state.
  * If `nohang` is true, this will not block the calling process and return immediately.
@@ -640,64 +688,16 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
  * @return pid_t The process ID of the child which has changed state on success, -1 on error.
  */
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    log_waited(pid, scheduler_state->current_process->priority, scheduler_state->current_process->command ? scheduler_state->current_process->command : "<?>");
     if (!scheduler_state || !scheduler_state->current_process) {
         return -1;
     }
     if (pid == -1) {
-        // Wait for any child process
-        scheduler_state->current_process->waited_child = -1;
-        child_process_t* child = scheduler_state->current_process->children->head;
-        child_process_t* zombie_child = NULL;
-
-
-
-        // First pass: look for zombies and stopped children
-        while (child != NULL) {
-            child_process_t* next = child->next; // Save next pointer as we might remove child
-            
-            // TODO: this is a bit duplicated
-            if (child->process->state == PROCESS_ZOMBIED) {
-                // Found a zombie, collect its status
-                zombie_child = child;
-                if (wstatus != NULL) {
-                    *wstatus = W_EXITED;
-                }
-                
-                // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
-                linked_list_remove(scheduler_state->current_process->children, zombie_child);
-                linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
-                
-                pid_t result = zombie_child->process->pid;
-                return result;
-            } else if (child->process->state == PROCESS_STOPPED) {
-                if (wstatus != NULL) {
-                    *wstatus = W_STOPPED;
-                }
-                // do nothing else because it should already be in the stopped queue
-                return child->process->pid;
-            }
-            child = next;
+        pid_t result = -1;
+        while (result == -1) {
+            result = k_wait_for_any_child(scheduler_state->current_process, wstatus, nohang);
         }
-        
-        // No zombies found
-        if (scheduler_state->current_process->children->head == NULL) {
-            // No children at all
-            fprintf(stderr, "current process head is null\n");
-            return -1;
-        }
-        
-        if (nohang) {
-            // Have children, but none are zombies and nohang is true
-            return 0;
-        }
-        
-        // Need to wait for any child to terminate
-        // Block parent until a child terminate
-        block_process(scheduler_state->current_process);
-        
-        // Parent will be unblocked when a child terminates and becomes zombie
-        // After unblocking, recursively call waitpid to find and reap the zombie
-        return k_waitpid(-1, wstatus, false);
+        return result;
     } else {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
@@ -837,24 +837,6 @@ pcb_t* k_get_current_process(void) {
 }
 
 /**
- * @brief Voluntarily yields the CPU to the scheduler.
- *
- * Allows the scheduler to run other processes. The calling process will be
- * paused and resumed later according to the scheduling policy.
- * Placeholder implementation: Suspends the calling thread until the next
- * scheduler timer interrupt (SIGALRM).
- */
-void k_yield(void) {
-    // In a real kernel, this would directly invoke the scheduler's context
-    // switching logic.
-    // Here, we mimic yielding by suspending until the next SIGALRM, 
-    // which triggers the scheduler loop externally.
-    extern sigset_t suspend_set; // Defined static in scheduler.c
-    sigsuspend(&suspend_set);
-    // Execution resumes here after SIGALRM is handled
-}
-
-/**
  * @brief Stops a process, moving it to the stopped queue.
  * Removes the process from active queues and sets its state.
  * @param process The process to stop.
@@ -967,7 +949,6 @@ bool k_set_priority(pcb_t* process, int priority) {
 /**
  * @brief Puts the calling process to sleep for a specified number of ticks.
  * The process is blocked, and sleep_time is set.
- * Caller should likely call k_yield() after this.
  * @param process The process to put to sleep.
  * @param ticks The number of ticks to sleep (must be > 0).
  * @return true on success, false if process is NULL or ticks is 0.
