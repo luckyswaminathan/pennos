@@ -27,8 +27,12 @@
  */
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
 
-#define W_EXITED 1
-#define W_STOPPED 2
+bool P_WIFEXITED(int wstatus);
+bool P_WIFSTOPPED(int wstatus);
+bool P_WIFSIGNALED(int wstatus);
+
+#define W_EXITED 1 // 0b1
+#define W_STOPPED 2 // 0b10
 
 /**
  * @brief Wait on a child of the calling process, until it changes state.

@@ -87,18 +87,11 @@ void execute_job(job* job)
     if (job->status == J_RUNNING_FG) {   
         int status;
         s_waitpid(pid, &status, false);
-        
-        // TODO: don't love putting this logic here
-        // Since we handle the signals in the child, we can't directly check for WIFSTOPPED. Instead, we exit with a sentinel
-        // status code from the child.
-        if (WIFEXITED(status) && WEXITSTATUS(status) == CHILD_STOPPED_EXIT_STATUS) {
+        if (P_WIFSTOPPED(status)) {
             job->status = J_STOPPED;
             remove_foreground_job(job);
             enqueue_job(job);
         }
-
-        // Use global shell_pgid
-        // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
     } else if (job->status == J_RUNNING_BG) {
         return;
     }

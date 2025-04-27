@@ -58,6 +58,17 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1) {
     return new_pid;
 }
 
+bool P_WIFEXITED(int wstatus) {
+    return (wstatus & 1);
+}
+
+bool P_WIFSTOPPED(int wstatus) {
+    return (wstatus & 2);
+}
+
+bool P_WIFSIGNALED(int wstatus) {
+    return (wstatus & 4);
+}
 
 /**
  * @brief Wait on a child of the calling process, until it changes state (zombies).
