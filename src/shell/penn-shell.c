@@ -22,6 +22,8 @@ static void* shell_loop(void* arg) {
     s_ignore_sigint(true);
     s_ignore_sigtstp(true);
     while (true) {
+        while (s_waitpid(-1, NULL, true) > 0) {}
+
         display_prompt();
      
         struct parsed_command *parsed_command = NULL;
