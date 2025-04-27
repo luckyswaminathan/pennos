@@ -285,7 +285,6 @@ void unblock_parents(pcb_t *process) {
             if (k_tcgetpid() == process->pid) {
                 k_tcsetpid(blocked_ptr->pid);
             }
-            k_get_all_process_info();
             break;
         }
         blocked_ptr = blocked_ptr->next;
@@ -562,6 +561,17 @@ pcb_t* k_get_process_by_pid(pid_t pid)
         }
         process = process->next;
     }
+    process = scheduler_state->zombie_queue.head;
+    while (process != NULL)
+    {
+        if (process->pid == pid)
+        {
+            return process;
+        }
+        process = process->next;
+    }
+
+    fprintf(stderr, "k_get_process_by_pid: pid = %d not found\n", pid);
     // NOTE: Intentionally not checking zombie queue here. 
     // Use k_get_process_by_pid_including_zombies if needed.
     return NULL; 
@@ -588,9 +598,6 @@ void block_and_wait(scheduler_t *scheduler_state, pcb_t *process, pcb_t *child, 
 
     // Wait for the child to finish
     k_log("Child finished\n");
-    k_get_all_process_info();
-
-    k_get_all_process_info();
     // Mark child as zombie and add to zombie queue
 
     // TODO: actually cleanup/free the child
@@ -646,7 +653,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // First pass: look for zombies and stopped children
         while (child != NULL) {
             child_process_t* next = child->next; // Save next pointer as we might remove child
-            
+
             // TODO: this is a bit duplicated
             if (child->process->state == PROCESS_ZOMBIED) {
                 // Found a zombie, collect its status
@@ -654,19 +661,19 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 if (wstatus != NULL) {
                     *wstatus = W_EXITED;
                 }
+
+                log_waited(zombie_child->process->pid, zombie_child->process->priority, zombie_child->process->command ? zombie_child->process->command : "<?>");
                 
                 // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
                 linked_list_remove(scheduler_state->current_process->children, zombie_child);
                 linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
 
-                log_waited(zombie_child->process->pid, zombie_child->process->priority, zombie_child->process->command ? zombie_child->process->command : "<?>");
                 pid_t result = zombie_child->process->pid;
                 return result;
             } else if (child->process->state == PROCESS_STOPPED) {
                 if (wstatus != NULL) {
                     *wstatus = W_STOPPED;
                 }
-
                 log_waited(child->process->pid, child->process->priority, child->process->command ? child->process->command : "<?>");
                 // do nothing else because it should already be in the stopped queue
                 return child->process->pid;
@@ -677,13 +684,11 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // No zombies found
         if (scheduler_state->current_process->children->head == NULL) {
             // No children at all
-            fprintf(stderr, "current process head is null\n");
             return -1;
         }
         
         if (nohang) {
             // Have children, but none are zombies and nohang is true
-            log_waited(scheduler_state->current_process->pid, scheduler_state->current_process->priority, scheduler_state->current_process->command ? scheduler_state->current_process->command : "<?>");
             return 0;
         }
         
@@ -699,8 +704,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
 
-        log_waited(pid, child->priority, child->command ? child->command : "<?>");
-        
         if (child == NULL) {
             return -1; // No such process
         }
@@ -717,53 +720,56 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             if (wstatus != NULL) {
                 *wstatus = W_EXITED;
             }
-            log_zombie(child->pid, child->priority, child->command ? child->command : "<?>");
             // Remove from zombie queue and children list
             remove_from_children_list(scheduler_state->current_process, child);
             linked_list_remove(&scheduler_state->zombie_queue, child);
             
             pid_t result = child->pid;
+            log_waited(result, child->priority, child->command ? child->command : "<?>");
             return result;
         } else if (child->state == PROCESS_STOPPED) {
             if (wstatus != NULL) {
                 *wstatus = W_STOPPED;
             }
             // do nothing else because it should already be in the stopped queue
+            log_waited(child->pid, child->priority, child->command ? child->command : "<?>");
             return child->pid;
         }
         
         if (nohang) {
             // Child exists but isn't zombie, and nohang is true
+            log_waited(child->pid, child->priority, child->command ? child->command : "<?>");
             return 0;
         }
         
         // Need to wait for specific child to terminate
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
-        k_get_all_process_info();
+
+        return k_waitpid(child->pid, wstatus, false);
         
         // TODO: this is a bit duplicated
-        if (child->state == PROCESS_ZOMBIED) {
-            // Process is zombie, collect its status
-            if (wstatus != NULL) {
-                *wstatus = W_EXITED;
-            }
+        // if (child->state == PROCESS_ZOMBIED) {
+        //     // Process is zombie, collect its status
+        //     if (wstatus != NULL) {
+        //         *wstatus = W_EXITED;
+        //     }
             
-            // Remove from zombie queue and children list
-            remove_from_children_list(scheduler_state->current_process, child);
-            linked_list_remove(&scheduler_state->zombie_queue, child);
+        //     // Remove from zombie queue and children list
+        //     remove_from_children_list(scheduler_state->current_process, child);
+        //     linked_list_remove(&scheduler_state->zombie_queue, child);
             
-            pid_t result = child->pid;
-            return result;
-        } else if (child->state == PROCESS_STOPPED) {
-            if (wstatus != NULL) {
-                *wstatus = W_STOPPED;
-            }
-            // do nothing else because it should already be in the stopped queue
-            return child->pid;
-        }
+        //     pid_t result = child->pid;
+        //     return result;
+        // } else if (child->state == PROCESS_STOPPED) {
+        //     if (wstatus != NULL) {
+        //         *wstatus = W_STOPPED;
+        //     }
+        //     // do nothing else because it should already be in the stopped queue
+        //     return child->pid;
+        // }
         
-        pid_t result = child->pid;
-        return result;
+        // pid_t result = child->pid;
+        // return result;
     }
 }
 
@@ -1030,10 +1036,6 @@ int k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
  * Status codes: R (Running), B (Blocked), S (Stopped), Z (Zombie).
  */
 void k_get_all_process_info() {
-
-    if (!extra_logging_enabled || !scheduler_state) {
-        return;
-    }
 
     // Print header once
     char* header = "PID PPID PRI STAT CMD\n";

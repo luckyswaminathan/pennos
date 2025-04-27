@@ -102,6 +102,13 @@ void log_orphan(pid_t pid, int nice_value, const char* process_name) {
     }
 }
 
+/**
+ * @brief Log a process that has been waited on
+ * 
+ * @param pid The PID of the process that has been waited on
+ * @param nice_value The nice value of the process that has been waited on
+ * @param process_name The name of the process that has been waited on
+ */
 void log_waited(pid_t pid, int nice_value, const char* process_name) {
     if (!log_file) {
         log_file = stderr;

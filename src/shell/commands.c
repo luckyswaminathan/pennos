@@ -126,10 +126,6 @@ void* orphan_child(void* arg) {
 }
 
 void* orphanify(void* arg) {
-    pcb_t* current_process = s_get_current_process(); // Use the syscall wrapper
-    if (current_process) { // Check if the call succeeded
-        log_orphan(current_process->pid, current_process->priority, current_process->command ? current_process->command : "<?>");
-    }
     s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_exit(0);
     return NULL;

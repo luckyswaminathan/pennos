@@ -97,12 +97,17 @@ static void* shell_loop(void* arg) {
  */
 static void* init_process(void* arg) {
     // Spawn shell process
-    pid_t pid =s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    pid_t pid = s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
     s_tcsetpid(pid);
 
     // Consume any zombies
     int wstatus;
-    while (s_waitpid(-1, &wstatus, true) > 0) {}
+    pid_t result;
+    while (true) {
+        while ((result = s_waitpid(-1, &wstatus, true)) > 0) {
+            fprintf(stderr, "result = %d\n", result);
+        }
+    }
 
     return NULL;
 }
