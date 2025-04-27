@@ -11,6 +11,7 @@
 #include "../scheduler/spthread.h"
 #include "src/pennfat/fat_constants.h"
 #include "jobs.h"
+#include "stress.h"
 #define BUFFER_SIZE 256
 
 // Helper function specific to ps command within this file
@@ -556,6 +557,12 @@ void* mv(void* arg) {
     return NULL;
 }
 
+void* hang_helper(void* arg) {
+    s_exit(0);
+    return NULL;
+}
+
+
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
     
@@ -620,6 +627,18 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "jobs") == 0) {
         return jobs_command(ctx);
+    }
+    if (strcmp(ctx[0], "hang") == 0) {
+        return hang(ctx);
+    }
+    if (strcmp(ctx[0], "nohang") == 0) {
+        return nohang(ctx);
+    }
+    if (strcmp(ctx[0], "recur") == 0) {
+        return recur(ctx);
+    }
+    if (strcmp(ctx[0], "crash") == 0) {
+        return crash(ctx);
     }
     s_exit(0);
     return NULL;

@@ -451,14 +451,13 @@ static bool k_remove_from_active_queue(pcb_t *process) {
 void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
-    k_log("Blocking process with pid %d\n", process->pid);
+    //k_log("Blocking process with pid %d\n", process->pid);
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
     process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
-    k_log("Post push tail\n");
 
     pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
     while (curr != NULL) {
@@ -603,15 +602,21 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
  * @return pid_t The process ID of the child which has changed state on success, -1 on error.
  */
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    if (!scheduler_state || !scheduler_state->current_process) {
+        return -1;
+    }
     if (pid == -1) {
         // Wait for any child process
         scheduler_state->current_process->waited_child = -1;
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
-        
+
+
+
         // First pass: look for zombies
         while (child != NULL) {
             child_process_t* next = child->next; // Save next pointer as we might remove child
+            
             
             if (child->process->state == PROCESS_ZOMBIED) {
                 // Found a zombie, collect its status
@@ -627,13 +632,13 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 pid_t result = zombie_child->process->pid;
                 return result;
             }
-            
             child = next;
         }
         
         // No zombies found
         if (scheduler_state->current_process->children->head == NULL) {
             // No children at all
+            fprintf(stderr, "current process head is null\n");
             return -1;
         }
         
@@ -643,7 +648,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for any child to terminate
-        // Block parent until a child terminates
+        // Block parent until a child terminate
         block_process(scheduler_state->current_process);
         
         // Parent will be unblocked when a child terminates and becomes zombie
@@ -654,11 +659,12 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
-        k_log("Child found with pid %d\n", child->pid);
+        
         
         if (child == NULL) {
             return -1; // No such process
         }
+        k_log("Child found with pid %d\n", child->pid);
         
         // If the process is not a child of the calling process, return -1
         if (child->ppid != scheduler_state->current_process->pid) {
