@@ -215,3 +215,8 @@ void s_sleep(unsigned int ticks) {
 void s_get_process_info() {
     k_get_all_process_info();
 }
+
+// s_function to get the current process
+pcb_t* s_get_current_process() {
+    return k_get_current_process();
+}

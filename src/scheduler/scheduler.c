@@ -602,8 +602,6 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
     if (pid == -1) {
         // Wait for any child process
-        // TODO: We need to comment back the fprint since we're not actually logging anything rn
-        log_waited(scheduler_state->current_process->pid, scheduler_state->current_process->priority, scheduler_state->current_process->command);
         scheduler_state->current_process->waited_child = -1;
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
@@ -651,7 +649,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
     } else {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
-        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         scheduler_state->current_process->waited_child = pid;
         
         if (child == NULL) {
@@ -683,7 +680,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
-
+        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
         k_get_all_process_info();
         

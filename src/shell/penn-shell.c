@@ -24,7 +24,7 @@ static void* shell_loop(void* arg) {
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-
+        // Error handling
         if (ret == -1) {
             exit(0);
         } else if (ret == -2) {  
@@ -35,8 +35,9 @@ static void* shell_loop(void* arg) {
             exit(1);
         }
 
+        // Empty command, try again
         if (parsed_command == NULL) {
-            continue;  // Empty command, try again
+            continue;
         }
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
             free(parsed_command);
