@@ -74,6 +74,15 @@ bool k_unblock_process(pcb_t *process);
 int k_proc_exit(pcb_t *process, int exit_status);
 
 /**
+ * @brief Voluntarily yields the CPU to the scheduler.
+ *
+ * Allows the scheduler to run other processes. The calling process will be 
+ * paused and resumed later according to the scheduling policy.
+ * This is a placeholder implementation relying on signal suspension.
+ */
+void k_yield(void);
+
+/**
  * @brief Stops a process, moving it to the stopped queue.
  * @param process The process to stop.
  * @return true on success, false if process not found or already stopped.

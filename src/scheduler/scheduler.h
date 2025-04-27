@@ -142,6 +142,7 @@ int k_add_to_ready_queue(pcb_t* process);
 bool k_block_process(pcb_t* process);
 bool k_unblock_process(pcb_t* process);
 int k_proc_exit(pcb_t* process, int exit_status);
+void k_yield(void);
 bool k_stop_process(pcb_t* process);
 bool k_continue_process(pcb_t* process);
 bool k_set_priority(pcb_t* process, int priority);
