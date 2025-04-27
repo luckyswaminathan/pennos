@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <wait.h>
 #include "./exiting_signal.h"
-#include "./print.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "./Job.h"
@@ -67,7 +66,7 @@ void execute_job(job* job)
     }
 
     pid_t pid = s_spawn((void* (*)(void*)) execute_command, argv, stdin_fd, stdout_fd, PRIORITY_MEDIUM);
-    if (pid == -1)
+    if (pid < 0)
     {
         perror("Failed to spawn command");
         exit(EXIT_FAILURE);

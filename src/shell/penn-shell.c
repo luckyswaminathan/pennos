@@ -19,21 +19,7 @@ jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
     while (true) {
-        display_prompt();  
-
-        // while (true) {
-        //     pid_t dead_pid = s_waitpid(-1, NULL, true);
-        //     if (dead_pid == -1 && errno != ECHILD) {
-        //         perror("Failed to wait for background jobs");
-        //         exit(EXIT_FAILURE);
-        //     }
-
-        //     if (dead_pid == 0 || (dead_pid == -1 && errno == ECHILD)) {
-        //         break;
-        //     }
-
-        //     remove_job_by_pid(dead_pid);
-        // }
+        display_prompt();
      
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
@@ -138,8 +124,6 @@ int main(int argc, char **argv) {
     
     // Finally set up the job control handlers
     setup_job_control_handlers();
-
-    printf("Shell PID/PGID: %d; getpid(): %d\n", shell_pgid, getpid());
 
     run_scheduler();
 

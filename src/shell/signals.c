@@ -30,12 +30,7 @@ void job_control_handler(int sig) {
     // Get the actual foreground job's PGID
     job* job = get_jobs_head();
     if (job && job->pids && job->status == J_RUNNING_FG) {
-        pid_t fg_pgid = job->pids[0];
-        fprintf(stderr, "Foreground job PGID: %d\n", fg_pgid);
-        
         if (sig == SIGTSTP) {
-            printf("SIGTSTP: getpid(): %d\n", getpid());
-            
             // Use PennOS s_stop instead of real kill system call
             s_kill(scheduler_state->current_process->pid, P_SIGSTOP);
             

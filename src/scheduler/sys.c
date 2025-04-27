@@ -5,12 +5,12 @@
 #include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
+#include <stdio.h>
 #include <stdlib.h> // For NULL
 #include <string.h> // For strcmp etc. if needed
 #include <signal.h> // For signal definitions (SIGTERM, SIGSTOP, SIGCONT)
-#include <stdio.h>  // For fprintf
 #include <unistd.h> // For _exit? No, use spthread_exit or infinite loop.
-
+#include "src/utils/error_codes.h"
 // Forward declaration for the scheduler function (to be implemented later)
 void run_scheduler(); 
 
@@ -34,7 +34,8 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1, priority_t p
     // k_proc_create returns -1 on error, so we can return that directly.
     if (new_pid < 0) {
         // Optionally log the error at the syscall level if desired
-        fprintf(stderr, "s_spawn: Failed to create process.\n");
+        k_fprintf_short(STDERR_FILENO, "s_spawn: Failed to create process.\n");
+        return new_pid;
     }
     
     if (parent != NULL) { // TODO: ideally we should handle this more gracefully so we don't have duplicate checks in k_proc_create and s_spawn
@@ -84,12 +85,12 @@ pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
 int s_kill(pid_t pid, int signal) {
     // Find the target process using the kernel helper
     pcb_t* target = k_get_process_by_pid(pid);
-    fprintf(stderr,"pid: %d\n", pid);
-    fprintf(stderr,"signal: %d\n", signal);
-    fprintf(stderr, "current process pid %d\n", scheduler_state->current_process->pid);
     if (!target) {
-        fprintf(stderr, "s_kill: Process PID %d not found.\n", pid);
-        return -1; // ESRCH (No such process)
+        return E_NO_SUCH_PROCESS;
+    }
+
+    if (pid == 1) {
+        return E_TRIED_TO_KILL_INIT;
     }
 
     bool success = false;
@@ -97,26 +98,18 @@ int s_kill(pid_t pid, int signal) {
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
-            
-            if (target->pid != 1) {
-                fprintf(stdout, "s_kill: Sending SIGTERM to PID %d\n", pid);
-                k_proc_exit(target, 1); // Using status 1 for killed by signal
-            }
-            success = true; // k_proc_exit doesn't return status, assume success if target found
+            return k_proc_exit(target, 1); // Using status 1 for killed by signal
             break;
 
         case P_SIGSTOP:
             // Stop the process
-            fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
             if (target->pid != 1) {
-                fprintf(stdout, "s_kill: Sending SIGSTOP to PID %d\n", pid);
                 success = k_stop_process(target);
             }
             break;
 
         case P_SIGCONT:
             // Continue a stopped process
-            fprintf(stdout, "s_kill: Sending SIGCONT to PID %d\n", pid);
             if (target->pid != 1) {
                 success = k_continue_process(target);
             }
@@ -125,8 +118,7 @@ int s_kill(pid_t pid, int signal) {
         // Add cases for other signals as needed (SIGINT, SIGHUP, etc.)
 
         default:
-            fprintf(stderr, "s_kill: Signal %d not supported.\n", signal);
-            return -1; // EINVAL (Invalid argument)
+            return E_INVALID_ARGUMENT;
     }
 
     return success ? 0 : -1;

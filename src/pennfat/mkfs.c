@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 
 int mkfs(char *fs_name, uint8_t blocks_in_fat, uint8_t block_size_config)
 {
@@ -39,8 +38,6 @@ int mkfs(char *fs_name, uint8_t blocks_in_fat, uint8_t block_size_config)
 	int fs_fd = open(fs_name, O_CREAT | O_EXCL | O_WRONLY, 0644);
 	if (fs_fd < 0)
 	{
-		perror("open failed in mkfs");
-		fprintf(stderr, "Attempted to open file: %s\n", fs_name);
 		return EMKFS_OPEN_FAILED;
 	}
 
