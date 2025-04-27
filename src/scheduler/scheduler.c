@@ -683,7 +683,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // No zombies found
         if (scheduler_state->current_process->children->head == NULL) {
             // No children at all
-            fprintf(stderr, "current process head is null\n");
             return -1;
         }
         
