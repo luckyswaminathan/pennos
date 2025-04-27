@@ -160,4 +160,6 @@ void k_log(const char *format, ...);
 void k_tcsetpid(pid_t pid);
 pid_t k_tcgetpid();
 
+bool k_resume_sleep(pcb_t* process);
+
 #endif

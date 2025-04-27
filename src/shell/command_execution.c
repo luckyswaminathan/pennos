@@ -34,16 +34,7 @@ void execute_job(job* job)
     struct parsed_command* parsed_command = job->cmd;
     validate_command(parsed_command);
     
-    // No need to store shell's PGID locally anymore
     
-    // Allocate space for PIDs
-    job->pids = malloc(sizeof(pid_t) * parsed_command->num_commands);
-    if (!job->pids) {
-        char* error_message = "Failed to allocate PIDs array\n";
-        s_write(STDERR_FILENO, error_message, strlen(error_message));
-        return;
-    }
-
     char** argv = parsed_command->commands[0];
     int stdin_fd;
     if (parsed_command->stdin_file != NULL) {
@@ -59,7 +50,8 @@ void execute_job(job* job)
 
     int stdout_fd;
     if (parsed_command->stdout_file != NULL) {
-        stdout_fd = s_open(parsed_command->stdout_file, F_WRITE);
+        int mode = parsed_command->is_file_append ? F_APPEND : F_WRITE;
+        stdout_fd = s_open(parsed_command->stdout_file, mode);
         if (stdout_fd < 0) {
             char* error_message = "Failed to open stdout file\n";
             s_write(STDERR_FILENO, error_message, strlen(error_message));
@@ -70,12 +62,15 @@ void execute_job(job* job)
     }
 
     pid_t pid = s_spawn((void* (*)(void*)) execute_command, argv, stdin_fd, stdout_fd, PRIORITY_MEDIUM);
+    job->pid = pid;
+
+    // TODO: check if this error okay
     if (pid < 0)
     {
         char* error_message = "Failed to spawn command\n";
         s_write(STDERR_FILENO, error_message, strlen(error_message));
     }
-    job->pids[0] = pid;
+
     // Store the lead process ID
     // job->pids[0] = pid;
     // job->num_processes = parsed_command->num_commands;
