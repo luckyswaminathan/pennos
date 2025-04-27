@@ -58,6 +58,17 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1, priority_t p
     return new_pid;
 }
 
+bool P_WIFEXITED(int wstatus) {
+    return (wstatus & 1);
+}
+
+bool P_WIFSTOPPED(int wstatus) {
+    return (wstatus & 2);
+}
+
+bool P_WIFSIGNALED(int wstatus) {
+    return (wstatus & 4);
+}
 
 /**
  * @brief Wait on a child of the calling process, until it changes state (zombies).
@@ -71,6 +82,9 @@ pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1, priority_t p
  * @return pid_t The process ID of the zombied child on success, 0 if nohang and no child zombied, -1 on error.
  */
 pid_t s_waitpid(pid_t pid, int* wstatus, bool nohang) {
+    if (pid != -1 && !nohang) {
+        s_tcsetpid(pid); // try to pass the terminal control to the child process we will be blocked on
+    }
     return k_waitpid(pid, wstatus, nohang);
 }
 
@@ -95,12 +109,22 @@ int s_kill(pid_t pid, int signal) {
 
     bool success = false;
     switch (signal) {
+        case P_SIGINT:
+            if (target->ignore_sigint) {
+                return 0;
+            }
+            // fall through to P_SIGTERM
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
             return k_proc_exit(target, 1); // Using status 1 for killed by signal
             break;
 
+        case P_SIGTSTP:
+            if (target->ignore_sigtstp) {
+                return 0;
+            }
+            // fall through to P_SIGSTOP
         case P_SIGSTOP:
             // Stop the process
             if (target->pid != 1) {
@@ -214,6 +238,31 @@ void s_sleep(unsigned int ticks) {
 */
 void s_get_process_info() {
     k_get_all_process_info();
+}
+
+int s_tcsetpid(pid_t pid) {
+    if (k_tcgetpid() == k_get_current_process()->pid) {
+        k_tcsetpid(pid);
+    } else {
+        return E_TCSET_NO_TERMINAL_CONTROL;
+    }
+    return 0;
+}
+
+int s_ignore_sigint(bool ignore) {
+    pcb_t* current = k_get_current_process();
+    current->ignore_sigint = ignore;
+    return 0;
+}
+
+int s_ignore_sigtstp(bool ignore) {
+    pcb_t* current = k_get_current_process();
+    current->ignore_sigtstp = ignore;
+    return 0;
+}
+
+void s_logout() {
+    k_logout();
 }
 
 // s_function to get the current process

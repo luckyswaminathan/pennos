@@ -21,3 +21,5 @@ int s_ls(const char *filename);
 int s_chmod(const char *fname, uint8_t perm, int mode);
 
 int s_mv(const char *src, const char *dest);
+
+int s_fprintf_short(int fd, const char *format, ...);

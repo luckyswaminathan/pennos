@@ -1,6 +1,12 @@
 #include <stdint.h>
+#include <stdarg.h>
+#include <string.h>
+#include <stdio.h> // for vsnprintf
+
 #include "src/pennfat/fat.h"
 #include "src/scheduler/kernel.h"
+#include "src/utils/error_codes.h"
+#include "sys.h"
 
 #define PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL 0xFFFF
 
@@ -48,6 +54,7 @@ int s_open(const char *fname, int mode)
 }
 
 #define ES_READ_UNKNOWN_FD -101
+#define ES_READ_NO_TERMINAL_CONTROL -106
 
 int s_read(int fd, int n, char *buf)
 {
@@ -55,6 +62,12 @@ int s_read(int fd, int n, char *buf)
     if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
         return ES_READ_UNKNOWN_FD;
+    }
+
+    int global_fd = current_process->process_fd_table[fd].global_fd;
+    if (global_fd == STDIN_FD && k_tcgetpid() != current_process->pid) {        
+        k_fprintf_short(STDERR_FD, "[WARN]: process %d tried to read from terminal STDIN without terminal control\n", current_process->pid);
+        s_kill(current_process->pid, P_SIGSTOP);
     }
 
     // set the offset in the global fd table
@@ -67,12 +80,19 @@ int s_read(int fd, int n, char *buf)
 #define ES_WRITE_UNKNOWN_FD -102
 #define ES_SEEK_ERROR -103
 #define ES_SETMODE_ERROR -104
+#define ES_WRITE_NO_TERMINAL_CONTROL -105
 int s_write(int fd, const char *str, int n)
 {
     pcb_t *current_process = k_get_current_process();
     if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
         return ES_WRITE_UNKNOWN_FD;
+    }
+
+    int global_fd = current_process->process_fd_table[fd].global_fd;
+    if (global_fd == STDIN_FD && k_tcgetpid() != current_process->pid) {
+        k_fprintf_short(STDERR_FD, "[WARN]: process %d tried to write to terminal STDIN without terminal control\n", current_process->pid);
+        s_kill(current_process->pid, P_SIGSTOP);
     }
 
     // set the offset in the global fd table
@@ -133,4 +153,21 @@ int s_chmod(const char *fname, uint8_t perm, int mode)
 int s_mv(const char *src, const char *dest)
 {
     return k_mv(src, dest);
+}
+
+char S_FPRINTF_SHORT_BUF[1024];
+
+int s_fprintf_short(int fd, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int status = vsnprintf(S_FPRINTF_SHORT_BUF, sizeof(S_FPRINTF_SHORT_BUF), format, args);
+    va_end(args);
+    if (status < 0) {
+        return E_STR_FORMAT_FAILED;
+    }
+    if (status >= sizeof(S_FPRINTF_SHORT_BUF)) {
+        return E_STR_TOO_LONG_FOR_FPRINTF_BUF;
+    }
+    return s_write(fd, S_FPRINTF_SHORT_BUF, strlen(S_FPRINTF_SHORT_BUF));
 }
