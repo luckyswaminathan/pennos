@@ -251,7 +251,6 @@ void _update_blocked_processes()
             process->sleep_time -= 0.1;
             if (process->sleep_time <= 0)
             {
-                printf("Process %d is sleeping for %f ticks\n", process->pid, process->sleep_time);
                 unblock_process(process);
             }
         }

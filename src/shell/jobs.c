@@ -11,6 +11,7 @@
 #include <signal.h>  // For kill() and SIGCONT
 #include "../scheduler/sys.h"
 #include "../scheduler/logger.h"
+#include "../scheduler/fat_syscalls.h" // Added include
 
 typedef linked_list(job_ll_node) job_ll;
 
@@ -49,7 +50,6 @@ void print_job_command(job* job) {
       fprintf(stderr, "%s", command[j]);
     }
   }
-  fprintf(stderr, "\n");
 }
 
 /**
@@ -62,9 +62,10 @@ void handle_jobs() {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
-    // s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
+    fprintf(stderr, "[%lu] %s ", node->job->id, 
+            (node->job->status == J_RUNNING_BG) ? "Running" : "Stopped");
     print_job_command(node->job);
-    // s_fprintf_short(STDERR_FILENO, "\n");
+    fprintf(stderr, "\n");
     node = linked_list_next(node);
   }
 }
@@ -197,18 +198,14 @@ void handle_bg(struct parsed_command* cmd) {
     return;
   }
 
-  fprintf(stderr, "Resuming job %d\n", job->pid);
-
   job->status = J_RUNNING_BG;
-
-  fprintf(stderr, "Status changed\n");
 
   // Resume the job in the background
   s_kill(job->pid, P_SIGCONT);
 
-  fprintf(stderr, "Running: ");
+  fprintf(stderr, "[%lu] ", node->job->id);
   print_job_command(job);
-  fprintf(stderr, "\n");
+  fprintf(stderr, " &\n");
 }
 
 /**
@@ -360,7 +357,7 @@ void remove_job_by_pid(pid_t pid) {
     linked_list_remove(jobs, node);
 
     // TODO: Update to 
-    print_parsed_command(node->job->cmd);
+    // print_parsed_command(node->job->cmd); // Removed this
 
     // Free the job resources
     destroy_job(node->job);
