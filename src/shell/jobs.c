@@ -52,7 +52,7 @@ void print_all_jobs() {
   job_ll_node* node = linked_list_head(jobs);
   while (node != NULL) {
     fprintf(stderr, "[%lu] ", node->job->id);
-    print_job_command(node->job);
+    fprintf(stderr, "%d", node->job->pids[0]);
     fprintf(stderr, "\n");
     node = linked_list_next(node);
   }
@@ -195,7 +195,8 @@ void enqueue_job(job* job) {
   node->next = NULL;
   node->job = job;
   linked_list_push_tail(jobs, node);
-  print_job_list();
+  print_all_jobs();
+  // print_job_list();
 }
 
 job* find_job_by_id(jid_t id) {
@@ -237,7 +238,7 @@ job* find_job_by_pid(pid_t pid) {
 void print_job_list() {
   job_ll_node* node = linked_list_head(jobs);
   while (node) {
-    print_job(node->job);
+    print_job_command(node->job);
     node = linked_list_next(node);
   }
 }

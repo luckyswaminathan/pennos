@@ -94,7 +94,6 @@ void execute_job(job* job)
         // Use global shell_pgid
         // TODO: cannot use tcsetpgrp, should instead track pid that can use stdin
     } else if (job->status == J_RUNNING_BG) {
-        printf("job %lu is running in the background\n", job->id);
         return;
     }
     

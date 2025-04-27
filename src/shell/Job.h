@@ -25,11 +25,6 @@ typedef struct job_st {
 } job;
 
 /**
- * @brief print a representation of a job
- */
-void print_job(job* job);
-
-/**
  * @brief Frees the job, also destroying its fields as needed (ie, the `cmd` field). 
  * Note that it is assumed that the job contains the only reference to the fields within
  * it (specifically, to the `cmd` field of type `parsed_command*`), thus this function
