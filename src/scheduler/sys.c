@@ -98,12 +98,22 @@ int s_kill(pid_t pid, int signal) {
 
     bool success = false;
     switch (signal) {
+        case P_SIGINT:
+            if (target->ignore_sigint) {
+                return 0;
+            }
+            // fall through to P_SIGTERM
         case P_SIGTERM: 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
             return k_proc_exit(target, 1); // Using status 1 for killed by signal
             break;
 
+        case P_SIGTSTP:
+            if (target->ignore_sigtstp) {
+                return 0;
+            }
+            // fall through to P_SIGSTOP
         case P_SIGSTOP:
             // Stop the process
             if (target->pid != 1) {
@@ -222,5 +232,17 @@ int s_tcsetpid(pid_t pid) {
     } else {
         return E_TCSET_NO_TERMINAL_CONTROL;
     }
+    return 0;
+}
+
+int s_ignore_sigint(bool ignore) {
+    pcb_t* current = k_get_current_process();
+    current->ignore_sigint = ignore;
+    return 0;
+}
+
+int s_ignore_sigtstp(bool ignore) {
+    pcb_t* current = k_get_current_process();
+    current->ignore_sigtstp = ignore;
     return 0;
 }

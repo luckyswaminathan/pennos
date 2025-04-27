@@ -342,8 +342,6 @@ void _run_next_process()
                 }
                 k_get_all_process_info();
                 break;
-            } else if (blocked_ptr->waited_child == -1) {
-                //
             }
             blocked_ptr = blocked_ptr->next;
             // TODO: add -1 case
@@ -601,6 +599,8 @@ void remove_from_children_list(pcb_t *process, pcb_t *child) {
     }
 }
 
+#define W_EXITED 1
+#define W_STOPPED 2
 
 /**
  * @brief Wait on a child of the calling process, until it changes state.

@@ -9,6 +9,10 @@
 #define P_SIGSTOP 2
 #define P_SIGCONT 3
 
+// This is a syscall level signal (it has no equivalent in the kernel)
+#define P_SIGINT 4
+#define P_SIGTSTP 5
+
 #define S_SPAWN_INVALID_FD_ERROR -100
 
 /**
@@ -22,6 +26,9 @@
  * @return pid_t The process ID of the created child process.
  */
 pid_t s_spawn(void* (*func)(void*), char *argv[], int fd0, int fd1);
+
+#define W_EXITED 1
+#define W_STOPPED 2
 
 /**
  * @brief Wait on a child of the calling process, until it changes state.
@@ -74,3 +81,6 @@ void s_sleep(unsigned int ticks);
 void s_get_process_info();
 
 int s_tcsetpid(pid_t pid); 
+
+int s_ignore_sigint(bool ignore);
+int s_ignore_sigtstp(bool ignore);

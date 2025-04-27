@@ -77,6 +77,11 @@ struct pcb_st {
     process_state state;
     pid_t waited_child;
 
+    // Signal handling
+    bool ignore_sigint;
+    bool ignore_sigtstp;
+
+
     // Process priority
     priority_t priority;
     double sleep_time;
@@ -145,8 +150,6 @@ bool k_sleep(pcb_t* process, unsigned int ticks);
 void k_get_processes_from_queue(pcb_ll_t queue);
 void k_get_all_process_info();
 pcb_t* k_get_current_process(void);
-#define W_EXITED 0
-#define W_STOPPED 1
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang);
 
 pcb_t* get_process_by_pid(pid_t pid);

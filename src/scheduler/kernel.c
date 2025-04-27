@@ -112,6 +112,8 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[]) {
     for (int i = 0; i < PROCESS_FD_TABLE_SIZE; i++) {
         proc->process_fd_table[i].in_use = false;
     }
+    proc->ignore_sigint = false;
+    proc->ignore_sigtstp = false;
 
     proc->process_fd_table[STDIN_FD].in_use = true;
     proc->process_fd_table[STDIN_FD].mode = F_WRITE;
