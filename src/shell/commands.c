@@ -331,7 +331,17 @@ void* ls(void* arg) {
 void* echo(void* arg) {
     char** command = (char**) arg;
     int ret = s_write(STDOUT_FILENO, command[1], strlen(command[1]));
-    s_exit(ret);
+    if (ret < 0) {
+        s_exit(ret);
+        return NULL;
+    }
+
+    int ret2 = s_write(STDOUT_FILENO, "\n", 1);
+    if (ret2 < 0) {
+        s_exit(ret2);
+        return NULL;
+    }
+    s_exit(0);
     return NULL;
 }
 
