@@ -73,3 +73,5 @@ void s_sleep(unsigned int ticks);
 
 void s_get_process_info();
 
+pcb_t* s_get_current_process();
+

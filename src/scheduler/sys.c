@@ -120,7 +120,9 @@ int s_kill(pid_t pid, int signal) {
         default:
             return E_INVALID_ARGUMENT;
     }
-
+    if (success) {
+        log_signaled(pid, target->priority, target->command ? target->command : "<?>");
+    }
     return success ? 0 : -1;
 }
 
@@ -166,6 +168,7 @@ int s_nice(pid_t pid, int priority) {
     }
 
     if (k_set_priority(target, priority)) {
+        log_nice(pid, target->priority, priority, target->command ? target->command : "<?>");
         return 0;
     } else {
         // k_set_priority might fail if internal state is inconsistent
@@ -211,4 +214,9 @@ void s_sleep(unsigned int ticks) {
 */
 void s_get_process_info() {
     k_get_all_process_info();
+}
+
+// s_function to get the current process
+pcb_t* s_get_current_process() {
+    return k_get_current_process();
 }

@@ -100,18 +100,21 @@ void* ps(void* arg) {
 
 void* zombie_child(void* arg) {
     // Child process exits normally
-    LOG_INFO("Child process running, will exit soon");
+    // LOG_INFO("Child process running, will exit soon");
     s_exit(0);
     return NULL;
 }
 
 
 void* zombify(void* arg) {
-    
+    pcb_t* current_process = s_get_current_process(); // Use the syscall wrapper
+    if (current_process) { // Check if the call succeeded
+        log_zombie(current_process->pid, current_process->priority, current_process->command ? current_process->command : "<?>");
+    }
+
     // Spawn the child process
-    pid_t child = s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
+    s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_get_process_info();
-    LOG_INFO("Spawned child process with PID %d", child);
     while(1) {  
     };
     s_exit(0);
@@ -127,6 +130,10 @@ void* orphan_child(void* arg) {
 }
 
 void* orphanify(void* arg) {
+    pcb_t* current_process = s_get_current_process(); // Use the syscall wrapper
+    if (current_process) { // Check if the call succeeded
+        log_orphan(current_process->pid, current_process->priority, current_process->command ? current_process->command : "<?>");
+    }
     s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_exit(0);
     return NULL;
