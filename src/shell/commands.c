@@ -108,7 +108,7 @@ void* zombie_child(void* arg) {
 void* zombify(void* arg) {
     
     // Spawn the child process
-    pid_t child = s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    pid_t child = s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_get_process_info();
     LOG_INFO("Spawned child process with PID %d", child);
     while(1) {  
@@ -126,7 +126,7 @@ void* orphan_child(void* arg) {
 }
 
 void* orphanify(void* arg) {
-    s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    s_spawn(orphan_child, (char*[]){"orphan_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);
     s_exit(0);
     return NULL;
 }
@@ -144,6 +144,9 @@ void* orphanify(void* arg) {
 void* busy(void* arg, char* priority) {
     // Get the command context
     //char** command = (char**)arg;
+
+    printf("priority: %s\n", priority);
+
     int priority_level = atoi(priority);
 
     // Validate the priority level
@@ -555,6 +558,7 @@ void* mv(void* arg) {
 
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
+    
     // We always want the first command to be the command name
     if (ctx == NULL || ctx[0] == NULL) {
         return NULL;
@@ -596,7 +600,8 @@ void* execute_command(void* arg) {
         return mv(ctx);
     }
     if (strcmp(ctx[0], "busy") == 0) {
-        return busy(ctx, ctx[1]);
+        char* priority_level = ctx[1] == NULL ? "1" : ctx[1];
+        return busy(ctx, priority_level);
     }
     if (strcmp(ctx[0], "sleep") == 0) {
         return sleep_command(ctx, ctx[1]);

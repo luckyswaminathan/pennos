@@ -24,10 +24,9 @@ static void* shell_loop(void* arg) {
         struct parsed_command *parsed_command = NULL;
         int ret = read_command(&parsed_command);
 
-
         if (ret == -1) {
             exit(0);
-        } else if (ret == -2) {  
+        } else if (ret == -2) {
             if (errno == EINTR) {
                 continue;
             }
@@ -39,12 +38,13 @@ static void* shell_loop(void* arg) {
         if (parsed_command == NULL) {
             continue;  // Empty command, try again
         }
+
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
             free(parsed_command);
             continue; // do nothing and try reading again
         }
-        LOG_INFO("handling jobs");
         bool is_jobs_command = handle_jobs_commands(parsed_command);
+
         if (is_jobs_command) {
             // jobs commands are handled by the shell, and not execve'd
             free(parsed_command);
@@ -82,18 +82,22 @@ static void* shell_loop(void* arg) {
     return NULL;
 }
 
+/**
+ * @brief Spawns the shell process
+ * 
+ * This process is responsible for spawning the shell process
+ * and waiting for it to exit.
+ * 
+ * @param arg 
+ * @return void* 
+ */
 static void* init_process(void* arg) {
-    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO);
-    // k_get_all_process_info();
+    // Spawn shell process
+    s_spawn(shell_loop, (char*[]){"shell", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
 
-    while (true) {
-        // // dprintf(2, "init running %d\n", i);
-        // // k_get_all_process_info();
-        //usleep(1000000);
-        int wstatus;
-        while (s_waitpid(-1, &wstatus, true) > 0) {
-        }
-    }
+    // Consume any zombies
+    int wstatus;
+    while (s_waitpid(-1, &wstatus, true) > 0) {}
 
     return NULL;
 }
@@ -114,9 +118,10 @@ int main(int argc, char **argv) {
     init_logger("scheduler.log");
     init_scheduler();
 
-    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO);
+    // Spawn init process
+    s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
+    printf("Scheduler initialized\n");
     
-
     // Finally set up the job control handlers
     setup_job_control_handlers();
 

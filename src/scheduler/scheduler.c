@@ -21,6 +21,7 @@ static const int centisecond = 10000;
 static int quantum = 0;
 static sigset_t suspend_set;
 static bool extra_logging_enabled = false; // Added global toggle
+static bool shell_spawned = false;
 
 /**
  * @brief The process to run at each quantum. Randomly disperesed array of 0s, 1s, and 2s (priority levels).
@@ -269,6 +270,9 @@ void _run_next_process()
     // Update the blocked processes before selecting the next process
     _update_blocked_processes();
 
+    if (!shell_spawned) {
+        shell_spawned = k_get_process_by_pid(2) != NULL;
+    }
 
     // Select the next queue to run a process from
     int next_queue = _select_next_queue(scheduler_state);
@@ -282,7 +286,13 @@ void _run_next_process()
     // Get the process to run from the queue
     pcb_t *process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
 
-    
+    // Only schedule init if there are zombies to consume or if the shell has not spawned yet
+    if (process->pid == 1 && scheduler_state->zombie_queue.head == NULL && shell_spawned) {
+        linked_list_pop_head(&scheduler_state->ready_queues[next_queue]);
+        linked_list_push_tail(&scheduler_state->ready_queues[next_queue], process);
+        process = linked_list_head(&scheduler_state->ready_queues[next_queue]);
+    }
+
     if (!process) {
         // This should ideally not happen if _select_next_queue returned a valid index
         return; // Don't consume quantum
@@ -306,7 +316,6 @@ void _run_next_process()
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
-
 
     // Consume a quantum
     quantum++;
@@ -453,7 +462,6 @@ void block_process(pcb_t *process)
 
     pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
     while (curr != NULL) {
-        k_log("Blocked process PID %d\n", curr->pid);
         curr = curr->next;
     }
 }
@@ -481,7 +489,7 @@ void unblock_process(pcb_t *process)
  * @param pid The PID of the process to find.
  * @return pcb_t* Pointer to the PCB if found, NULL otherwise.
  */
-pcb_t *k_get_process_by_pid(pid_t pid)
+pcb_t* k_get_process_by_pid(pid_t pid)
 {
      if (!scheduler_state) return NULL;
 
@@ -912,7 +920,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
 void k_get_processes_from_queue(pcb_ll_t queue) {
     pcb_t* current = queue->head;
     while (current != NULL) {
-        k_log("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
+        printf("PID: %d, PPID: %d, Priority: %d, State: %d, Args: %s\n", current->pid, current->ppid, current->priority, current->state, current->argv[0]);
         current = current->next;
     }
 }
@@ -956,6 +964,7 @@ int k_print_processes_from_queue(pcb_ll_t queue, char state_char) {
  * Status codes: R (Running), B (Blocked), S (Stopped), Z (Zombie).
  */
 void k_get_all_process_info() {
+
     if (!extra_logging_enabled || !scheduler_state) {
         return;
     }

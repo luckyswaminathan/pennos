@@ -65,12 +65,8 @@ void execute_job(job* job)
         stdout_fd = STDOUT_FILENO;
     }
 
-    pid_t pid = s_spawn((void* (*)(void*)) execute_command,
-                          argv,
-                          stdin_fd, // fd0
-                          stdout_fd // fd1
-                         );
-    if (pid == -1)
+    pid_t pid = s_spawn((void* (*)(void*)) execute_command, argv, stdin_fd, stdout_fd, PRIORITY_MEDIUM);
+    if (pid < 0)
     {
         perror("Failed to spawn command");
         exit(EXIT_FAILURE);
