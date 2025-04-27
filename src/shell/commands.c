@@ -107,10 +107,6 @@ void* zombie_child(void* arg) {
 
 
 void* zombify(void* arg) {
-    pcb_t* current_process = s_get_current_process(); // Use the syscall wrapper
-    if (current_process) { // Check if the call succeeded
-        log_zombie(current_process->pid, current_process->priority, current_process->command ? current_process->command : "<?>");
-    }
 
     // Spawn the child process
     s_spawn(zombie_child, (char*[]){"zombie_child", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_MEDIUM);

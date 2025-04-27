@@ -197,7 +197,6 @@ int k_add_to_ready_queue(pcb_t *process)
     
     // Use the linked list macro to add to the tail of the correct priority queue
     k_log("Adding process PID %d to priority queue %d\n", process->pid, process->priority);
-    log_schedule(process->pid, process->priority, process->command ? process->command : "<?>");
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
     return 0;
@@ -296,6 +295,7 @@ void unblock_parents(pcb_t *process) {
 void reparent_children(pcb_t *process) {
     child_process_t* children_ptr = linked_list_head(process->children);
     while (children_ptr != NULL) {
+        log_orphan(children_ptr->process->pid, children_ptr->process->priority, children_ptr->process->command ? children_ptr->process->command : "<?>");
         children_ptr->process->ppid = 1;
         child_process_t* next_children_ptr = children_ptr->next;
         linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
@@ -358,11 +358,10 @@ void _run_next_process()
     scheduler_state->current_process = process;
 
     // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
-    log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
+    log_schedule(process->pid, process->priority, process->command ? process->command : "<?>");
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
-    log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
 
     // Consume a quantum
     quantum++;
@@ -495,11 +494,6 @@ void block_process(pcb_t *process)
     process->state = PROCESS_BLOCKED;
     // Add the process to the blocked queue
     linked_list_push_tail(&scheduler_state->blocked_queue, process);
-
-    pcb_t* curr = linked_list_head(&scheduler_state->blocked_queue);
-    while (curr != NULL) {
-        curr = curr->next;
-    }
 }
 
 /**
@@ -649,8 +643,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         child_process_t* child = scheduler_state->current_process->children->head;
         child_process_t* zombie_child = NULL;
 
-
-
         // First pass: look for zombies and stopped children
         while (child != NULL) {
             child_process_t* next = child->next; // Save next pointer as we might remove child
@@ -666,15 +658,14 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
                 // Remove from zombie queue and children list, ele_dtor should handle freeing but TODO check
                 linked_list_remove(scheduler_state->current_process->children, zombie_child);
                 linked_list_remove(&scheduler_state->zombie_queue, zombie_child->process);
-                
+
+                log_waited(zombie_child->process->pid, zombie_child->process->priority, zombie_child->process->command ? zombie_child->process->command : "<?>");
                 pid_t result = zombie_child->process->pid;
                 return result;
             } else if (child->process->state == PROCESS_STOPPED) {
-                if (wstatus != NULL) {
-                    *wstatus = W_STOPPED;
-                }
-                // do nothing else because it should already be in the stopped queue
-                return child->process->pid;
+                // Do nothing: this child was stopped even before the waitpid was called!
+                // and since there was no status change, waitpid doesn't need to do anything
+                return 0;
             }
             child = next;
         }
@@ -688,6 +679,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         
         if (nohang) {
             // Have children, but none are zombies and nohang is true
+            log_waited(scheduler_state->current_process->pid, scheduler_state->current_process->priority, scheduler_state->current_process->command ? scheduler_state->current_process->command : "<?>");
             return 0;
         }
         
@@ -702,6 +694,8 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
+
+        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         
         if (child == NULL) {
             return -1; // No such process
@@ -719,7 +713,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             if (wstatus != NULL) {
                 *wstatus = W_EXITED;
             }
-            
+            log_zombie(child->pid, child->priority, child->command ? child->command : "<?>");
             // Remove from zombie queue and children list
             remove_from_children_list(scheduler_state->current_process, child);
             linked_list_remove(&scheduler_state->zombie_queue, child);
@@ -727,11 +721,9 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
             pid_t result = child->pid;
             return result;
         } else if (child->state == PROCESS_STOPPED) {
-            if (wstatus != NULL) {
-                *wstatus = W_STOPPED;
-            }
-            // do nothing else because it should already be in the stopped queue
-            return child->pid;
+            // Do nothing: this child was stopped even before the waitpid was called!
+            // and since there was no status change, waitpid doesn't need to do anything
+            return 0;
         }
         
         if (nohang) {
@@ -740,7 +732,6 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
-        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
         k_get_all_process_info();
         
@@ -797,6 +788,7 @@ int k_proc_exit(pcb_t *process, int exit_status) {
      // If it's the current process, the scheduler loop needs to handle not running it again.
      k_remove_from_active_queue(process); // Remove from ready/blocked/stopped
      // 3. Add to the zombie queue
+     log_zombie(process->pid, process->priority, process->command);
      linked_list_push_tail(&scheduler_state->zombie_queue, process);
 
      // NOTE: The actual thread *must* have exited its main function before this is called.
@@ -866,6 +858,7 @@ bool k_stop_process(pcb_t *process) {
     }
     // Remove from active queue (or current)
     bool removed = false;
+    log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
 
     removed = k_remove_from_active_queue(process); 
     if (removed) {
@@ -887,7 +880,7 @@ bool k_continue_process(pcb_t *process) {
     if (!process || process->state != PROCESS_STOPPED) {
         return false;
     }
-
+    log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
     // Manual removal from stopped queue
     bool removed = false;
     pcb_t* current = scheduler_state->stopped_queue.head;
