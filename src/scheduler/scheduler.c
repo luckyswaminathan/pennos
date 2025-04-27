@@ -369,6 +369,10 @@ void _run_next_process()
     }
 }
 
+// Flag to indicate that the logout command has been issued
+// and the scheduler should exit
+bool logout_issued = false;
+
 /**
  * @brief Run the scheduler
  *
@@ -378,7 +382,7 @@ void _run_next_process()
  */
 void run_scheduler()
 {
-    while (1)
+    while (!logout_issued)
     {
         _run_next_process();
     }

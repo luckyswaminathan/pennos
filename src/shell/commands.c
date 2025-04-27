@@ -575,6 +575,12 @@ void* hang_helper(void* arg) {
     return NULL;
 }
 
+void* logout(void* arg) {
+    s_logout();
+    s_exit(0);
+    return NULL;
+}
+
 
 void* execute_command(void* arg) {
     char** ctx = (char**)arg;
@@ -652,6 +658,9 @@ void* execute_command(void* arg) {
     }
     if (strcmp(ctx[0], "crash") == 0) {
         return crash(ctx);
+    }
+    if (strcmp(ctx[0], "logout") == 0) {
+        return logout(ctx);
     }
     s_exit(0);
     return NULL;
