@@ -295,6 +295,7 @@ void unblock_parents(pcb_t *process) {
 void reparent_children(pcb_t *process) {
     child_process_t* children_ptr = linked_list_head(process->children);
     while (children_ptr != NULL) {
+        log_orphan(children_ptr->process->pid, children_ptr->process->priority, children_ptr->process->command ? children_ptr->process->command : "<?>");
         children_ptr->process->ppid = 1;
         child_process_t* next_children_ptr = children_ptr->next;
         linked_list_push_tail(scheduler_state->init_process->children, children_ptr);
