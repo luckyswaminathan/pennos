@@ -197,6 +197,7 @@ int k_add_to_ready_queue(pcb_t *process)
     
     // Use the linked list macro to add to the tail of the correct priority queue
     k_log("Adding process PID %d to priority queue %d\n", process->pid, process->priority);
+    log_schedule(process->pid, process->priority, process->command ? process->command : "<?>");
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
     process->state = PROCESS_RUNNING; // Ensure state reflects it's ready
     return 0;
@@ -357,9 +358,11 @@ void _run_next_process()
     scheduler_state->current_process = process;
 
     // Run the process and block the scheduler until the next SIGALRM arrives (100ms later)
+    log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
     spthread_continue(*process->thread);
     sigsuspend(&suspend_set);
     spthread_suspend(*process->thread);
+    log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
 
     // Consume a quantum
     quantum++;
@@ -484,6 +487,8 @@ void block_process(pcb_t *process)
 {
     // Remove the process from the queue it is currently on
     //k_log("Blocking process with pid %d\n", process->pid);
+    log_blocked(process->pid, process->priority, process->command ? process->command : "<?>");
+
     //k_get_all_process_info();
     linked_list_remove(&scheduler_state->ready_queues[process->priority], process);
 
@@ -508,6 +513,7 @@ void unblock_process(pcb_t *process)
 {
     // Remove the process from the blocked queue
     linked_list_remove(&scheduler_state->blocked_queue, process);
+    log_unblocked(process->pid, process->priority, process->command ? process->command : "<?>");
     process->state = PROCESS_RUNNING;
     // Add the process to the appropriate queue based on its priority
     linked_list_push_tail(&scheduler_state->ready_queues[process->priority], process);
@@ -693,11 +699,9 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         // After unblocking, recursively call waitpid to find and reap the zombie
         return k_waitpid(-1, wstatus, false);
     } else {
-        k_log("Waiting for specific child with pid %d\n", pid);
         // Wait for specific child
         pcb_t* child = k_get_process_by_pid(pid);
         scheduler_state->current_process->waited_child = pid;
-        
         
         if (child == NULL) {
             return -1; // No such process
@@ -736,11 +740,8 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
         }
         
         // Need to wait for specific child to terminate
-
-        k_log("current process pid: %d\n", scheduler_state->current_process->pid);
-        k_log("waiting for %lu for %s\n", child->thread->thread, child->command);
+        log_waited(pid, child->priority, child->command ? child->command : "<?>");
         block_and_wait(scheduler_state, scheduler_state->current_process, child, wstatus);
-        k_log("Unblocked and waiting for child with pid %d to terminate\n", child->pid);
         k_get_all_process_info();
         
         // TODO: this is a bit duplicated
@@ -785,6 +786,7 @@ pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang) {
 int k_proc_exit(pcb_t *process, int exit_status) {
     if (!process) return E_INVALID_ARGUMENT;
     if (!scheduler_state) return E_INVALID_SCHEDULER_STATE;
+     log_exited(process->pid, process->priority, process->command ? process->command : "<?>");
 
      // 1. Set state and exit status
      process->state = PROCESS_ZOMBIED;

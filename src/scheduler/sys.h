@@ -95,3 +95,11 @@ int s_ignore_sigtstp(bool ignore);
  * it is not guaranteed to exit immediately.
  */
 void s_logout();
+
+/**
+ * @brief Get the current process.
+ * 
+ * @return pcb_t* The current process.
+ */
+pcb_t* s_get_current_process();
+

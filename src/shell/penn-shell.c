@@ -40,9 +40,9 @@ static void* shell_loop(void* arg) {
             continue;
         }
 
-        LOG_INFO("Read command");
+        // Empty command, try again
         if (parsed_command == NULL) {
-            continue;  // Empty command, try again
+            continue;
         }
 
         if (parsed_command->num_commands <= 0 || parsed_command->commands[0][0] == NULL) {
@@ -73,7 +73,6 @@ static void* shell_loop(void* arg) {
             add_foreground_job(job_ptr);
 
             execute_job(job_ptr); 
-            LOG_INFO("execute_job returned");
             // Only destroy the job if it wasn't stopped
             if (job_ptr->status != J_STOPPED) {
                 remove_foreground_job(job_ptr);
