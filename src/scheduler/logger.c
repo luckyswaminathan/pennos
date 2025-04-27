@@ -161,6 +161,19 @@ void log_unblocked(pid_t pid, int nice_value, const char* process_name) {
     }
 }
 
+void log_sleep(pid_t pid, int nice_value, const char* process_name) {
+    if (!log_file) {
+        log_file = stderr;
+    }
+    char buf[LOG_BUF_SIZE];
+    int fd = fileno(log_file);
+    int len = snprintf(buf, LOG_BUF_SIZE, "[%d]\tSLEEPING\t%d\t%d\t%s\n",
+                       k_get_quantum(), pid, nice_value, process_name);
+    if (len > 0) {
+        write(fd, buf, len);
+    }
+}
+
 void log_stopped(pid_t pid, int nice_value, const char* process_name) {
     if (!log_file) {
         log_file = stderr;
