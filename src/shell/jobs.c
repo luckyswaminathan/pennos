@@ -49,6 +49,7 @@ void print_job_command(job* job) {
       fprintf(stderr, "%s", command[j]);
     }
   }
+  fprintf(stderr, "\n");
 }
 
 /**
@@ -61,9 +62,9 @@ void handle_jobs() {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
-    s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
+    // s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
     print_job_command(node->job);
-    s_fprintf_short(STDERR_FILENO, "\n");
+    // s_fprintf_short(STDERR_FILENO, "\n");
     node = linked_list_next(node);
   }
 }
@@ -77,7 +78,7 @@ void print_all_jobs() {
   job_ll_node* node = linked_list_head(jobs);
   while (node != NULL) {
     fprintf(stderr, "[%lu] ", node->job->id);
-    fprintf(stderr, "%d", node->job->pids[0]);
+    fprintf(stderr, "%d", node->job->pid);
     fprintf(stderr, "\n");
     node = linked_list_next(node);
   }
@@ -135,19 +136,20 @@ void handle_fg(struct parsed_command* cmd) {
   print_job_command(job);
   fprintf(stderr, "\n");
 
+  if (job->status == J_STOPPED) {
+    s_kill(job->pid, P_SIGCONT);
+  }
+
+  int status;
   // mark the job as running
   job->status = J_RUNNING_FG;
-
-  // Give terminal control to the job
-  tcsetpgrp(STDIN_FILENO, job->pids[0]);
-
-  if (job->status == J_STOPPED) {
-    kill(-job->pids[0], SIGCONT);
+  s_waitpid(job->pid, &status, false);
+  // NOTE: this is identical logic to command_execution.c
+  if (P_WIFSTOPPED(status)) {
+      job->status = J_STOPPED;
+      remove_foreground_job(job);
+      enqueue_job(job);
   }
-  s_waitpid(job->pids[0], NULL, true);
-
-  // Give terminal control back to the shell
-  tcsetpgrp(STDIN_FILENO, getpid());
 }
 
 /**
@@ -195,10 +197,14 @@ void handle_bg(struct parsed_command* cmd) {
     return;
   }
 
+  fprintf(stderr, "Resuming job %d\n", job->pid);
+
   job->status = J_RUNNING_BG;
 
+  fprintf(stderr, "Status changed\n");
+
   // Resume the job in the background
-  kill(-job->pids[0], SIGCONT);
+  s_kill(job->pid, P_SIGCONT);
 
   fprintf(stderr, "Running: ");
   print_job_command(job);
@@ -256,7 +262,7 @@ void enqueue_job(job* job) {
   node->next = NULL;
   node->job = job;
   linked_list_push_tail(jobs, node);
-  print_all_jobs();
+  // print_all_jobs();
   // print_job_list();
 }
 
@@ -305,16 +311,14 @@ job* find_job_by_pid(pid_t pid) {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node) {
-    if (node->job->pids != NULL) {
-      fprintf(stderr, "Comparing pid %d with job pid %d\n", pid, node->job->pids[0]);
-      if (node->job->pids[0] == pid) {
+    if (node->job->pid > 0) {
+      if (node->job->pid == pid) {
         return node->job;
       }
     }
     node = linked_list_next(node);
   }
 
-  fprintf(stderr, "No job found with pid %d\n", pid);
   return NULL;
 }
 
@@ -346,7 +350,7 @@ void remove_job_by_pid(pid_t pid) {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
-    if (node->job->pids[0] == pid) {
+    if (node->job->pid == pid) {
       break; // we've found the node with the PID
     }
     node = linked_list_next(node);
@@ -355,8 +359,7 @@ void remove_job_by_pid(pid_t pid) {
   if (node != NULL) {
     linked_list_remove(jobs, node);
 
-    // Print completion message
-    fprintf(stderr, "Finished ");
+    // TODO: Update to 
     print_parsed_command(node->job->cmd);
 
     // Free the job resources

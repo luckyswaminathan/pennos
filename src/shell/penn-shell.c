@@ -22,7 +22,25 @@ static void* shell_loop(void* arg) {
     s_ignore_sigint(true);
     s_ignore_sigtstp(true);
     while (true) {
-        while (s_waitpid(-1, NULL, true) > 0) {}
+        pid_t pid;
+        int status;
+        while ((pid = s_waitpid(-1, &status, true)) > 0) {
+            if (P_WIFSTOPPED(status)) {
+                job* job = find_job_by_pid(pid);
+                if (job != NULL) {
+                    job->status = J_STOPPED;
+                    remove_job_by_pid(pid);
+                    enqueue_job(job);
+                }
+            } else {
+                job* job = find_job_by_pid(pid);
+                if (job != NULL) {
+                    job->status = J_STOPPED;
+                    remove_job_by_pid(pid);
+                    enqueue_job(job);
+                }
+            }
+        }
 
         display_prompt();
      
@@ -61,7 +79,7 @@ static void* shell_loop(void* arg) {
 
         job* job_ptr = (job*) exiting_malloc(sizeof(job));
         job_ptr->id = ++job_id;
-        job_ptr->pids = NULL;
+        job_ptr->pid = -1;
         job_ptr->status = J_RUNNING_FG;
         job_ptr->cmd = parsed_command;
 

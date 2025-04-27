@@ -18,7 +18,7 @@ typedef enum job_status_enum {
 // Represents a job
 typedef struct job_st {
   jid_t id;
-  pid_t* pids;        // Array of process IDs in the job
+  pid_t pid;        // Array of process IDs in the job
   size_t num_processes;  // Number of processes in the job
   job_status status;
   struct parsed_command* cmd;
