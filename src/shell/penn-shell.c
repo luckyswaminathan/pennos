@@ -19,6 +19,8 @@
 jid_t job_id = 0;
 
 static void* shell_loop(void* arg) {
+    s_ignore_sigint(true);
+    s_ignore_sigtstp(true);
     while (true) {
         display_prompt();
      
