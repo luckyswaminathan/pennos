@@ -81,6 +81,8 @@ struct pcb_st {
     bool ignore_sigint;
     bool ignore_sigtstp;
 
+    // error number
+    int errnumber;
 
     // Process priority
     priority_t priority;
@@ -139,14 +141,14 @@ void run_scheduler();
 // ================================ Kernel-Level Process Management ================================
 
 int k_add_to_ready_queue(pcb_t* process);
-bool k_block_process(pcb_t* process);
-bool k_unblock_process(pcb_t* process);
+int k_block_process(pcb_t* process);
+int k_unblock_process(pcb_t* process);
 int k_proc_exit(pcb_t* process, int exit_status);
 void k_yield(void);
-bool k_stop_process(pcb_t* process);
-bool k_continue_process(pcb_t* process);
-bool k_set_priority(pcb_t* process, int priority);
-bool k_sleep(pcb_t* process, unsigned int ticks);
+int k_stop_process(pcb_t* process);
+int k_continue_process(pcb_t* process);
+int k_set_priority(pcb_t* process, int priority);
+int k_sleep(pcb_t* process, unsigned int ticks);
 void k_get_processes_from_queue(pcb_ll_t queue);
 void k_get_all_process_info();
 pcb_t* k_get_current_process(void);
