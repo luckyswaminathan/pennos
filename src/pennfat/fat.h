@@ -67,55 +67,125 @@ typedef struct global_fd_entry_st
 } global_fd_entry;
 
 /**
- * Mount the pennfat (fat16) filesystem from the file named fs_name into
- * the struct pointed to by ptr_to_fs.
- *
- * Return 0 on success, and an error code on error (see the EMOUNT_* error codes
- * defined in this header).
+ * @brief Mount the pennfat (fat16) filesystem from the file named fs_name
+ * @param fs_name file name of the FAT in the host filesystem
+ * @return int 0 on success, and an error code on error
  */
 int mount(char *fs_name);
 
 /**
- * Unmount the pennfat (fat16) filesystem from the struct pointed to by ptr_to_fs.
+ * @brief Unmount the pennfat (fat16) filesystem from the struct pointed to by ptr_to_fs.
  * This function will 0 out the struct on success (but may not on failure).
  *
- * Return 0 on success, and an error code on error (see the EUNMOUNT_* error codes
- * defined in this header).
+ * @return int 0 on success, and an error code on error
  */
 int unmount(void);
 
+/**
+ * @brief Check if the pennfat (fat16) filesystem is mounted
+ * @return bool true if the pennfat (fat16) filesystem is mounted, false otherwise
+ */
 bool is_mounted(void);
 
+/**
+ * @brief Open a file
+ * @param fname file name
+ * @param mode mode to open the file with (i.e., F_READ, F_WRITE, F_APPEND)
+ * @return int global file descriptor, or negative error code
+ */
 int k_open(const char *fname, int mode);
 
+/**
+ * @brief Close a file
+ * @param fd global file descriptor to close
+ * @return int 0 on success, or negative error code
+ */
 int k_close(int fd);
 
+/**
+ * @brief Read from a file
+ * @param fd global file descriptor to read from
+ * @param n number of bytes to read from the file
+ * @param buf buffer to read the bytes into
+ * @return int number of bytes read, or negative error code
+ */
 int k_read(int fd, int n, char *buf);
 
 /**
- * IMPORTANT: this function does not have the same signature as lseek(2) because
+ * @brief Seek to a position in a file
+ * @param fd global file descriptor to seek in
+ * @param offset offset to seek to
+ * @param whence whence to seek from (i.e., F_SEEK_SET, F_SEEK_CUR, F_SEEK_END)
+ * @return int64_t new offset, or negative error code
+ * @note IMPORTANT: this function does not have the same signature as lseek(2) because
  * it returns a negative error code on error. On success, it returns the offset
  * which is guaranteed to fit in a uint32_t
- *
- * Returns the new offset on success and a negative value on error (see EK_LSEEK_*
- * error codes)
  */
 int64_t k_lseek(int fd, int offset, int whence);
 
+/**
+ * @brief Write to a file
+ * @param fd global file descriptor to write to
+ * @param str bytes to write to the file
+ * @param n number of bytes to write to the file
+ * @return int number of bytes written, or negative error code
+ */
 int k_write(int fd, const char *str, int n);
 
+/**
+ * @brief Remove (unlink) a file
+ * @param fname file name
+ * @return int 0 on success, or negative error code
+ */
 int k_unlink(const char *fname);
 
+/**
+ * @brief List the contents of a directory
+ * @param filename directory to list the contents of
+ * @return int 0 on success, or negative error code
+ */
 int k_ls(const char *filename);
 
+/**
+ * @brief Change the permissions of a file
+ * @param fname file name
+ * @param perm permissions to set the file to
+ * @param mode mode to set the file to (i.e., F_READ, F_WRITE, F_APPEND)
+ * @return int 0 on success, or negative error code
+ */
 int k_chmod(const char *fname, uint8_t perm, int mode);
 
+/**
+ * @brief Move a file from src to dest
+ * @param src source file name
+ * @param dest destination file name
+ * @return int 0 on success, or negative error code
+ */
 int k_mv(const char *src, const char *dest);
 
+/**
+ * @brief Set the mode the global file descriptor is opened with
+ * @param fd global file descriptor to set the mode of
+ * @param mode mode to set the global file descriptor to (i.e., F_READ, F_WRITE, F_APPEND)
+ * @return int 0 on success, or negative error code
+ */
 int k_setmode(int fd, int mode);
 
+/**
+ * @brief Get the mode the global file descriptor is opened with
+ * @param fd global file descriptor to get the mode of
+ * @return int mode of the global file descriptor, or negative error code
+ */
 int k_getmode(int fd);
 
+/**
+ * @brief Like dprintf but using pennfat and limited to 1023 characters
+ * 
+ * @param fd global file descriptor to write to
+ * @param format format string
+ * @param ... arguments to format string
+ * @return int number of characters written, or negative error code
+ */
 int k_fprintf_short(int fd, const char *format, ...);
 
 #endif // PENNFAT_FAT_H
