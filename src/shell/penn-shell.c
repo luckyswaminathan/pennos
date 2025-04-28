@@ -141,7 +141,13 @@ static void* init_process(void* arg) {
 }
 
 int main(int argc, char **argv) {
-    int mount_status = mount("pennosfat");
+    if (argc < 2 || argc > 3) {
+        perror("Usage: pennos fatfs [log_fname]"); // NOTE: this usage is OK because we haven't started PennOS yet
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize fat filesystem
+    int mount_status = mount(argv[1]);
     if (mount_status != 0) {
         exit(mount_status);
     }
@@ -150,8 +156,12 @@ int main(int argc, char **argv) {
     ignore_signals();
 
     // Initialize logger and scheduler
-    init_logger("scheduler.log");
-    if (s_init_scheduler() == -1) {
+    if (argc == 3) {
+        init_logger(argv[2]);
+    } else {
+        init_logger("log");
+    }
+    if (init_scheduler() == -1) {
         exit(EXIT_FAILURE);
     }
 

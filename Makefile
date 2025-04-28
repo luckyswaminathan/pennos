@@ -1,5 +1,5 @@
 SRC_DIR = src
-TESTS_DIR = test
+TESTS_DIR = tests
 BIN_DIR = bin
 
 
@@ -18,12 +18,9 @@ SHELL_SRCS = $(wildcard src/shell/*.c)
 SHELL_HDRS = $(wildcard src/shell/*.h)
 SHELL_OBJS = $(SHELL_SRCS:.c=.o)
 
-.PHONY: all clean scheduler shell dirs
+.PHONY: all clean scheduler shell dirs pennfat-info pennfat-all
 
 all: dirs scheduler shell
-
-dirs:
-	mkdir -p $(BIN_DIR)
 
 scheduler: $(SCHED_TEST)
 
