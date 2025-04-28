@@ -1254,13 +1254,8 @@ int k_unlink(const char *fname)
     return 0;
 }
 
-#define EK_LS_WRITE_FAILED -1
-#define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
-#define EK_LS_NOT_IMPLEMENTED -3
 int ls_dir_entry(directory_entry *ptr_to_dir_entry)
 {
-    // TODO: implement nice formatting
-
     // can write no more than block_size bytes
     // this should be enough since
     // - the block number is at most 65535 (5 bytes to represent)

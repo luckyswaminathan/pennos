@@ -86,40 +86,12 @@ int unmount(void);
 
 bool is_mounted(void);
 
-#define EK_OPEN_INVALID_FILENAME -1
-#define EK_OPEN_FIND_FILE_IN_ROOT_DIR_FAILED -3
-#define EK_OPEN_GLOBAL_FD_TABLE_FULL -4
-#define EK_OPEN_FILE_DOES_NOT_EXIST -5
-#define EK_OPEN_MALLOC_FAILED -6
-#define EK_OPEN_TIME_FAILED -7
-#define EK_OPEN_ALREADY_WRITE_LOCKED -8
-#define EK_OPEN_WRITE_NEW_ROOT_DIR_ENTRY_FAILED -10
-#define EK_OPEN_NO_EMPTY_BLOCKS -11
-#define EK_OPEN_WRONG_PERMISSIONS -12
-#define EK_OPEN_WRITE_ROOT_DIR_ENTRY_FAILED -13
 int k_open(const char *fname, int mode);
 
-#define EK_CLOSE_FD_OUT_OF_RANGE -1
-#define EK_CLOSE_SPECIAL_FD -2
-#define EK_CLOSE_WRITE_ROOT_DIR_ENTRY_FAILED -3
 int k_close(int fd);
 
-#define EK_READ_FD_OUT_OF_RANGE -1
-#define EK_READ_FD_NOT_IN_TABLE -2
-// this is an unexpected error (almost a panic) because
-// this should never happen if lseek is implemented correctly
-#define EK_READ_COULD_NOT_JUMP_TO_BLOCK_FOR_OFFSET -3
-#define EK_READ_WRONG_PERMISSIONS -4
-#define EK_READ_READ_FAILED -5
 int k_read(int fd, int n, char *buf);
 
-#define EK_LSEEK_BAD_WHENCE -1
-#define EK_LSEEK_NEGATIVE_OFFSET -2
-#define EK_LSEEK_OFFSET_OVERFLOW -3
-#define EK_LSEEK_FD_OUT_OF_RANGE -4
-#define EK_LSEEK_FD_NOT_IN_TABLE -5
-#define EK_LSEEK_WRONG_PERMISSIONS -6
-#define EK_LSEEK_SPECIAL_FD -7
 /**
  * IMPORTANT: this function does not have the same signature as lseek(2) because
  * it returns a negative error code on error. On success, it returns the offset
@@ -130,55 +102,18 @@ int k_read(int fd, int n, char *buf);
  */
 int64_t k_lseek(int fd, int offset, int whence);
 
-#define EK_WRITE_WRONG_PERMISSIONS -1
-#define EK_WRITE_FD_NOT_IN_TABLE -2
-#define EK_WRITE_FD_OUT_OF_RANGE -3
-#define EK_WRITE_GET_BLOCK_FAILED -5
-#define EK_WRITE_NEXT_BLOCK_NUM_FAILED -6
-#define EK_WRITE_WRITE_BLOCK_FAILED -7
-#define EK_WRITE_WRITE_ROOT_DIR_ENTRY_FAILED -8
-#define EK_WRITE_NO_EMPTY_BLOCKS -9
-#define EK_WRITE_TIME_FAILED -10
-#define EK_WRITE_WRITE_FAILED -11
 int k_write(int fd, const char *str, int n);
 
-#define EK_UNLINK_FILE_NOT_FOUND -1
-#define EK_UNLINK_FIND_FILE_IN_ROOT_DIR_FAILED -2
-#define EK_UNLINK_WRITE_ROOT_DIR_ENTRY_FAILED -3
-#define EK_UNLINK_INVALID_FILENAME -4
 int k_unlink(const char *fname);
 
-#define EK_LS_WRITE_FAILED -1
-#define EK_LS_FIND_FILE_IN_ROOT_DIR_FAILED -2
-#define EK_LS_NOT_IMPLEMENTED -3
-#define EK_LS_MALLOC_FAILED -4
-#define EK_LS_GET_BLOCK_FAILED -5
-#define EK_LS_NEXT_BLOCK_NUM_FAILED -6
 int k_ls(const char *filename);
 
-#define EK_CHMOD_FILE_NOT_FOUND -1
-#define EK_CHMOD_WRITE_ROOT_DIR_ENTRY_FAILED -2
-#define EK_CHMOD_WRONG_PERMISSIONS -3
-#define EK_CHMOD_INVALID_FILENAME -4
-#define EK_CHMOD_INVALID_MODE -5
 int k_chmod(const char *fname, uint8_t perm, int mode);
 
-#define EK_MV_FILE_NOT_FOUND -1
-#define EK_MV_WRONG_PERMISSIONS -2
-#define EK_MV_UNLINK_FAILED -3
-#define EK_MV_INVALID_FILENAME -4
-#define EK_MV_OPEN_FAILED -5
-#define EK_MV_WRITE_ROOT_DIR_ENTRY_FAILED -6
-#define EK_MV_CLOSE_FAILED -7
 int k_mv(const char *src, const char *dest);
 
-#define EK_SETMODE_FD_OUT_OF_RANGE -1
-#define EK_SETMODE_BAD_MODE -2
-#define EK_SETMODE_FD_NOT_IN_USE -3
 int k_setmode(int fd, int mode);
 
-#define EK_GETMODE_FD_OUT_OF_RANGE -1
-#define EK_GETMODE_FD_NOT_IN_USE -2
 int k_getmode(int fd);
 
 int k_fprintf_short(int fd, const char *format, ...);

@@ -6,7 +6,7 @@
 #include "src/pennfat/fat.h"
 #include "src/scheduler/kernel.h"
 #include "src/utils/error_codes.h"
-#include "sys.h"
+#include "src/scheduler/sys.h"
 
 #define PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL 0xFFFF
 
@@ -34,14 +34,16 @@ int s_open(const char *fname, int mode)
     // TODO: some kind of error translation?
     if (global_fd < 0)
     {
-        return global_fd;
+        s_set_errno(global_fd);
+        return -1;
     }
 
     // find an empty spot in the process fd table
     uint32_t empty_spot = find_empty_spot_in_process_fd_table();
     if (empty_spot == PROCESS_FD_TABLE_ENTRY_NOT_FOUND_SENTINEL)
     {
-        return ES_PROCESS_FILE_TABLE_FULL;
+        s_set_errno(E_PROCESS_FILE_TABLE_FULL);
+        return -1;
     }
 
     // update the process fd table
@@ -61,7 +63,8 @@ int s_read(int fd, int n, char *buf)
     pcb_t *current_process = k_get_current_process();
     if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
-        return ES_READ_UNKNOWN_FD;
+        s_set_errno(E_READ_UNKNOWN_FD);
+        return -1;
     }
 
     int global_fd = current_process->process_fd_table[fd].global_fd;
@@ -77,16 +80,13 @@ int s_read(int fd, int n, char *buf)
     return bytes_read;
 }
 
-#define ES_WRITE_UNKNOWN_FD -102
-#define ES_SEEK_ERROR -103
-#define ES_SETMODE_ERROR -104
-#define ES_WRITE_NO_TERMINAL_CONTROL -105
 int s_write(int fd, const char *str, int n)
 {
     pcb_t *current_process = k_get_current_process();
     if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
-        return ES_WRITE_UNKNOWN_FD;
+        s_set_errno(E_UNKNOWN_FD);
+        return -1;
     }
 
     int global_fd = current_process->process_fd_table[fd].global_fd;
@@ -99,35 +99,38 @@ int s_write(int fd, const char *str, int n)
     int seek_status = k_lseek(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].offset, F_SEEK_SET);
     if (seek_status != EK_LSEEK_SPECIAL_FD && seek_status < 0) // it's OK if the fd is a special fd
     {
-        return ES_SEEK_ERROR;
+        s_set_errno(seek_status);
+        return -1;
     }
 
     int old_mode = k_getmode(current_process->process_fd_table[fd].global_fd);
     int setmode_status = k_setmode(current_process->process_fd_table[fd].global_fd, current_process->process_fd_table[fd].mode);
     if (setmode_status != 0)
     {
-        return ES_SETMODE_ERROR;
+        s_set_errno(setmode_status);
+        return -1;
     }
 
     int bytes_written = k_write(current_process->process_fd_table[fd].global_fd, str, n);
 
     if (k_setmode(current_process->process_fd_table[fd].global_fd, old_mode) != 0)
     {
-        return ES_SETMODE_ERROR;
+        s_set_errno(setmode_status);
+        return -1;
     }
 
     current_process->process_fd_table[fd].offset += bytes_written;
     return bytes_written;
 }
 
-#define ES_CLOSE_UNKNOWN_FD -103
 
 int s_close(int fd)
 {
     pcb_t *current_process = k_get_current_process();
     if (fd >= PROCESS_FD_TABLE_SIZE || !current_process->process_fd_table[fd].in_use)
     {
-        return ES_CLOSE_UNKNOWN_FD;
+        s_set_errno(E_UNKNOWN_FD);
+        return -1;
     }
     // close the global fd
     k_close(current_process->process_fd_table[fd].global_fd);
@@ -137,22 +140,42 @@ int s_close(int fd)
 
 int s_unlink(const char *fname)
 {
-    return k_unlink(fname);
+    int status = k_unlink(fname);
+    if (status != 0) {
+        s_set_errno(status);
+        return -1;
+    }
+    return 0;
 }
 
 int s_ls(const char *filename)
 {
-    return k_ls(filename);
+    int status = k_ls(filename);
+    if (status != 0) {
+        s_set_errno(status);
+        return -1;
+    }
+    return 0;
 }
 
 int s_chmod(const char *fname, uint8_t perm, int mode)
 {
-    return k_chmod(fname, perm, mode);
+    int status = k_chmod(fname, perm, mode);
+    if (status != 0) {
+        s_set_errno(status);
+        return -1;
+    }
+    return 0;
 }
 
 int s_mv(const char *src, const char *dest)
 {
-    return k_mv(src, dest);
+    int status = k_mv(src, dest);
+    if (status != 0) {
+        s_set_errno(status);
+        return -1;
+    }
+    return 0;
 }
 
 char S_FPRINTF_SHORT_BUF[1024];
@@ -164,10 +187,12 @@ int s_fprintf_short(int fd, const char *format, ...)
     int status = vsnprintf(S_FPRINTF_SHORT_BUF, sizeof(S_FPRINTF_SHORT_BUF), format, args);
     va_end(args);
     if (status < 0) {
-        return E_STR_FORMAT_FAILED;
+        s_set_errno(E_STRING_FORMAT_FAILED);
+        return -1;
     }
     if (status >= sizeof(S_FPRINTF_SHORT_BUF)) {
-        return E_STR_TOO_LONG_FOR_FPRINTF_BUF;
+        s_set_errno(E_STRING_TOO_LONG_FOR_PRINTF_BUF);
+        return -1;
     }
     return s_write(fd, S_FPRINTF_SHORT_BUF, strlen(S_FPRINTF_SHORT_BUF));
 }

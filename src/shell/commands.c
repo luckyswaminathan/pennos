@@ -12,6 +12,7 @@
 #include "src/pennfat/fat_constants.h"
 #include "jobs.h"
 #include "stress.h"
+#include "src/utils/errno.h"
 #define BUFFER_SIZE 256
 
 // Helper function specific to ps command within this file
@@ -237,7 +238,10 @@ void* sleep_command(void* arg, char* time) {
         return NULL;
     }
     int ticks = atoi(time);
-    s_sleep(ticks);
+    int ret = s_sleep(ticks);
+    if (ret != 0) {
+        u_perror("sleep");
+    }
     s_exit(0);
     return NULL;
 }
@@ -280,7 +284,10 @@ void* kill_process_shell(void* arg, char* first_term) {
     // Process all PIDs
     for (int i = start_idx; args[i] != NULL; i++) {
         int pid = atoi(args[i]);
-        s_kill(pid, signal);
+        int ret = s_kill(pid, signal);
+        if (ret != 0) {
+            u_perror("kill");
+        }
     }
     s_exit(0);
     return NULL;
@@ -349,6 +356,7 @@ void* echo(void* arg) {
         s_exit(ret2);
         return NULL;
     }
+    u_perror("echo");
     s_exit(0);
     return NULL;
 }
@@ -365,21 +373,20 @@ void* touch(void* arg) {
         int fd = s_open(command[i], F_APPEND);
         if (fd < 0)
         {
-            char* error_message = "touch: failed to open file\n";
-            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            u_perror("touch");
             s_exit(fd);
             return NULL;
         }
         int status = s_write(fd, NULL, 0);
         if (status < 0)
         {
-            char* error_message = "touch: failed to write to file\n";
-            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            u_perror("touch");
             s_exit(status);
             return NULL;
         }
         s_close(fd);
     }
+    u_perror("touch");
     s_exit(0);
     return NULL;
 }
@@ -403,6 +410,7 @@ void* rm(void* arg) {
             return NULL;
         }
     }
+    u_perror("rm");
     s_exit(0);
     return NULL;
 }
@@ -422,8 +430,7 @@ void* cp(void* arg) {
     int src_fd = s_open(command[1], F_READ);
     if (src_fd < 0)
     {
-        char* error_message = "cp: Error - failed to open source file\n";
-        s_write(STDERR_FILENO, error_message, strlen(error_message));
+        u_perror("cp");
         s_exit(src_fd);
         return NULL;
     }
@@ -432,8 +439,7 @@ void* cp(void* arg) {
     int dest_fd = s_open(command[2], F_WRITE);
     if (dest_fd < 0)
     {
-        char* error_message = "cp: Error - failed to create destination file\n";
-        s_write(STDERR_FILENO, error_message, strlen(error_message));
+        u_perror("cp");
         s_close(src_fd);
         s_exit(dest_fd);
         return NULL;
@@ -446,8 +452,7 @@ void* cp(void* arg) {
     {
         if (s_write(dest_fd, buffer, bytes_read) < 0)
         {
-            char* error_message = "cp: Error - failed to write to destination file\n";
-            s_write(STDERR_FILENO, error_message, strlen(error_message));
+            u_perror("cp");
             s_close(src_fd);
             s_close(dest_fd);
             s_exit(dest_fd);
@@ -457,6 +462,7 @@ void* cp(void* arg) {
 
     s_close(src_fd);
     s_close(dest_fd);
+    u_perror("cp");
     s_exit(0);
     return NULL;
 }
@@ -472,6 +478,7 @@ void *cat(void *arg) {
         while ((bytes_read = s_read(STDIN_FILENO, buf_size, buffer)) > 0) {
             s_write(STDOUT_FILENO, buffer, bytes_read);
         }
+        u_perror("cat");
         s_exit(0);
         return NULL;
     }
@@ -480,9 +487,8 @@ void *cat(void *arg) {
     for (int i = 1; command[i] != NULL; i++) {
         int fd = s_open(command[i], F_READ);
         if (fd < 0) {
-            char* error_message = "cat: Error - failed to open file\n";
-            s_write(STDERR_FILENO, error_message, strlen(error_message));
-            s_exit(fd);
+            u_perror("cat");
+            s_exit(-1);
             return NULL;
         }
         while ((bytes_read = s_read(fd, buf_size, buffer)) > 0) {
@@ -539,14 +545,8 @@ void* chmod(void* arg) {
         }
     }
 
-    int chmod_status = s_chmod(command[2], permissions, mode);
-    if (chmod_status < 0)
-    {
-        char* error_message = "chmod: Error - failed to change permissions\n";
-        s_write(STDERR_FILENO, error_message, strlen(error_message));
-        s_exit(chmod_status);
-        return NULL;
-    }
+    s_chmod(command[2], permissions, mode);
+    u_perror("chmod");
     s_exit(0);
     return NULL;
 }
@@ -562,9 +562,8 @@ void* mv(void* arg) {
     }
     int mv_status = s_mv(command[1], command[2]);
     if (mv_status < 0) {
-        char* error_message = "mv: Error - failed to move file\n";
-        s_write(STDERR_FILENO, error_message, strlen(error_message));
-        s_exit(mv_status);
+        u_perror("mv");
+        s_exit(-1);
         return NULL;
     }
     s_exit(0);
