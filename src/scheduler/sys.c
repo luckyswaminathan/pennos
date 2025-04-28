@@ -323,7 +323,7 @@ int s_get_errno() {
  * Wrapper function.
  */
 int s_init_scheduler() {
-    init_scheduler();
+    return init_scheduler();
 }
 
 /**
