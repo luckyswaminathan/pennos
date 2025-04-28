@@ -2,7 +2,6 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <stdio.h>
@@ -323,7 +322,7 @@ int s_get_errno() {
  * @brief Initialize the scheduler.
  * Wrapper function.
  */
-void s_init_scheduler() {
+int s_init_scheduler() {
     init_scheduler();
 }
 

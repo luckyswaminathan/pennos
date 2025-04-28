@@ -6,7 +6,6 @@
 #include "commands.h"
 #include "../scheduler/logger.h"
 #include "../scheduler/sys.h"
-#include "../../lib/exiting_alloc.h"
 #include "../scheduler/spthread.h"
 #include "src/pennfat/fat_constants.h"
 #include "jobs.h"

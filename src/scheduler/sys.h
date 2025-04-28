@@ -143,7 +143,7 @@ int s_get_errno();
  * @brief Initialize the scheduler. 
  * This is a wrapper around the internal init_scheduler function.
  */
-void s_init_scheduler();
+int s_init_scheduler();
 
 /**
  * @brief Start the scheduler's main loop.
