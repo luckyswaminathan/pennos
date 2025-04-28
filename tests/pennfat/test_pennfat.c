@@ -1,6 +1,7 @@
 #include "acutest.h"
 #include "src/pennfat/fat.h"
 #include "src/pennfat/mkfs.h"
+#include "src/utils/error_codes.h"
 #include <stdio.h>
 
 // this will be a min sized fs, so it will have
