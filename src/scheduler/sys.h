@@ -138,3 +138,15 @@ void s_set_errno(int errno);
  * @return int The error number.
  */
 int s_get_errno();
+
+/**
+ * @brief Initialize the scheduler. 
+ * This is a wrapper around the internal init_scheduler function.
+ */
+int s_init_scheduler();
+
+/**
+ * @brief Start the scheduler's main loop.
+ * This is a wrapper around the internal run_scheduler function.
+ */
+void s_run_scheduler();
