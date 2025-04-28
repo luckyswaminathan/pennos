@@ -8,8 +8,8 @@ CFLAGS = -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -W
 CPPFLAGS = -DNDEBUG -I. -I.. -I./shell -I./scheduler
 
 # Scheduler files
-SCHED_SRCS = src/scheduler/scheduler.c src/scheduler/spthread.c src/scheduler/logger.c lib/exiting_alloc.c src/scheduler/kernel.c src/scheduler/fat_syscalls.c src/pennfat/fat.c src/pennfat/fat_utils.c src/scheduler/sys.c src/utils/errno.c
-SCHED_HDRS = src/scheduler/scheduler.h src/scheduler/spthread.h src/scheduler/logger.h lib/exiting_alloc.h src/scheduler/kernel.h lib/linked_list.h src/scheduler/sys.h src/scheduler/fat_syscalls.h src/pennfat/fat.h src/pennfat/fat_utils.h src/pennfat/fat_constants.h src/utils/errno.h src/utils/error_codes.h
+SCHED_SRCS = src/scheduler/scheduler.c src/scheduler/spthread.c src/scheduler/logger.c src/scheduler/kernel.c src/scheduler/fat_syscalls.c src/pennfat/fat.c src/pennfat/fat_utils.c src/scheduler/sys.c src/utils/errno.c
+SCHED_HDRS = src/scheduler/scheduler.h src/scheduler/spthread.h src/scheduler/logger.h src/scheduler/kernel.h lib/linked_list.h src/scheduler/sys.h src/scheduler/fat_syscalls.h src/pennfat/fat.h src/pennfat/fat_utils.h src/pennfat/fat_constants.h src/utils/errno.h src/utils/error_codes.h
 SCHED_OBJS = $(SCHED_SRCS:.c=.o)
 
 # Shell files
