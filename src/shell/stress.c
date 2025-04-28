@@ -16,7 +16,7 @@
 #include <signal.h> // for kill(SIGKILL) to mimic crashing for one of the tests
 #include <string.h> // for memcpy and strlen
 #include <time.h>   // for time()
-#include "sys.h"
+#include "src/scheduler/sys.h"
 /******************************************************************************
  *                                                                            *
  * Replace syscalls.h with your own header file(s) for s_spawn and s_waitpid. *
