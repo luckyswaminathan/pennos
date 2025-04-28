@@ -2,28 +2,130 @@
 
 ## Name and Penn Key
 
-*   **Name:** [Your Name Here]
+*   **Names:**: Aagam Dalal, Lakshman Swaminathan, Kavin Sarvanan, Arnav Chopra
 *   **Penn Key:** [Your Penn Key Here]
 
-## Submitted Source Files
+## Directory Structure and Files Submitted
 
-*   `Makefile`
-*   `scheduler.mk`
-*   `src/Makefile`
-*   `src/pennosfat`
-*   `src/shell/...` (all files within)
-*   `src/utils/...` (all files within)
-*   `src/scheduler/...` (all files within)
-*   `src/pennfat/...` (all files within)
-*   `lib/...` (relevant library files if any)
-*   `tests/...` (all files within)
-*   `doc/companion.md` (or `doc/companion.pdf` after conversion)
-
-*(Please list any other relevant files you submitted)*
-
-## Extra Credit Answers
-
-*(Detail any extra credit implemented here)*
+```
+├── Makefile
+├── Makefile2
+├── README.md
+├── bin
+│   ├── pennfat
+│   └── standalone-pennfat
+├── doc
+│   ├── README.md
+│   └── companion.md
+├── lib
+│   ├── exiting_alloc.o
+│   └── linked_list.h
+├── llvm.sh.1
+├── pennosfat
+├── scheduler-test
+├── scheduler.mk
+├── src
+│   ├── Makefile
+│   ├── nonewline
+│   ├── nonewline2
+│   ├── pennfat
+│   │   ├── fat.c
+│   │   ├── fat.h
+│   │   ├── fat.o
+│   │   ├── fat_constants.h
+│   │   ├── fat_utils.c
+│   │   ├── fat_utils.h
+│   │   ├── fat_utils.o
+│   │   ├── mkfs.c
+│   │   ├── mkfs.h
+│   │   ├── mkfs.o
+│   │   └── pennfat.c
+│   ├── pennosfat
+│   ├── scheduler
+│   │   ├── README.md
+│   │   ├── fat_syscalls.c
+│   │   ├── fat_syscalls.h
+│   │   ├── fat_syscalls.o
+│   │   ├── kernel.c
+│   │   ├── kernel.h
+│   │   ├── kernel.o
+│   │   ├── logger.c
+│   │   ├── logger.h
+│   │   ├── logger.o
+│   │   ├── pennos.c
+│   │   ├── sched-test.o
+│   │   ├── scheduler.c
+│   │   ├── scheduler.h
+│   │   ├── scheduler.o
+│   │   ├── spthread.c
+│   │   ├── spthread.h
+│   │   ├── spthread.o
+│   │   ├── spthread_demo.c
+│   │   ├── sys.c
+│   │   ├── sys.h
+│   │   └── sys.o
+│   ├── scheduler.log
+│   ├── shell
+│   │   ├── Job.c
+│   │   ├── Job.h
+│   │   ├── Job.o
+│   │   ├── Makefile
+│   │   ├── README.md
+│   │   ├── command_execution.c
+│   │   ├── command_execution.h
+│   │   ├── command_execution.o
+│   │   ├── commands.c
+│   │   ├── commands.h
+│   │   ├── commands.o
+│   │   ├── exiting_signal.c
+│   │   ├── exiting_signal.h
+│   │   ├── exiting_signal.o
+│   │   ├── inp.txt
+│   │   ├── jobs.c
+│   │   ├── jobs.h
+│   │   ├── jobs.o
+│   │   ├── out.txt
+│   │   ├── parser.c
+│   │   ├── parser.h
+│   │   ├── parser.o
+│   │   ├── penn-shell
+│   │   ├── penn-shell.c
+│   │   ├── penn-shell.o
+│   │   ├── print.o
+│   │   ├── shell_porcelain.c
+│   │   ├── shell_porcelain.h
+│   │   ├── shell_porcelain.o
+│   │   ├── signals.c
+│   │   ├── signals.h
+│   │   ├── signals.o
+│   │   ├── stress.c
+│   │   ├── stress.h
+│   │   ├── stress.o
+│   │   ├── valid_input.c
+│   │   ├── valid_input.h
+│   │   └── valid_input.o
+│   └── utils
+│       ├── errno.c
+│       ├── errno.h
+│       ├── errno.o
+│       ├── error_codes.h
+│       ├── spthread.c
+│       └── spthread.h
+├── test
+│   └── sched-demo.c
+├── test_scheduler
+└── tests
+    ├── pennfat
+    │   ├── acutest.h
+    │   ├── cram-tests
+    │   │   └── mount_unmount.t
+    │   ├── test_pennfat
+    │   └── test_pennfat.c
+    ├── sched-demo.c
+    ├── test_linked_list.c
+    ├── test_scheduler.c
+    └── test_scheduler.o
+```
 
 ## Compilation Instructions
 
@@ -31,11 +133,18 @@
 2.  Run `make` to compile the project: `make`
 3.  The executable(s) (e.g., `pennosfat`) will be created in the `src` directory.
 
-*(Add any specific targets or variations if needed, e.g., `make clean`, `make test`)*
-
 ## Overview of Work Accomplished
 
-*(Provide a high-level summary of the features and components implemented in this submission. e.g., implemented the FAT file system, the shell, process scheduling, etc.)*
+This project implements a basic operating system with a filesystem that lives on top (and runs as a process in) the host operating system. Users can interact with it via a shell interface that is also implemented. Here is a breakdown of the different components we have implemented -
+
+### Process Management
+
+### Shell Interface
+
+### FAT based Filesystem 
+
+aagam here plz
+
 
 ## Description of Code and Code Layout
 
