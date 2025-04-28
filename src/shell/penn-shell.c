@@ -9,7 +9,6 @@
 #include "./Job.h"
 #include "./jobs.h"
 #include "./signals.h"
-#include "../scheduler/scheduler.h"
 #include "../scheduler/sys.h"
 #include "commands.h"
 #include "src/pennfat/fat.h"
@@ -169,12 +168,11 @@ int main(int argc, char **argv) {
     // Spawn init process
     pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);
     k_tcsetpid(pid);
-    printf("Scheduler initialized\n");
     
     // Finally set up the job control handlers
     setup_job_control_handlers();
 
-    run_scheduler();
+    s_run_scheduler();
 
     return EXIT_SUCCESS;
 }

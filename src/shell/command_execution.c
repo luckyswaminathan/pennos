@@ -17,7 +17,6 @@
 #include "./jobs.h"
 #include "commands.h"
 #include "../scheduler/sys.h"
-#include "../../lib/exiting_alloc.h"
 #include <string.h>
 
 #define DEFAULT_FILE_PERMISSIONS 0644  // User: read/write, Group: read, Others: read

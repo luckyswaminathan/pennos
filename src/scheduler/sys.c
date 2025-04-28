@@ -2,7 +2,6 @@
 #include "scheduler.h"
 #include "kernel.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <stdio.h>
@@ -317,4 +316,20 @@ void s_set_errno(int errno) {
 int s_get_errno() {
     pcb_t* current = k_get_current_process();
     return current->errnumber;
+}
+
+/**
+ * @brief Initialize the scheduler.
+ * Wrapper function.
+ */
+int s_init_scheduler() {
+    init_scheduler();
+}
+
+/**
+ * @brief Run the scheduler.
+ * Wrapper function.
+ */
+void s_run_scheduler() {
+    run_scheduler();
 }
