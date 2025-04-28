@@ -26,6 +26,12 @@ void update_ticks(unsigned long ticks);
 void log_schedule(pid_t pid, int queue, const char* process_name);
 
 /**
+ * Log a sleep event
+ * Format: [ticks] SLEEPING PID NICE_VALUE PROCESS_NAME
+ */
+void log_sleep(pid_t pid, int nice_value, const char* process_name);
+
+/**
  * Log a process creation event
  * Format: [ticks] CREATE PID NICE_VALUE PROCESS_NAME
  */

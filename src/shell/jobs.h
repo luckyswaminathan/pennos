@@ -45,6 +45,8 @@ job* find_job_by_pid(pid_t pid);
 
 void print_job_list();
 
+void print_job_command(job* job);
+
 void remove_job_by_pid(pid_t pid);
 
 void add_foreground_job(job* job);

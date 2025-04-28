@@ -19,6 +19,7 @@
 #define E_CONTINUE_NON_STOPPED_PROCESS -13
 #define E_STOP_STOPPED_PROCESS -14
 #define E_STOP_NON_ACTIVE_QUEUE_PROCESS -15
+#define E_PID_NOT_FOUND -16
 
 // these are bad errors -- almost panics
 #define E_RUNNING_PROCESS_NOT_IN_READY_QUEUE -13

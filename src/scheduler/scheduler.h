@@ -155,11 +155,13 @@ pcb_t* k_get_current_process(void);
 pid_t k_waitpid(pid_t pid, int* wstatus, bool nohang);
 
 pcb_t* get_process_by_pid(pid_t pid);
-
+int k_get_quantum();
 void k_toggle_logging();
 void k_print_ps_output();
 void k_log(const char *format, ...);
 void k_tcsetpid(pid_t pid);
 pid_t k_tcgetpid();
+
+bool k_resume_sleep(pcb_t* process);
 
 #endif

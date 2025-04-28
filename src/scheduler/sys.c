@@ -110,6 +110,7 @@ int s_kill(pid_t pid, int signal) {
     bool success = false;
     switch (signal) {
         case P_SIGINT:
+            log_signaled(target->pid, target->priority, target->command);
             if (target->ignore_sigint) {
                 return 0;
             }
@@ -241,6 +242,13 @@ void s_sleep(unsigned int ticks) {
         // Execution resumes here after sleep duration (or signal)
     } else {
         s_set_errno(status);
+        // Kernel function failed, maybe log error? Proceed without yielding.
+    }
+
+    // Call kernel sleep function
+    // support re-entrancy
+    while (k_resume_sleep(current)) {
+        spthread_suspend_self();
     }
 }
 
