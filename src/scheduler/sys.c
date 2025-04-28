@@ -318,3 +318,19 @@ int s_get_errno() {
     pcb_t* current = k_get_current_process();
     return current->errnumber;
 }
+
+/**
+ * @brief Initialize the scheduler.
+ * Wrapper function.
+ */
+void s_init_scheduler() {
+    init_scheduler();
+}
+
+/**
+ * @brief Run the scheduler.
+ * Wrapper function.
+ */
+void s_run_scheduler() {
+    run_scheduler();
+}

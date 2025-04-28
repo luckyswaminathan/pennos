@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include "commands.h"
-#include "../scheduler/scheduler.h"
 #include "../scheduler/logger.h"
 #include "../scheduler/sys.h"
 #include "../../lib/exiting_alloc.h"
@@ -15,85 +14,11 @@
 #include "src/utils/errno.h"
 #define BUFFER_SIZE 256
 
-// Helper function specific to ps command within this file
-static void print_process_line(pcb_t* proc, char state_char) {
-     if (!proc) return;
-     // Print process info directly using printf
-     printf("%3d %4d %3d %c    %s\n", 
-            proc->pid, 
-            proc->ppid, 
-            proc->priority, 
-            state_char, 
-            proc->command ? proc->command : "<?>" // Use command name
-     );
-}
-
-// static void print_header(int output_fd) {
-//     const char* header = "PID PPID PRI STAT CMD\n";
-//     dprintf(output_fd, "%s", header);
-//     LOG_INFO("%s", header);
-// }
-// static void print_process(pcb_t* proc, int output_fd) {
-//     char state_char = 'R';
-//     if (proc->state == PROCESS_BLOCKED){ state_char = 'B';
-//     } else if (proc->state == PROCESS_ZOMBIED) {
-//         state_char = 'Z';
-//     }
-//     dprintf(output_fd, "%3d %4d %3d %c   %s\n", proc->pid, proc->ppid, proc->priority, state_char, proc->command);
-//     LOG_INFO("Process info - PID: %d, PPID: %d, STATE: %d, COMMAND: %s", proc->pid, proc->ppid, proc->state, proc->command);
-// }
-
-
 
 // Implementation of ps command
 void* ps(void* arg) {
-    // Directly access kernel state (assuming this is allowed by the project structure)
-    if (!scheduler_state) {
-        printf("Scheduler not initialized.\n");
-        s_exit(1); // Exit with an error code
-        return NULL; 
-    }
-
-    // Print header
-    printf("PID PPID PRI STAT CMD\n");
-
-    // Get current process - careful, this is the 'ps' process itself
-    // pcb_t *ps_process = scheduler_state->current_process; 
-    // pid_t ps_pid = (ps_process) ? ps_process->pid : -1;
-
-
-    // --- Iterate through all queues ---
-
-    // Ready Queues (excluding the ps process itself)
-    // TODO: Maintain abstraction here
-    for (int i = 0; i < 3; i++) {
-        pcb_t* current = scheduler_state->ready_queues[i].head;
-        while (current != NULL) {
-            print_process_line(current, 'R');
-            current = current->next;
-        }
-    }
-
-    // Blocked Queue
-    pcb_t* current = scheduler_state->blocked_queue.head;
-    while (current != NULL) {
-        print_process_line(current, 'B');
-        current = current->next;
-    }
-
-    // Stopped Queue
-    current = scheduler_state->stopped_queue.head;
-    while (current != NULL) {
-        print_process_line(current, 'S');
-        current = current->next;
-    }
-
-    // Zombie Queue
-    current = scheduler_state->zombie_queue.head;
-    while (current != NULL) {
-        print_process_line(current, 'Z');
-        current = current->next;
-    }
+    // Use the system call to get process info, maintaining abstraction
+    s_get_process_info();
 
     s_exit(0); // Exit the ps process itself cleanly
     return NULL;
@@ -156,11 +81,23 @@ void* busy(void* arg, char* priority) {
         return NULL;
     }
 
-    // Remove the current process from the ready queue and add it to the ready queue with the new priority
-    pcb_t* proc = scheduler_state->current_process;
-    linked_list_remove(&scheduler_state->ready_queues[proc->priority], proc);
-    proc->priority = priority_level;
-    linked_list_push_tail(&scheduler_state->ready_queues[priority_level], proc);
+    // Get the current process's PID
+    pcb_t* current_process = s_get_current_process();
+    if (!current_process) {
+        s_write(STDERR_FILENO, "Busy: Could not get current process\n", strlen("Busy: Could not get current process\n"));
+        s_exit(1);
+        return NULL;
+    }
+    pid_t current_pid = current_process->pid;
+
+    // Use the s_nice system call to change priority
+    int result = s_nice(current_pid, priority_level);
+    if (result != 0) {
+        // s_nice already sets errno, so use u_perror
+        u_perror("busy (s_nice)");
+        s_exit(1);
+        return NULL;
+    }
 
     // Busy wait
     while (1) {}
