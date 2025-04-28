@@ -1,11 +1,10 @@
 #include "src/scheduler/kernel.h"
 #include "scheduler.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <string.h>
-#include "shell/commands.h"
+#include "src/shell/commands.h"
 #include <stdlib.h> // For malloc/free
 #include "src/utils/error_codes.h"
 
@@ -35,7 +34,7 @@ static char** duplicate_argv(char *const argv[]) {
     }
 
     // Allocate space for the array of pointers (+1 for NULL terminator)
-    char** new_argv = (char**) exiting_malloc(sizeof(char*) * (argc + 1));
+    char** new_argv = (char**) malloc(sizeof(char*) * (argc + 1));
     if (!new_argv) {
         return NULL;
     }
@@ -87,7 +86,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], pr
         return E_INIT_ALREADY_EXISTS;
     }
 
-    pcb_t* proc = (pcb_t*) exiting_malloc(sizeof(pcb_t));
+    pcb_t* proc = (pcb_t*) malloc(sizeof(pcb_t));
     if (!proc) {
         return E_FAILED_TO_ALLOCATE;
     }
@@ -135,7 +134,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], pr
     }
 
     // Initialize children list
-    proc->children = (child_process_ll_t) exiting_malloc(sizeof(*(proc->children)));
+    proc->children = (child_process_ll_t) malloc(sizeof(*(proc->children)));
     if (!proc->children) {
         free(proc);
         return E_FAILED_TO_ALLOCATE;
@@ -171,7 +170,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], pr
     }
 
     // Allocate and create the thread
-    proc->thread = (spthread_t*) exiting_malloc(sizeof(spthread_t));
+    proc->thread = (spthread_t*) malloc(sizeof(spthread_t));
     if (!proc->thread) {
         // Cleanup command and argv
         if (proc->command) free(proc->command);
@@ -205,7 +204,7 @@ pid_t k_proc_create(pcb_t *parent, void *(*func)(void *), char *const argv[], pr
     k_log("CREATED THREAD %lu for %s\n", proc->thread->thread, proc->command);
     log_create(proc->pid, proc->priority, proc->command);
 
-    child_process_t* child_process = (child_process_t*) exiting_malloc(sizeof(child_process_t));
+    child_process_t* child_process = (child_process_t*) malloc(sizeof(child_process_t));
     if (!child_process) {
         if (proc->command) free(proc->command);
         if (proc->argv) {

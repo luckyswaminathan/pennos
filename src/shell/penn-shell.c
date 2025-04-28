@@ -8,7 +8,6 @@
 #include "./shell_porcelain.h"
 #include "./Job.h"
 #include "./jobs.h"
-#include "../../lib/exiting_alloc.h"
 #include "./signals.h"
 #include "../scheduler/sys.h"
 #include "commands.h"
@@ -80,7 +79,12 @@ static void* shell_loop(void* arg) {
             continue;
         }
 
-        job* job_ptr = (job*) exiting_malloc(sizeof(job));
+        job* job_ptr = (job*) malloc(sizeof(job));
+        if (!job_ptr) {
+            s_fprintf_short(STDERR_FILENO, "Failed to allocate job\n");
+            free(parsed_command);
+            continue;
+        }
         job_ptr->id = ++job_id;
         job_ptr->pid = -1;
         job_ptr->status = J_RUNNING_FG;
@@ -147,7 +151,9 @@ int main(int argc, char **argv) {
 
     // Initialize logger and scheduler
     init_logger("scheduler.log");
-    s_init_scheduler();
+    if (s_init_scheduler() == -1) {
+        exit(EXIT_FAILURE);
+    }
 
     // Spawn init process
     pid_t pid = s_spawn(init_process, (char*[]){"init", NULL}, STDIN_FILENO, STDOUT_FILENO, PRIORITY_HIGH);

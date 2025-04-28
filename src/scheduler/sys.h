@@ -1,6 +1,5 @@
 #include "scheduler.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include "src/scheduler/fat_syscalls.h"
@@ -82,11 +81,34 @@ int s_nice(pid_t pid, int priority);
  */
 int s_sleep(unsigned int ticks);
 
+/**
+ * @brief Get the process info of the current process and print it to stderr
+ */
 void s_get_process_info();
 
+/**
+ * @brief Set the terminal controlling process
+ * @param pid process id of the new terminal controlling process
+ * @return int 0 on success, or negative error code
+ * @note If the current process is not the terminal controlling process, this will fail. Note also that the s_waitpid function
+ * automatically passes terminal control to the child process when it is waited on with nohang set to false and pid set to the pid
+ * of the child process. Thus it is expected that this function will rarely need to be called explicitly. Terminaly control is also
+ * returned to the parent process on stop or termination.
+ */
 int s_tcsetpid(pid_t pid); 
 
+/**
+ * @brief Ignore or unignore SIGINT signals for the current process
+ * @param ignore true to ignore, false to unignore
+ * @return int 0 on success, or negative error code
+ */
 int s_ignore_sigint(bool ignore);
+
+/**
+ * @brief Ignore or unignore SIGTSTP signals for the current process
+ * @param ignore true to ignore, false to unignore
+ * @return int 0 on success, or negative error code
+ */
 int s_ignore_sigtstp(bool ignore);
 
 /**
