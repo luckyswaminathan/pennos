@@ -1,4 +1,4 @@
-# PennOS Project Readme
+# PennOS Project README
 
 ## Name and Penn Key
 
@@ -158,6 +158,10 @@ We maintain three levels of abstraction for our processes -
 
 ### Shell Interface
 
+The shell is implemented as a high priority process. It is responsible for parsing commands and executing them. It also spawns new processes when necessary.
+
+At a high level, the shell provides jobs, foreground and background processes, and a way to interact with the filesystem and is built on top of the system functions exposed by the kernel. For more details on the commands and functionality implemented, please refer to the companion document.
+
 ### FAT based Filesystem 
 
 aagam here plz
@@ -173,19 +177,15 @@ The project is structured as follows:
     *   `shell/`: Source code for the PennOS shell implementation.
     *   `utils/`: Utility functions used across different components.
     *   `scheduler/`: Source code for the process scheduler.
+        *   `kernel.c`: Kernel level functions for the scheduler.
+        *   `logger.c`: Logger for the scheduler.
+        *   `pennos.c`: PennOS specific functions for the scheduler.
+        *   `scheduler.c`: Scheduler implementation.
+        *   `spthread.c`: Thread library.
+        *   `sys.c`: System call implementation.
     *   `pennfat/`: Source code for the PennFAT file system implementation.
     *   `pennosfat`: Likely the main executable or related file.
 *   **`lib/`:** Contains any supporting libraries.
 *   **`tests/` (and potentially `test/`):** Contains testing scripts and code.
 *   **`doc/`:** Contains documentation, including the Companion Document.
 *   **`bin/`:** May contain compiled binaries or scripts.
-
-*(Add more specific details about key modules or design choices)*
-
-## General Comments
-
-*(Include any other relevant information, known issues, or comments that might help the graders understand your submission.)*
-
-## Companion Document
-
-A detailed description of the OS API and functionality can be found in the Companion Document located at `doc/companion.md`.
