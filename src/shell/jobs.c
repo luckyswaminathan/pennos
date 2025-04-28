@@ -253,7 +253,12 @@ void enqueue_job(job* job) {
     exit(EXIT_FAILURE);
   }
 
-  job_ll_node* node = (job_ll_node*) exiting_malloc(sizeof(job_ll_node));
+  job_ll_node* node = (job_ll_node*) malloc(sizeof(job_ll_node));
+  if (!node) {
+    s_fprintf_short(STDERR_FILENO, "Failed to allocate job_ll_node\n");
+    return;
+  }
+
   node->prev = NULL;
   node->next = NULL;
   node->job = job;
@@ -375,7 +380,12 @@ void remove_job_by_pid(pid_t pid) {
  * @param job The job currently running in the foreground.
  */
 void add_foreground_job(job* job) {
-  job_ll_node* node = (job_ll_node*) exiting_malloc(sizeof(job_ll_node));
+  job_ll_node* node = (job_ll_node*) malloc(sizeof(job_ll_node));
+  if (!node) {
+    s_fprintf_short(STDERR_FILENO, "Failed to allocate job_ll_node\n");
+    return;
+  }
+
   node->prev = NULL;
   node->next = NULL;
   node->job = job;

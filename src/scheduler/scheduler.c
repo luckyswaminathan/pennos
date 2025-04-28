@@ -137,9 +137,13 @@ static void _setup_sigalarm(sigset_t *suspend_set)
 /**
  * @brief Initialize the scheduler
  */
-void init_scheduler()
+int init_scheduler()
 {
-    scheduler_state = (scheduler_t *)exiting_malloc(sizeof(scheduler_t));
+    scheduler_state = (scheduler_t *) malloc(sizeof(scheduler_t));
+    if (!scheduler_state) {
+        perror("Failed to allocate scheduler state");
+        return -1;
+    }
 
     // Initialize priority queues
     for (int i = 0; i < 3; i++)
@@ -175,6 +179,8 @@ void init_scheduler()
     it.it_interval = (struct timeval){.tv_usec = centisecond * 10};
     it.it_value = it.it_interval;
     setitimer(ITIMER_REAL, &it, NULL);
+
+    return 0;
 }
 
 /**

@@ -125,7 +125,7 @@ typedef struct scheduler {
 
 extern scheduler_t* scheduler_state;
 
-void init_scheduler();
+int init_scheduler();
 void pcb_destructor(void* pcb);
 
 // ================================ Process Management API ================================
