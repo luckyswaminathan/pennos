@@ -4,7 +4,7 @@
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <string.h>
-#include "shell/commands.h"
+#include "src/shell/commands.h"
 #include <stdlib.h> // For malloc/free
 #include "src/utils/error_codes.h"
 

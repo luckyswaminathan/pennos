@@ -1,72 +1,55 @@
 SRC_DIR = src
+TESTS_DIR = test
 BIN_DIR = bin
-LOG_DIR = log
-DOC_DIR = doc
-TESTS_DIR = tests
 
-.PHONY: all tests info format clean
 
-CC = clang-15
-CXX = clang++-15
-CFLAGS = -g3 -gdwarf-4 -pthread -Wall -Werror -Wno-gnu -O0 -g --std=gnu2x
-CXXFLAGS = -g3 -gdwarf-4 -pthread -Wall -Werror -Wno-gnu -O0 -g --std=gnu++2b
+CC = clang
+CFLAGS = -g3 -gdwarf-4 -Wall -Werror -Wpedantic -Wno-gnu-statement-expression -Wno-language-extension-token --std=gnu2x
+CPPFLAGS = -DNDEBUG -I. -I.. -I./shell -I./scheduler
 
-# tells it to search in the src dir and the current dir
-# so we support both "src/pennfat/fat.h" and "pennfat/fat.h" style includes
-CPPFLAGS = -I $(SRC_DIR) -I.
+# Scheduler files
+SCHED_SRCS = src/scheduler/scheduler.c src/scheduler/spthread.c src/scheduler/logger.c lib/exiting_alloc.c src/scheduler/kernel.c src/scheduler/fat_syscalls.c src/pennfat/fat.c src/pennfat/fat_utils.c src/scheduler/sys.c src/utils/errno.c
+SCHED_HDRS = src/scheduler/scheduler.h src/scheduler/spthread.h src/scheduler/logger.h lib/exiting_alloc.h src/scheduler/kernel.h lib/linked_list.h src/scheduler/sys.h src/scheduler/fat_syscalls.h src/pennfat/fat.h src/pennfat/fat_utils.h src/pennfat/fat_constants.h src/utils/errno.h src/utils/error_codes.h
+SCHED_OBJS = $(SCHED_SRCS:.c=.o)
 
-# add each test name to this list
-# for example:
-# TEST_MAINS = $(TESTS_DIR)/test1.c $(TESTS_DIR)/othertest.c $(TESTS_DIR)/sched-demo.c
-TEST_MAINS = $(TESTS_DIR)/sched-demo.c 
+# Shell files
+SHELL_PROG = bin/pennos
+SHELL_SRCS = $(wildcard src/shell/*.c)
+SHELL_HDRS = $(wildcard src/shell/*.h)
+SHELL_OBJS = $(SHELL_SRCS:.c=.o)
 
-# list all files with their own main() function here
-# for example:
-# MAIN_FILES = $(SRC_DIR)/stand_alone_pennfat.c $(SRC_DIR)/helloworld.c $(SRC_DIR)/pennos.c
-MAIN_FILES = $(SRC_DIR)/pennos.c 
+.PHONY: all clean scheduler shell dirs
 
-# to get the executables, remove the .c from the filename and put 
-# it in the BIN_DIR
-EXECS = $(subst $(SRC_DIR),$(BIN_DIR),$(MAIN_FILES:.c=))
-TEST_EXECS = $(subst $(TESTS_DIR),$(BIN_DIR),$(TEST_MAINS:.c=))
+all: dirs scheduler shell
 
-# srcs = all C files in SRC_DIR that are not listed in MAIN_FILES
-SRCS = src/scheduler.c src/spthread.c src/logger.c shell/exiting_alloc.c src/kernel.c src/sys.c
-HDRS = src/scheduler.h src/spthread.h src/logger.h shell/exiting_alloc.h src/kernel.h lib/linked_list.h src/sys.h
-MAIN = src/sched-test.c
+dirs:
+	mkdir -p $(BIN_DIR)
 
-TEST_OBJS = $($(wildcard $(TESTS_DIR)/*.c):.c=.o)
+scheduler: $(SCHED_TEST)
 
-all: $(EXECS)
+shell: $(SHELL_PROG)
 
-tests: $(TEST_EXECS)
+$(SCHED_TEST): src/scheduler/sched-test.c $(SCHED_OBJS) $(SCHED_HDRS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SCHED_OBJS) src/scheduler/sched-test.c
 
-$(EXECS): $(BIN_DIR)/%: $(SRC_DIR)/%.c $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $<
+$(SHELL_PROG): $(SHELL_OBJS) $(SCHED_OBJS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SHELL_OBJS) $(SCHED_OBJS)
 
-$(TEST_EXECS): $(BIN_DIR)/%: $(TESTS_DIR)/%.c $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(SRCS) $(subst $(BIN_DIR)/,$(TESTS_DIR)/,$@).c
-
-%.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
-
-%.o: %.cpp $(HDRS)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ -c $<
-
-info:
-	$(info MAIN_FILES: $(MAIN_FILES)) \
-	$(info EXECS: $(EXECS)) \
-	$(info SRCS: $(SRCS)) \
-	$(info HDRS: $(HDRS)) \
-	$(info OBJS: $(OBJS)) \
-	$(info TEST_MAINS: $(TEST_MAINS)) \
-	$(info TEST_EXECS: $(TEST_EXECS))
-
-format:
-	clang-format -i --verbose --style=Chromium $(MAIN_FILES) $(TEST_MAINS) $(SRCS) $(HDRS)
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(EXECS)
+	rm -f $(SCHED_TEST) $(SHELL_PROG) $(SCHED_OBJS) $(SHELL_OBJS)
+
+tidy-check:
+	clang-tidy-15 \
+	--extra-arg=--std=gnu2x \
+	-warnings-as-errors=* \
+	-header-filter=.* \
+	$(SHELL_SRCS) $(SHELL_HDRS)
+
+format:
+	clang-format-15 -i --verbose --style=Chromium $(SHELL_SRCS) $(SHELL_HDRS)
 
 # configs for standalone pennfat
 # and pennfat tests
