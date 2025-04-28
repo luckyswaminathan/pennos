@@ -114,11 +114,16 @@ int s_kill(pid_t pid, int signal) {
                 return 0;
             }
             // fall through to P_SIGTERM
-        case P_SIGTERM: 
+        case P_SIGTERM: { 
             // Terminate the process. Use a default status for now.
             // k_proc_exit handles moving to zombie queue and waking parent.
-            return k_proc_exit(target, 1); // Using status 1 for killed by signal
+            int status = k_proc_exit(target, 1); // Using status 1 for killed by signal
+            if (status != 0) {
+                success = false;
+                s_set_errno(status);
+            }
             break;
+        }
 
         case P_SIGTSTP:
             if (target->ignore_sigtstp) {
@@ -128,21 +133,30 @@ int s_kill(pid_t pid, int signal) {
         case P_SIGSTOP:
             // Stop the process
             if (target->pid != 1) {
-                success = k_stop_process(target);
+                int status = k_stop_process(target);
+                if (status != 0) {
+                    success = false;
+                    s_set_errno(status);
+                }
             }
             break;
 
         case P_SIGCONT:
             // Continue a stopped process
             if (target->pid != 1) {
-                success = k_continue_process(target);
+                int status = k_continue_process(target);
+                if (status != 0) {
+                    success = false;
+                    s_set_errno(status);
+                }
             }
             break;
 
         // Add cases for other signals as needed (SIGINT, SIGHUP, etc.)
 
         default:
-            return E_INVALID_ARGUMENT;
+            s_set_errno(E_INVALID_ARGUMENT);
+            return -1;
     }
     if (success) {
         log_signaled(pid, target->priority, target->command ? target->command : "<?>");
@@ -191,12 +205,12 @@ int s_nice(pid_t pid, int priority) {
          return -1;
     }
 
-    if (k_set_priority(target, priority)) {
+    int status = k_set_priority(target, priority);
+    if (status != 0) {
         log_nice(pid, target->priority, priority, target->command ? target->command : "<?>");
         return 0;
     } else {
-        // k_set_priority might fail if internal state is inconsistent
-        k_fprintf_short(STDERR_FILENO, "s_nice: Kernel failed to set priority for PID %d.\n", pid);
+        s_set_errno(status);
         return -1;
     }
 }
@@ -220,13 +234,13 @@ void s_sleep(unsigned int ticks) {
     }
 
     // Call kernel sleep function
-    if (k_sleep(current, ticks)) {
+    int status = k_sleep(current, ticks);
+    if (status == 0) {
         // If kernel successfully put process to sleep, yield the CPU
         spthread_suspend_self();
         // Execution resumes here after sleep duration (or signal)
     } else {
-         k_fprintf_short(STDERR_FILENO, "s_sleep Error: Kernel failed to put process PID %d to sleep.\n", current->pid);
-         // Kernel function failed, maybe log error? Proceed without yielding.
+        s_set_errno(status);
     }
 }
 
@@ -244,19 +258,28 @@ int s_tcsetpid(pid_t pid) {
     if (k_tcgetpid() == k_get_current_process()->pid) {
         k_tcsetpid(pid);
     } else {
-        return E_TCSET_NO_TERMINAL_CONTROL;
+        s_set_errno(E_TCSET_NO_TERMINAL_CONTROL);
+        return -1;
     }
     return 0;
 }
 
 int s_ignore_sigint(bool ignore) {
     pcb_t* current = k_get_current_process();
+    if (current == NULL) {
+        s_set_errno(E_NO_INIT_PROCESS); // there should always at least be init as the current process
+        return -1;
+    }
     current->ignore_sigint = ignore;
     return 0;
 }
 
 int s_ignore_sigtstp(bool ignore) {
     pcb_t* current = k_get_current_process();
+    if (current == NULL) {
+        s_set_errno(E_NO_INIT_PROCESS); // there should always at least be init as the current process
+        return -1;
+    }
     current->ignore_sigtstp = ignore;
     return 0;
 }
@@ -268,4 +291,9 @@ void s_logout() {
 // s_function to get the current process
 pcb_t* s_get_current_process() {
     return k_get_current_process();
+}
+
+void s_set_errno(int errno) {
+    pcb_t* current = k_get_current_process();
+    current->errnumber = errno;
 }

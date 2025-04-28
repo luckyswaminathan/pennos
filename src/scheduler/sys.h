@@ -103,3 +103,10 @@ void s_logout();
  */
 pcb_t* s_get_current_process();
 
+/**
+ * @brief Set the errno of the current process.
+ * 
+ * @param errno The errno to set.
+ */
+void s_set_errno(int errno);
+
