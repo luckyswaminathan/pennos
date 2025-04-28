@@ -50,17 +50,17 @@ pcb_t* k_get_process_by_pid(pid_t pid);
  * @brief Moves a process from its current ready/running queue to the blocked queue.
  * Does not change the process state field directly, assumes caller manages state.
  * @param process The process to block.
- * @return true if the process was found and moved, false otherwise.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_block_process(pcb_t *process);
+int k_block_process(pcb_t *process);
 
 /**
  * @brief Moves a process from the blocked queue to the appropriate ready queue.
  * Does not change the process state field directly, assumes caller manages state.
  * @param process The process to unblock.
- * @return true if the process was found and moved, false otherwise.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_unblock_process(pcb_t *process);
+int k_unblock_process(pcb_t *process);
 
 
 
@@ -85,16 +85,16 @@ void k_yield(void);
 /**
  * @brief Stops a process, moving it to the stopped queue.
  * @param process The process to stop.
- * @return true on success, false if process not found or already stopped.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_stop_process(pcb_t *process);
+int k_stop_process(pcb_t *process);
 
 /**
  * @brief Continues a stopped process, moving it back to the ready queue.
  * @param process The process to continue.
- * @return true on success, false if process not found or not stopped.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_continue_process(pcb_t *process);
+int k_continue_process(pcb_t *process);
 
 /**
  * @brief Sets the priority of a process.
@@ -102,18 +102,18 @@ bool k_continue_process(pcb_t *process);
  * If blocked or stopped, only the priority field is updated.
  * @param process The process to modify.
  * @param priority The new priority (PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW).
- * @return true on success, false if process not found or invalid priority.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_set_priority(pcb_t* process, int priority);
+int k_set_priority(pcb_t* process, int priority);
 
 /**
  * @brief Puts the calling process to sleep for a specified number of ticks.
  * The process is blocked, and sleep_time is set.
  * @param process The process to put to sleep.
  * @param ticks The number of ticks to sleep (must be > 0).
- * @return true on success, false if process is NULL or ticks is 0.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_sleep(pcb_t* process, unsigned int ticks);
+int k_sleep(pcb_t* process, unsigned int ticks);
 
 /**
  * @brief Sets a flag to indicate that the logout command has been issued

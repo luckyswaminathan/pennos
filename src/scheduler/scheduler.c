@@ -856,12 +856,17 @@ void k_yield(void) {
  * @brief Stops a process, moving it to the stopped queue.
  * Removes the process from active queues and sets its state.
  * @param process The process to stop.
- * @return true on success, false if process not found or already stopped.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_stop_process(pcb_t *process) {
-    if (!process || process->state == PROCESS_STOPPED) {
-        return false;
+int k_stop_process(pcb_t *process) {
+    if (!process) {
+        return E_INVALID_ARGUMENT;
     }
+
+    if (process->state == PROCESS_STOPPED) {
+        return E_STOP_STOPPED_PROCESS;
+    }
+
     // Remove from active queue (or current)
     bool removed = false;
     log_stopped(process->pid, process->priority, process->command ? process->command : "<?>");
@@ -871,20 +876,23 @@ bool k_stop_process(pcb_t *process) {
         process->state = PROCESS_STOPPED;
         linked_list_push_tail(&scheduler_state->stopped_queue, process);
         unblock_parents(process);
-        return true;
+        return 0;
     }
-    return false;
+    return E_STOP_NON_ACTIVE_QUEUE_PROCESS;
 }
 
 /**
  * @brief Continues a stopped process, moving it back to the ready queue.
  * Removes the process from the stopped queue and sets its state.
  * @param process The process to continue.
- * @return true on success, false if process not found or not stopped.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_continue_process(pcb_t *process) {
-    if (!process || process->state != PROCESS_STOPPED) {
-        return false;
+int k_continue_process(pcb_t *process) {
+    if (!process) {
+        return E_INVALID_ARGUMENT;
+    }
+    if (process->state != PROCESS_STOPPED) {
+        return E_CONTINUE_NON_STOPPED_PROCESS;
     }
     log_continued(process->pid, process->priority, process->command ? process->command : "<?>");
     // Manual removal from stopped queue
@@ -906,9 +914,9 @@ bool k_continue_process(pcb_t *process) {
     if (removed) {
         process->state = PROCESS_RUNNING;
         k_add_to_ready_queue(process); // Add to appropriate ready queue
-        return true;
+        return 0;
     }
-    return false;
+    return E_CONTINUE_NON_STOPPED_PROCESS;
 }
 
 /**
@@ -917,11 +925,11 @@ bool k_continue_process(pcb_t *process) {
  * If blocked or stopped, only the priority field is updated.
  * @param process The process to modify.
  * @param priority The new priority (PRIORITY_HIGH, PRIORITY_MEDIUM, PRIORITY_LOW).
- * @return true on success, false if process not found or invalid priority.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_set_priority(pcb_t* process, int priority) {
+int k_set_priority(pcb_t* process, int priority) {
     if (!process || priority < PRIORITY_HIGH || priority > PRIORITY_LOW) {
-        return false;
+        return E_INVALID_ARGUMENT;
     }
 
     int old_priority = process->priority;
@@ -955,12 +963,12 @@ bool k_set_priority(pcb_t* process, int priority) {
             // Process was RUNNING but not found in its expected ready queue? Log error.
             k_fprintf_short(STDERR_FILENO, "k_set_p)riority Warning: Process PID %d state is RUNNING but not found in ready queue %d.\n", process->pid, old_priority);
             // Still update priority field, but return false as queue move failed.
-            return false;
+            return E_RUNNING_PROCESS_NOT_IN_READY_QUEUE;
         }
     }
     // If process was blocked, stopped, or priority didn't change, 
     // just updating the field is sufficient.
-    return true; 
+    return 0; 
 }
 
 /**
@@ -969,11 +977,11 @@ bool k_set_priority(pcb_t* process, int priority) {
  * Caller should likely call k_yield() after this.
  * @param process The process to put to sleep.
  * @param ticks The number of ticks to sleep (must be > 0).
- * @return true on success, false if process is NULL or ticks is 0.
+ * @return 0 on success, and a negative error code on error
  */
-bool k_sleep(pcb_t* process, unsigned int ticks) {
+int k_sleep(pcb_t* process, unsigned int ticks) {
     if (!process || ticks == 0) {
-        return false;
+        return E_INVALID_ARGUMENT;
     }
     log_sleep(process->pid, process->priority, process->command ? process->command : "<?>");
     process->sleep_time = ticks; 
@@ -981,7 +989,7 @@ bool k_sleep(pcb_t* process, unsigned int ticks) {
     // and sets state to PROCESS_BLOCKED.
     block_process(process); 
     //k_proc_exit(process, 0);
-    return true;
+    return 0;
 }
 
 /**

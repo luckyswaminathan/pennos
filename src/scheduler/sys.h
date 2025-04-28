@@ -80,7 +80,7 @@ int s_nice(pid_t pid, int priority);
  *
  * @param ticks Duration of the sleep in system clock ticks. Must be greater than 0.
  */
-void s_sleep(unsigned int ticks);
+int s_sleep(unsigned int ticks);
 
 void s_get_process_info();
 
@@ -103,3 +103,16 @@ void s_logout();
  */
 pcb_t* s_get_current_process();
 
+/**
+ * @brief Set the errno of the current process.
+ * 
+ * @param errno The errno to set.
+ */
+void s_set_errno(int errno);
+
+/**
+ * @brief Get the error number for the current process.
+ * 
+ * @return int The error number.
+ */
+int s_get_errno();
