@@ -3,7 +3,6 @@
 #include <stdarg.h> // Needed for va_list, etc.
 #include "scheduler.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include <sys/time.h>

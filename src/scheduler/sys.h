@@ -1,6 +1,5 @@
 #include "scheduler.h"
 #include "logger.h"
-#include "../../lib/exiting_alloc.h"
 #include "../../lib/linked_list.h"
 #include "spthread.h"
 #include "src/scheduler/fat_syscalls.h"

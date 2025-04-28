@@ -8,7 +8,6 @@
 #include "./shell_porcelain.h"
 #include "./Job.h"
 #include "./jobs.h"
-#include "../../lib/exiting_alloc.h"
 #include "./signals.h"
 #include "../scheduler/scheduler.h"
 #include "../scheduler/sys.h"
