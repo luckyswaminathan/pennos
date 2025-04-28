@@ -2,7 +2,6 @@
 #include "./jobs.h"
 #include "../../lib/linked_list.h"
 #include "../../lib/exiting_alloc.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "./command_execution.h"
@@ -39,15 +38,15 @@ static job_ll* jobs = &_jobs;
 void print_job_command(job* job) {
   for (size_t i = 0; i < job->cmd->num_commands; i++) {
     if (i > 0) {
-      fprintf(stderr, " | ");
+      s_fprintf_short(STDERR_FILENO, " | ");
     }
 
     char **command = job->cmd->commands[i];
     for (size_t j = 0; command[j] != NULL; j++) {
       if (j > 0) {
-        fprintf(stderr, " ");
+        s_fprintf_short(STDERR_FILENO, " ");
       }
-      fprintf(stderr, "%s", command[j]);
+      s_fprintf_short(STDERR_FILENO, "%s", command[j]);
     }
   }
 }
@@ -62,10 +61,10 @@ void handle_jobs() {
   job_ll_node* node = linked_list_head(jobs);
 
   while (node != NULL) {
-    fprintf(stderr, "[%lu] %s ", node->job->id, 
+    s_fprintf_short(STDERR_FILENO, "[%lu] %s ", node->job->id, 
             (node->job->status == J_RUNNING_BG) ? "Running" : "Stopped");
     print_job_command(node->job);
-    fprintf(stderr, "\n");
+    s_fprintf_short(STDERR_FILENO, "\n");
     node = linked_list_next(node);
   }
 }
@@ -78,9 +77,9 @@ void handle_jobs() {
 void print_all_jobs() {
   job_ll_node* node = linked_list_head(jobs);
   while (node != NULL) {
-    fprintf(stderr, "[%lu] ", node->job->id);
-    fprintf(stderr, "%d", node->job->pid);
-    fprintf(stderr, "\n");
+    s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
+    s_fprintf_short(STDERR_FILENO, "%d", node->job->pid);
+    s_fprintf_short(STDERR_FILENO, "\n");
     node = linked_list_next(node);
   }
 }
@@ -113,7 +112,7 @@ void handle_fg(struct parsed_command* cmd) {
 
     // Check if we found the job
     if (node == NULL) {
-      fprintf(stderr, "No job with id %ld\n", target_id);
+      s_fprintf_short(STDERR_FILENO, "No job with id %ld\n", target_id);
       return;
     }
   } else {
@@ -121,7 +120,7 @@ void handle_fg(struct parsed_command* cmd) {
     // so we have LIFO
     
     if (node == NULL) {
-      fprintf(stderr, "No jobs to fg\n");
+      s_fprintf_short(STDERR_FILENO, "No jobs to fg\n");
       return;
     }
   }
@@ -135,7 +134,7 @@ void handle_fg(struct parsed_command* cmd) {
               // mark the job as running in the foreground
   
   print_job_command(job);
-  fprintf(stderr, "\n");
+  s_fprintf_short(STDERR_FILENO, "\n");
 
   if (job->status == J_STOPPED) {
     s_kill(job->pid, P_SIGCONT);
@@ -179,7 +178,7 @@ void handle_bg(struct parsed_command* cmd) {
 
     // Check if we found the job
     if (node == NULL) {
-      fprintf(stderr, "No job with id %ld\n", target_id);
+      s_fprintf_short(STDERR_FILENO, "No job with id %ld\n", target_id);
       return;
     }
   } else {
@@ -187,14 +186,14 @@ void handle_bg(struct parsed_command* cmd) {
     // LIFO!
 
     if (node == NULL) {
-      fprintf(stderr, "No jobs to bg\n");
+      s_fprintf_short(STDERR_FILENO, "No jobs to bg\n");
       return;
     }
   }
     
   job* job = node->job;
   if (job->status == J_RUNNING_FG || job->status == J_RUNNING_BG) {
-    fprintf(stderr, "Job %ld is already running in foreground or background\n", job->id);
+    s_fprintf_short(STDERR_FILENO, "Job %ld is already running in foreground or background\n", job->id);
     return;
   }
 
@@ -203,9 +202,9 @@ void handle_bg(struct parsed_command* cmd) {
   // Resume the job in the background
   s_kill(job->pid, P_SIGCONT);
 
-  fprintf(stderr, "[%lu] ", node->job->id);
+  s_fprintf_short(STDERR_FILENO, "[%lu] ", node->job->id);
   print_job_command(job);
-  fprintf(stderr, " &\n");
+  s_fprintf_short(STDERR_FILENO, " &\n");
 }
 
 /**
@@ -250,7 +249,7 @@ bool handle_jobs_commands(struct parsed_command* cmd) {
  */
 void enqueue_job(job* job) {
   if (job->status != J_STOPPED && job->status != J_RUNNING_BG) {
-    fprintf(stderr, "Cannot enqueue a job that is not stopped or running in the background (cannot enqueue foreground jobs).\n");
+    s_fprintf_short(STDERR_FILENO, "Cannot enqueue a job that is not stopped or running in the background (cannot enqueue foreground jobs).\n");
     exit(EXIT_FAILURE);
   }
 
@@ -421,6 +420,3 @@ job* get_jobs_head() {
   job_ll_node* head = linked_list_head(jobs);
   return head ? head->job : NULL;  // Return NULL if no jobs in list
 }
-
-// TODO: add a cleanup function here so we free before exiting
-// it can just call linked_list_clear

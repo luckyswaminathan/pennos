@@ -38,9 +38,9 @@ static void* shell_loop(void* arg) {
                 job* job = find_job_by_pid(pid);
                 if (job != NULL) {
                     // Print completion message before removing/destroying
-                    fprintf(stderr, "[%lu] Done ", job->id);
+                    s_fprintf_short(STDERR_FILENO, "[%lu] Done ", job->id);
                     print_job_command(job); // Uses fprintf, prints command without newline
-                    fprintf(stderr, "\n"); // Add newline
+                    s_fprintf_short(STDERR_FILENO, "\n"); // Add newline
                     remove_job_by_pid(pid); // Removes job from list and destroys it
                 }
             }
@@ -92,7 +92,7 @@ static void* shell_loop(void* arg) {
             execute_job(job_ptr);
             // Add logging for background job start
             if (job_ptr->pid > 0) { // Ensure PID is valid before printing
-                fprintf(stderr, "[%lu] %d\n", job_ptr->id, job_ptr->pid);
+                s_fprintf_short(STDERR_FILENO, "[%lu] %d\n", job_ptr->id, job_ptr->pid);
             }
             //s_waitpid(-1, NULL, true);
             enqueue_job(job_ptr);
