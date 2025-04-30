@@ -164,8 +164,6 @@ At a high level, the shell provides jobs, foreground and background processes, a
 
 ### FAT based Filesystem 
 
-aagam here plz
-
 
 ## Description of Code and Code Layout
 
